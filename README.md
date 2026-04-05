@@ -256,8 +256,4 @@ And disclose AI use per your target journal's policy. Suggested language:
 
 ## License
 
-Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)
-
-You are free to use, adapt, and share PraatGen for non-commercial purposes, provided you give appropriate credit and distribute adaptations under the same license. Commercial use requires written permission from the author.
-
-Full license text: https://creativecommons.org/licenses/by-nc-sa/4.0/
+GPL-3.0-or-later
