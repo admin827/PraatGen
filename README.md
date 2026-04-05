@@ -12,7 +12,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)  
 **Version:** 0.9.0-beta.1  
 **Release date:** 3 April 2026  
-**License:** GPL-3.0-or-later
+**License:** Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)
 
 ---
 
@@ -36,10 +36,10 @@ PraatGen is not a plugin or a standalone application. It is a **Claude Project**
 
 ## Requirements
 
-- **Claude Pro, Team, or Enterprise account** (Projects require a paid plan). Note that PraatGen can burn tokens quickly on complex projects. You may want to at least use the Max plan (currently $100/month)for serious code production.
-- **Other AI optiions:** As of early April 2026, no other frontier model accommodates the modular design of PraatGen. I do not endorse using ChatGPT, Gemini, etc. They have not been tested and I make no guarantees. 
+- **Claude Pro, Team, or Enterprise account** (Projects require a paid plan). Note that PraatGen can burn tokens quickly on complex projects. You may want to at least use the Max plan (currently $100/month) for serious code production.
+- **Other AI options:** As of early April 2026, no other frontier model accommodates the modular design of PraatGen. I do not endorse using ChatGPT, Gemini, etc. They have not been tested and I make no guarantees. 
 - **Claude model:** Claude Opus 4.6 or later with Extended Thinking enabled. Sonnet may handle simpler scripts but is not the default recommendation. See the model guidance PraatGen provides during pre-flight.
-- **Claude modality:** PraatGen presumes that most users will use the Claude.ai or desktop environment. It can be modified to use with Claude Code by changing references to the pkb (project knowledge base) files in the Master Prompt to the local directory. You may also want to separate the Master Prompt file from your Claude.md file. 
+- **Claude modality:** PraatGen presumes that most users will use the Claude.ai or desktop environment. It can be modified to use with Claude Code by changing references to the pkb (project knowledge base) files in the Master Prompt to the local directory. You may also want to separate the Master Prompt file from your `CLAUDE.md` file. 
 - **Praat:** Version 6.4 or later (current stable release)
 
 ---
@@ -76,8 +76,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 ### The Basic Workflow
 
-0. **Verify your model and settings: Opus 4.6 or higher with Extended Thinking turned on
-
+0. **Verify your model and settings:** Opus 4.6 or higher with Extended Thinking turned on.
 
 1. **Describe your task.** PraatGen asks for four things:
    - What should the script accomplish?
@@ -87,7 +86,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 2. **Review the pre-flight.** PraatGen verifies it has the right references loaded and flags any ambiguities. It recommends a model tier and extended thinking settings. You will approve this step or discuss your concerns.
 
-3. PraatGen generates the a command plan. Once you tell it to execute this plan it will write and deliver the code and a self-audit.
+3. PraatGen generates a command plan. Once you tell it to execute this plan it will write and deliver the code and a self-audit.
 
 4. **Test in Praat.** Copy the script into Praat's script editor and run it. You may also ask it to present a downloadable .praat file in the chat window. If it works, you're done.
 
@@ -116,7 +115,7 @@ If you run into any errors with your scripts, or you want to refactor something,
 
 ### Master Prompt
 
-`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 35 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards.
+`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 36 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards.
 
 ### Project Knowledge Base (PKB)
 
@@ -169,7 +168,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `WHITELIST_CURRENT.txt` | Recently verified commands not yet merged into primary references |
 
 **Drawing and methodology references:**
-a
+
 | File | Purpose |
 |------|---------|
 | `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text label safety, spectrum/Ltas/PowerCepstrum axis alignment |
@@ -206,8 +205,8 @@ PraatGen tracks three version numbers:
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
 | **Release** | 0.9.0-beta.1 | The combined package (prompt + PKB). This is the version that matters to users. |
-| **Master Prompt** | 13.0 | The system instructions. Bumped when rules, workflow, or protocols change. |
-| **PKB Snapshot** | 2026-04-03 | The reference file set. Date-stamped when files are added or revised. |
+| **Master Prompt** | 13.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **PKB Snapshot** | 2026-04-05 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **0.x.y** — Beta. Expect changes based on tester feedback.
@@ -220,7 +219,7 @@ PraatGen tracks three version numbers:
 
 **Reference coverage gaps.** The COMMANDS_*.txt files cover the most commonly used object types thoroughly but are not exhaustive for every parameter variant. The Definitive Catalogue (`PRAAT_DEFINITIVE_CATALOGUE.txt`) provides fallback coverage for all 136 object types but with less contextual annotation. Gaps are filled as they're discovered — report them.
 
-**EML Tools integration.** PraatGen can generate scripts that reference EML Tools library procedures (drawing, statistics), but the EML Tools plugin itself is in pre-release. Scripts using EML procedures require the plugin to be installed.
+**EML Tools integration.** PraatGen generates flat scripts inspired by EML library procedures. The EML Tools plugin itself is in pre-release and available separately.
 
 **Extended thinking dependency.** Complex scripts benefit significantly from Claude's extended thinking capability. The prompt includes gates that recommend when to enable it, but this requires the user to manage the setting manually.
 
@@ -234,7 +233,7 @@ PraatGen tracks three version numbers:
 
 ## Reporting Issues
 
-During the beta period, report issues to Ian Howell at the Embodied Music Lab (www.embodiedmusiclab.com:
+During the beta period, report issues to Ian Howell at the Embodied Music Lab (www.embodiedmusiclab.com):
 
 - **Script errors:** Include the task description, the generated script, and the exact Praat error message with line number.
 - **Reference gaps:** If PraatGen can't find a command it should know about, note the object type and command name.
@@ -256,4 +255,5 @@ And disclose AI use per your target journal's policy. Suggested language:
 
 ## License
 
-GPL-3.0-or-later
+Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+
