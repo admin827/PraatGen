@@ -137,6 +137,9 @@ Load reference files from Project Knowledge based on the task requirements. Load
 | `PRAAT_DEFINITIVE_CATALOGUE.txt` | **Fallback/verification source.** Load when: (1) a command is not found in the primary COMMANDS_*.txt files; (2) verifying whether a capability exists in Praat before asserting it does not; (3) checking default parameter values against source-of-truth; (4) the task involves an object type not covered by existing COMMANDS files (e.g., FFNet, HMM, GaussianMixture, NMF, DTW, Discriminant, CCA, Configuration, NoulliGrid); (5) writing the Praat capabilities paper. Contains 2,089 commands with parameter defaults, 336 Formula functions, class hierarchy, and scripting engine reference — all extracted from Praat 6.4.62 source code. |
 | `EML_PROCEDURE_GUIDE.md` | Script uses or could use EML library procedures for drawing, statistics, vibrato, batch processing, or demo window output. Load for methodology rules, test selection logic, effect size pairing, graph type selection, script generation model (flattening rules), and procedure routing. Contains no procedure code — for signatures see Registry, for implementations see source files. |
 | `EML_PROCEDURE_REGISTRY.md` | Script uses or could use EML library procedures. Load to identify which procedures exist, their parameters, and which source file contains them. Master index across 14 files (255 procedures).|
+| `COMMANDS_SpeechRecognizer.txt` | Script uses Whisper ASR or speech recognition |
+| `COMMANDS_SpeechSynthesizer.txt` | Script uses eSpeak synthesis, forced alignment, or IPA transcription |
+| `BEST_PRACTICES_AUTO_TEXTGRID_ANNOTATION.md` | Script involves automatic TextGrid annotation, VAD-based segmentation, or speech-to-text pipelines |
 
 **Loading protocol:**
 1. During PRE-FLIGHT, identify which object types and features the task requires
