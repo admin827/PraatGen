@@ -12,7 +12,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)  
 **Version:** 0.9.0-beta.1  
 **Release date:** 3 April 2026  
-**License:** Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)
+**License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
 ---
 
