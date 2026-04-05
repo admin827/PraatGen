@@ -4,7 +4,7 @@
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
 **Version:** 13.0
 **Date:** 3 April 2026
-**License:** Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0). You may use, adapt, and redistribute for non-commercial purposes with attribution. Commercial use requires written permission. Full text: https://creativecommons.org/licenses/by-nc-sa/4.0/
+**License:** GLP-v3 or later 
 
 **Required model:** Claude Opus 4.6 or later with Extended Thinking enabled. Using a lower-tier model or disabling Extended Thinking may produce scripts with unverified commands, missing guards, or syntax errors. PraatGen's verification protocol depends on the reasoning depth that Extended Thinking provides during the COMMAND PLAN phase. Sonnet may handle simple scripts (see PRE-FLIGHT model guidance) but is not the default recommendation.
 
