@@ -4,11 +4,47 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
-# Version: 3.7
-# Date: 4 April 2026
+# Version: 3.15
+# Date: 7 April 2026
+#
+# v3.15: Bug #11 fix — @emlReportAnovaComparison Cohen's d matrix now
+#         always reported, not gated behind Tukey toggle. Reads from
+#         emlOneWayAnova.dMatrix## (guaranteed by orchestrator). All
+#         group label references changed from .groupName$ to
+#         .groupLabel$ (always set). Parallel fix in
+#         @emlReportKWComparison: rank-biserial r matrix always
+#         reported. Reads from emlKruskalWallis.rMatrix## (guaranteed
+#         by orchestrator).
+#
+# v3.14: Matrix label sanitization — annotMatrixLabel$[] sanitized at
+#         top of @emlMeasureMatrixLayout (after bridge data lookups,
+#         before text measurement and rendering). Fixes underscore
+#         rendering as subscript in matrix row/column headers.
+#
+# v3.13: Group sort order — removed 4 independent sort$# calls from
+#        bridge and reporter procedures. Order now controlled centrally
+#        by @emlCountGroups via emlGroupSortAlphabetical global.
+#
+# v3.12: Matrix legend bottom padding increased from fontInch*0.5 to
+#        fontInch*2.0 — legend was clipping below viewport on tall
+#        figures with many groups. Tukey CSV rows now include q-statistic
+#        and dfWithin (were hardcoded 0). Effect labels (large/medium/
+#        small) now populated on ANOVA omnibus, Tukey pairwise, and
+#        Dunn pairwise CSV rows.
+#
+# v3.11: Bug #13 — @emlReportKWComparison Dunn CSV rows now include
+#        real per-pair descriptives (n, mean, sd, median) and
+#        rank-biserial r from emlDunnTest.rMatrix##. Added .tableId
+#        parameter to signature. Three callers updated.
+#
+# v3.10: 10-group limit removal — deleted .extractIdx mapping blocks
+#        in @emlBridgeGroupComparison, updated 17 @eml_getGroupData
+#        calls to new 4-arg on-demand signature (eml-extract.praat),
+#        reporter label source changed from emlExtractMultipleGroups
+#        to emlOneWayAnova/emlTukeyHSD procedure outputs.
 #
 # v3.7: Pairwise effect size performance fix — k-group bridge paths AND
-#        reporter pairwise loops now use @eml_getGroupData (pre-extracted
+#        reporter pairwise loops now use @eml_getGroupData (on-demand
 #        vectors) instead of per-pair @emlExtractGroupVectors calls.
 #        Bridge: 6 paths updated (ANOVA sig/NS matrix+bracket, KW sig/NS
 #        matrix+bracket). Reporter: @emlReportAnovaComparison d-matrix
@@ -919,6 +955,13 @@ procedure emlMeasureMatrixLayout: .vpLeft, .vpRight, .vpTop, .vpBottom, .fontSiz
         emlMatrixLayout_hasEffect = 1
     endif
 
+    # Sanitize labels for display (underscores, special chars).
+    # Raw values were already used for data lookups in the bridge.
+    for .i from 1 to .nG
+        @emlSanitizeLabel: annotMatrixLabel$[.i]
+        annotMatrixLabel$[.i] = emlSanitizeLabel.result$
+    endfor
+
     .vpW = .vpRight - .vpLeft
     .vpH = .vpBottom - .vpTop
 
@@ -1140,7 +1183,7 @@ procedure emlMeasureMatrixLayout: .vpLeft, .vpRight, .vpTop, .vpBottom, .fontSiz
     if emlMatrixLayout_hasEffect = 1
         .legendGap = .fontInch * 1.5
         .legendSwatchSize = .fontInch * 2.0
-        .legendBottomPad = .fontInch * 0.5
+        .legendBottomPad = .fontInch * 2.0
         .yMax = .dataTop + .nG * .rowH
         ... + .legendGap + .legendSwatchSize + .legendBottomPad
     else
@@ -1783,27 +1826,26 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                 ... + ", " + emlFormatP.formatted$
                 ... + ", e2 = " + fixed$ (.epsilonSq, 3)
 
-                # Map bridge group indices to pre-extracted vector indices
-                # (@emlKruskalWallis called @emlExtractMultipleGroups;
-                # mapping stable across subsequent @emlDunnTest extraction)
-                if .showEffect = 1
-                    for .ii from 1 to .nGroups
-                        .extractIdx[.ii] = 0
-                        for .gg from 1 to .nGroups
-                            if emlCountGroups.groupLabel$[.ii]
-                            ... = emlExtractMultipleGroups.groupLabel$[.gg]
-                                .extractIdx[.ii] = .gg
-                            endif
-                        endfor
-                    endfor
-                endif
-
                 # Pairwise post-hoc
                 if .pOmnibus < .alpha
                     @emlDunnTest: .tableId, .dataCol$, .factorCol$, annotCorrectionMethod$
                     if emlDunnTest.error$ = ""
                         annotMatrixPosthoc$ = "Dunn's test ("
                         ... + annotCorrectionMethod$ + ")"
+                        # Order controlled by @emlCountGroups
+                        .sortLabels$# = empty$# (.nGroups)
+                        for .i from 1 to .nGroups
+                            .sortLabels$#[.i] = emlCountGroups.groupLabel$[.i]
+                        endfor
+                        for .i from 1 to .nGroups
+                            .sortMap[.i] = 0
+                            for .g from 1 to .nGroups
+                                if .sortLabels$#[.i]
+                                ... = emlDunnTest.groupName$[.g]
+                                    .sortMap[.i] = .g
+                                endif
+                            endfor
+                        endfor
                         if .useMatrix
                             # --- MATRIX OUTPUT (split triangle) ---
                             # Upper triangle: p-values only (text)
@@ -1816,11 +1858,11 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                 annotMatrixEffectLabel$ = ""
                             endif
                             for .i from 1 to .nGroups
-                                annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
+                                annotMatrixLabel$[.i] = .sortLabels$#[.i]
                             endfor
                             for .i from 1 to .nGroups - 1
                                 for .j from .i + 1 to .nGroups
-                                    .pairP = emlDunnTest.pMatrix##[.i, .j]
+                                    .pairP = emlDunnTest.pMatrix##[.sortMap[.i], .sortMap[.j]]
 
                                     # p-value text only (no effect in cell)
                                     @emlFormatAnnotLabel: .pairP, undefined, .style$, 0, ""
@@ -1837,9 +1879,9 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                     # Rank-biserial r stored numerically for lower triangle
                                     annotMatrixD'.i'_'.j' = undefined
                                     if .showEffect = 1
-                                        @eml_getGroupData: .extractIdx[.i]
+                                        @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                         .v1# = eml_getGroupData.data#
-                                        @eml_getGroupData: .extractIdx[.j]
+                                        @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                         @emlRankBiserialR: .v1#, eml_getGroupData.data#, 2
                                         if emlRankBiserialR.error$ = ""
                                             annotMatrixD'.i'_'.j' = abs (emlRankBiserialR.r)
@@ -1852,14 +1894,14 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotBracketN = 0
                             for .i from 1 to .nGroups - 1
                                 for .j from .i + 1 to .nGroups
-                                    .pairP = emlDunnTest.pMatrix##[.i, .j]
+                                    .pairP = emlDunnTest.pMatrix##[.sortMap[.i], .sortMap[.j]]
 
                                     # Rank-biserial r per pair if effect display requested
                                     .pairD = undefined
                                     if .showEffect = 1
-                                        @eml_getGroupData: .extractIdx[.i]
+                                        @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                         .v1# = eml_getGroupData.data#
-                                        @eml_getGroupData: .extractIdx[.j]
+                                        @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                         @emlRankBiserialR: .v1#, eml_getGroupData.data#, 2
                                         if emlRankBiserialR.error$ = ""
                                             .pairD = abs (emlRankBiserialR.r)
@@ -1899,7 +1941,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
+                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
@@ -1910,9 +1952,9 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                 endif
                                 annotMatrixD'.i'_'.j' = undefined
                                 if .showEffect = 1
-                                    @eml_getGroupData: .extractIdx[.i]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                     .v1# = eml_getGroupData.data#
-                                    @eml_getGroupData: .extractIdx[.j]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                     @emlRankBiserialR: .v1#, eml_getGroupData.data#, 2
                                     if emlRankBiserialR.error$ = ""
                                         annotMatrixD'.i'_'.j' = abs (emlRankBiserialR.r)
@@ -1953,38 +1995,22 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                 # Index mapping: encounter order → ANOVA alphabetical order
                 # emlCountGroups uses encounter order (matches x-axis)
                 # emlOneWayAnova inherits Tukey alphabetical sort
-                # Build .anovaMap[displayIdx] = anovaIdx so that
-                # pMatrix##[.anovaMap[.i], .anovaMap[.j]] gives the
-                # p-value for display row .i vs display column .j.
-                # --------------------------------------------------------
+                # Order controlled by @emlCountGroups.
+                # Build map from display position to stats-procedure
+                # position for matrix access.
+                .sortLabels$# = empty$# (.nGroups)
                 for .i from 1 to .nGroups
-                    .anovaMap[.i] = 0
+                    .sortLabels$#[.i] = emlCountGroups.groupLabel$[.i]
+                endfor
+                for .i from 1 to .nGroups
+                    .sortMap[.i] = 0
                     for .g from 1 to .nGroups
-                        if emlCountGroups.groupLabel$[.i]
+                        if .sortLabels$#[.i]
                         ... = emlOneWayAnova.groupName$[.g]
-                            .anovaMap[.i] = .g
+                            .sortMap[.i] = .g
                         endif
                     endfor
-                    if .anovaMap[.i] = 0
-                        .error$ = "Group mapping failed: "
-                        ... + emlCountGroups.groupLabel$[.i]
-                    endif
                 endfor
-
-                # Map bridge group indices to pre-extracted vector indices
-                # (@emlOneWayAnova called @emlExtractMultipleGroups internally;
-                # @eml_getGroupData reads those outputs without table scans)
-                if .error$ = "" and .showEffect = 1
-                    for .ii from 1 to .nGroups
-                        .extractIdx[.ii] = 0
-                        for .gg from 1 to .nGroups
-                            if emlCountGroups.groupLabel$[.ii]
-                            ... = emlExtractMultipleGroups.groupLabel$[.gg]
-                                .extractIdx[.ii] = .gg
-                            endif
-                        endfor
-                    endfor
-                endif
 
                 # Pairwise from Tukey
                 if .error$ = "" and .pOmnibus < .alpha and emlOneWayAnova.nPairs > 0
@@ -2000,11 +2026,11 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
+                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
-                                .pairP = emlOneWayAnova.pMatrix##[.anovaMap[.i], .anovaMap[.j]]
+                                .pairP = emlOneWayAnova.pMatrix##[.sortMap[.i], .sortMap[.j]]
 
                                 # p-value text only (no effect in cell)
                                 @emlFormatAnnotLabel: .pairP, undefined, .style$, 0, ""
@@ -2021,9 +2047,9 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                 # Cohen's d stored numerically for lower triangle
                                 annotMatrixD'.i'_'.j' = undefined
                                 if .showEffect = 1
-                                    @eml_getGroupData: .extractIdx[.i]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                     .v1# = eml_getGroupData.data#
-                                    @eml_getGroupData: .extractIdx[.j]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                     @emlCohenD: .v1#, eml_getGroupData.data#
                                     if emlCohenD.error$ = ""
                                         annotMatrixD'.i'_'.j' = abs (emlCohenD.d)
@@ -2036,14 +2062,14 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                         annotBracketN = 0
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
-                                .pairP = emlOneWayAnova.pMatrix##[.anovaMap[.i], .anovaMap[.j]]
+                                .pairP = emlOneWayAnova.pMatrix##[.sortMap[.i], .sortMap[.j]]
 
                                 # Cohen's d per pair if effect display requested
                                 .pairD = undefined
                                 if .showEffect = 1
-                                    @eml_getGroupData: .extractIdx[.i]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                     .v1# = eml_getGroupData.data#
-                                    @eml_getGroupData: .extractIdx[.j]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                     @emlCohenD: .v1#, eml_getGroupData.data#
                                     if emlCohenD.error$ = ""
                                         .pairD = emlCohenD.d
@@ -2082,11 +2108,11 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
+                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
-                                .pairP = emlOneWayAnova.pMatrix##[.anovaMap[.i], .anovaMap[.j]]
+                                .pairP = emlOneWayAnova.pMatrix##[.sortMap[.i], .sortMap[.j]]
                                 @emlFormatAnnotLabel: .pairP, undefined, .style$, 0, ""
                                 annotMatrixCell'.i'_'.j'$ = emlFormatAnnotLabel.result$
                                 annotMatrixSig'.i'_'.j' = 0
@@ -2095,9 +2121,9 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                 endif
                                 annotMatrixD'.i'_'.j' = undefined
                                 if .showEffect = 1
-                                    @eml_getGroupData: .extractIdx[.i]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.i]
                                     .v1# = eml_getGroupData.data#
-                                    @eml_getGroupData: .extractIdx[.j]
+                                    @eml_getGroupData: .tableId, .dataCol$, .factorCol$, annotMatrixLabel$[.j]
                                     @emlCohenD: .v1#, eml_getGroupData.data#
                                     if emlCohenD.error$ = ""
                                         annotMatrixD'.i'_'.j' = abs (emlCohenD.d)
@@ -2301,7 +2327,7 @@ procedure emlReportBridgeStats: .tableId, .dataCol$, .groupCol$
             .doDunn = 0
         endif
         @emlReportKWComparison: .tableName$, .dataCol$, .groupCol$,
-        ... .nGroups, .doDunn
+        ... .tableId, .nGroups, .doDunn
     endif
 endproc
 
@@ -2458,19 +2484,29 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
     .etaSq = emlOneWayAnova.etaSquared
     @emlReportLineString: "Effect size", "eta-squared = " + fixed$ (.etaSq, 4)
 
+    @emlFormatEffectLabel: .etaSq, "eta_squared"
+    .etaLabel$ = emlFormatEffectLabel.label$
     @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
     ... "omnibus", "omnibus", "One-way ANOVA",
     ... emlOneWayAnova.fValue, emlOneWayAnova.dfBetween, emlOneWayAnova.p,
-    ... .etaSq, "eta-squared", "",
+    ... .etaSq, "eta-squared", .etaLabel$,
     ... 0, 0, 0, 0, 0, 0, 0, 0
 
     # Group descriptives
     @emlReportBlank
     @emlReportSection: "Group Descriptives"
     @emlReportDescriptiveHeader
+
+    # Group order controlled by @emlCountGroups
+    .sortLabels$# = empty$# (.nGroups)
+    for .i from 1 to .nGroups
+        .sortLabels$#[.i] = emlOneWayAnova.groupLabel$[.i]
+    endfor
+
     for .iGroup from 1 to .nGroups
-        .gName$ = replace$ (emlExtractMultipleGroups.groupLabel$ [.iGroup], "_", " ", 0)
-        @eml_getGroupData: .iGroup
+        .gName$ = replace$ (.sortLabels$#[.iGroup], "_", " ", 0)
+        @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+        ... .sortLabels$#[.iGroup]
         .gN = eml_getGroupData.n
         .gData# = eml_getGroupData.data#
         @emlMean: .gData#
@@ -2482,14 +2518,14 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
         @emlReportDescriptiveRow: .gName$, .gN, .gMean, .gSD, .gMedian
     endfor
 
-    # Tukey pairwise
+    # Tukey pairwise p-values (only when Tukey ran)
     if .doTukey
         @emlReportBlank
         @emlReportSection: "Tukey HSD Pairwise Comparisons (p-values)"
         appendInfoLine: ""
         .headerLine$ = left$ ("" + "                ", 14)
         for .jGroup from 1 to .nGroups
-            .colName$ = replace$ (emlOneWayAnova.groupName$ [.jGroup], "_", " ", 0)
+            .colName$ = replace$ (emlOneWayAnova.groupLabel$[.jGroup], "_", " ", 0)
             if length (.colName$) > 10
                 .colName$ = left$ (.colName$, 10)
             endif
@@ -2497,7 +2533,7 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
         endfor
         appendInfoLine: .headerLine$
         for .iGroup from 1 to .nGroups
-            .rowName$ = replace$ (emlOneWayAnova.groupName$ [.iGroup], "_", " ", 0)
+            .rowName$ = replace$ (emlOneWayAnova.groupLabel$[.iGroup], "_", " ", 0)
             if length (.rowName$) > 12
                 .rowName$ = left$ (.rowName$, 12)
             endif
@@ -2518,61 +2554,19 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
             appendInfoLine: .rowLine$
         endfor
 
-        # Pairwise Cohen's d
-        @emlReportBlank
-        @emlReportSection: "Pairwise Effect Sizes (Cohen's d)"
-        appendInfoLine: ""
-        .dHeaderLine$ = left$ ("" + "                ", 14)
-        for .jGroup from 1 to .nGroups
-            .colName$ = replace$ (emlOneWayAnova.groupName$ [.jGroup], "_", " ", 0)
-            if length (.colName$) > 10
-                .colName$ = left$ (.colName$, 10)
-            endif
-            .dHeaderLine$ = .dHeaderLine$ + left$ (.colName$ + "            ", 12)
-        endfor
-        appendInfoLine: .dHeaderLine$
-        for .iGroup from 1 to .nGroups
-            .rowName$ = replace$ (emlOneWayAnova.groupName$ [.iGroup], "_", " ", 0)
-            if length (.rowName$) > 12
-                .rowName$ = left$ (.rowName$, 12)
-            endif
-            .dRowLine$ = left$ (.rowName$ + "                ", 14)
-            for .jGroup from 1 to .nGroups
-                if .iGroup = .jGroup
-                    .cellText$ = "---"
-                else
-                    @eml_getGroupData: emlTukeyHSD.sortMap[.iGroup]
-                    .v1# = eml_getGroupData.data#
-                    @eml_getGroupData: emlTukeyHSD.sortMap[.jGroup]
-                    @emlCohenD: .v1#, eml_getGroupData.data#
-                    if emlCohenD.error$ = ""
-                        .cellText$ = fixed$ (emlCohenD.d, 3)
-                    else
-                        .cellText$ = "err"
-                    endif
-                endif
-                .dRowLine$ = .dRowLine$ + left$ (.cellText$ + "            ", 12)
-            endfor
-            appendInfoLine: .dRowLine$
-        endfor
-
-        # CSV rows for pairwise
+        # CSV rows for Tukey pairwise
         for .iGroup from 1 to .nGroups - 1
             for .jGroup from .iGroup + 1 to .nGroups
                 .pVal = emlOneWayAnova.pMatrix## [.iGroup, .jGroup]
-                .g1Label$ = emlOneWayAnova.groupName$ [.iGroup]
-                .g2Label$ = emlOneWayAnova.groupName$ [.jGroup]
-                @eml_getGroupData: emlTukeyHSD.sortMap[.iGroup]
-                .v1# = eml_getGroupData.data#
+                .g1Label$ = emlOneWayAnova.groupLabel$[.iGroup]
+                .g2Label$ = emlOneWayAnova.groupLabel$[.jGroup]
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g1Label$
                 .n1 = eml_getGroupData.n
-                @eml_getGroupData: emlTukeyHSD.sortMap[.jGroup]
-                .v2# = eml_getGroupData.data#
+                .v1# = eml_getGroupData.data#
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g2Label$
                 .n2 = eml_getGroupData.n
-                .pairD = 0
-                @emlCohenD: .v1#, .v2#
-                if emlCohenD.error$ = ""
-                    .pairD = emlCohenD.d
-                endif
+                .v2# = eml_getGroupData.data#
+                .pairD = emlOneWayAnova.dMatrix## [.iGroup, .jGroup]
                 @emlMean: .v1#
                 .m1 = emlMean.result
                 @emlSD: .v1#
@@ -2585,9 +2579,100 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
                 .s2 = emlSD.result
                 @emlMedian: .v2#
                 .md2 = emlMedian.result
+                @emlFormatEffectLabel: .pairD, "d"
+                .dLabel$ = emlFormatEffectLabel.label$
                 @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
                 ... .g1Label$, .g2Label$, "Tukey HSD",
-                ... 0, 0, .pVal, .pairD, "Cohen's d", "",
+                ... emlOneWayAnova.qMatrix## [.iGroup, .jGroup],
+                ... emlOneWayAnova.dfWithin, .pVal,
+                ... .pairD, "Cohen's d", .dLabel$,
+                ... .n1, .n2,
+                ... .m1, .s1, .md1, .m2, .s2, .md2
+            endfor
+        endfor
+    endif
+
+    # Pairwise Cohen's d (ALWAYS — bug #11 fix)
+    # When called via orchestrator, dMatrix## is pre-computed.
+    # When called directly (backward compat), compute it here.
+    if .doTukey = 0
+        emlOneWayAnova.dMatrix## = zero## (.nGroups, .nGroups)
+        for .i from 1 to .nGroups - 1
+            @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+            ... emlOneWayAnova.groupLabel$[.i]
+            .tmpV1# = eml_getGroupData.data#
+            for .j from .i + 1 to .nGroups
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+                ... emlOneWayAnova.groupLabel$[.j]
+                @emlCohenD: .tmpV1#, eml_getGroupData.data#
+                if emlCohenD.error$ = ""
+                    emlOneWayAnova.dMatrix## [.i, .j] = emlCohenD.d
+                    emlOneWayAnova.dMatrix## [.j, .i] = -emlCohenD.d
+                endif
+            endfor
+        endfor
+    endif
+    @emlReportBlank
+    @emlReportSection: "Pairwise Effect Sizes (Cohen's d)"
+    appendInfoLine: ""
+    .dHeaderLine$ = left$ ("" + "                ", 14)
+    for .jGroup from 1 to .nGroups
+        .colName$ = replace$ (emlOneWayAnova.groupLabel$[.jGroup], "_", " ", 0)
+        if length (.colName$) > 10
+            .colName$ = left$ (.colName$, 10)
+        endif
+        .dHeaderLine$ = .dHeaderLine$ + left$ (.colName$ + "            ", 12)
+    endfor
+    appendInfoLine: .dHeaderLine$
+    for .iGroup from 1 to .nGroups
+        .rowName$ = replace$ (emlOneWayAnova.groupLabel$[.iGroup], "_", " ", 0)
+        if length (.rowName$) > 12
+            .rowName$ = left$ (.rowName$, 12)
+        endif
+        .dRowLine$ = left$ (.rowName$ + "                ", 14)
+        for .jGroup from 1 to .nGroups
+            if .iGroup = .jGroup
+                .cellText$ = "---"
+            else
+                .dVal = emlOneWayAnova.dMatrix## [.iGroup, .jGroup]
+                .cellText$ = fixed$ (.dVal, 3)
+            endif
+            .dRowLine$ = .dRowLine$ + left$ (.cellText$ + "            ", 12)
+        endfor
+        appendInfoLine: .dRowLine$
+    endfor
+
+    # CSV rows for Cohen's d only (when Tukey did NOT run)
+    if .doTukey = 0
+        for .iGroup from 1 to .nGroups - 1
+            for .jGroup from .iGroup + 1 to .nGroups
+                .g1Label$ = emlOneWayAnova.groupLabel$[.iGroup]
+                .g2Label$ = emlOneWayAnova.groupLabel$[.jGroup]
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g1Label$
+                .n1 = eml_getGroupData.n
+                .v1# = eml_getGroupData.data#
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g2Label$
+                .n2 = eml_getGroupData.n
+                .v2# = eml_getGroupData.data#
+                .pairD = emlOneWayAnova.dMatrix## [.iGroup, .jGroup]
+                @emlMean: .v1#
+                .m1 = emlMean.result
+                @emlSD: .v1#
+                .s1 = emlSD.result
+                @emlMedian: .v1#
+                .md1 = emlMedian.result
+                @emlMean: .v2#
+                .m2 = emlMean.result
+                @emlSD: .v2#
+                .s2 = emlSD.result
+                @emlMedian: .v2#
+                .md2 = emlMedian.result
+                @emlFormatEffectLabel: .pairD, "d"
+                .dLabel$ = emlFormatEffectLabel.label$
+                @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
+                ... .g1Label$, .g2Label$, "Pairwise Cohen's d",
+                ... 0, 0, 0,
+                ... .pairD, "Cohen's d", .dLabel$,
                 ... .n1, .n2,
                 ... .m1, .s1, .md1, .m2, .s2, .md2
             endfor
@@ -2601,7 +2686,7 @@ endproc
 # ============================================================================
 # @emlReportKWComparison
 # ============================================================================
-procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .doDunn
+procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .nGroups, .doDunn
     @emlUnderscoreToSpace: .tableName$
     .displayTable$ = emlUnderscoreToSpace.result$
     @emlUnderscoreToSpace: .dataCol$
@@ -2635,6 +2720,20 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
     ... emlFormatEffectLabel.label$,
     ... 0, 0, 0, 0, 0, 0, 0, 0
 
+    # Group order controlled by @emlCountGroups
+    .sortLabels$# = empty$# (.nGroups)
+    for .i from 1 to .nGroups
+        .sortLabels$#[.i] = emlKruskalWallis.groupName$[.i]
+    endfor
+    for .i from 1 to .nGroups
+        .sortMap[.i] = 0
+        for .g from 1 to .nGroups
+            if .sortLabels$#[.i] = emlKruskalWallis.groupName$[.g]
+                .sortMap[.i] = .g
+            endif
+        endfor
+    endfor
+
     # Group mean ranks
     @emlReportBlank
     @emlReportSection: "Group Mean Ranks"
@@ -2643,13 +2742,13 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
     ... + left$ ("N" + "      ", 6) + "Mean Rank"
     appendInfoLine: .grpHeader$
     for .iGroup from 1 to .nGroups
-        .gName$ = replace$ (emlKruskalWallis.groupName$ [.iGroup], "_", " ", 0)
+        .gName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
         if length (.gName$) > 12
             .gName$ = left$ (.gName$, 12)
         endif
         appendInfoLine: left$ (.gName$ + "                ", 14),
-        ... left$ (string$ (emlKruskalWallis.groupN [.iGroup]) + "      ", 6),
-        ... fixed$ (emlKruskalWallis.meanRank [.iGroup], 2)
+        ... left$ (string$ (emlKruskalWallis.groupN [.sortMap[.iGroup]]) + "      ", 6),
+        ... fixed$ (emlKruskalWallis.meanRank [.sortMap[.iGroup]], 2)
     endfor
 
     if .doDunn
@@ -2660,7 +2759,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
             appendInfoLine: ""
             .headerLine$ = left$ ("" + "                ", 14)
             for .jGroup from 1 to .nGroups
-                .colName$ = replace$ (emlDunnTest.groupName$ [.jGroup], "_", " ", 0)
+                .colName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.jGroup]], "_", " ", 0)
                 if length (.colName$) > 10
                     .colName$ = left$ (.colName$, 10)
                 endif
@@ -2668,7 +2767,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
             endfor
             appendInfoLine: .headerLine$
             for .iGroup from 1 to .nGroups
-                .rowName$ = replace$ (emlDunnTest.groupName$ [.iGroup], "_", " ", 0)
+                .rowName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
                 if length (.rowName$) > 12
                     .rowName$ = left$ (.rowName$, 12)
                 endif
@@ -2677,7 +2776,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
                     if .iGroup = .jGroup
                         .cellText$ = "---"
                     else
-                        .pVal = emlDunnTest.pMatrix## [.iGroup, .jGroup]
+                        .pVal = emlDunnTest.pMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
                         if .pVal < 0.001
                             .cellText$ = "< .001"
                         else
@@ -2694,7 +2793,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
             appendInfoLine: ""
             appendInfoLine: .headerLine$
             for .iGroup from 1 to .nGroups
-                .rowName$ = replace$ (emlDunnTest.groupName$ [.iGroup], "_", " ", 0)
+                .rowName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
                 if length (.rowName$) > 12
                     .rowName$ = left$ (.rowName$, 12)
                 endif
@@ -2703,7 +2802,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
                     if .iGroup = .jGroup
                         .cellText$ = "---"
                     else
-                        .zVal = emlDunnTest.zMatrix## [.iGroup, .jGroup]
+                        .zVal = emlDunnTest.zMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
                         .cellText$ = fixed$ (.zVal, 3)
                     endif
                     .rowLine$ = .rowLine$ + left$ (.cellText$ + "            ", 12)
@@ -2711,23 +2810,135 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .nGroups, .
                 appendInfoLine: .rowLine$
             endfor
 
-            # CSV rows
+            # CSV rows — per-pair descriptives + rank-biserial r
             for .iGroup from 1 to .nGroups - 1
                 for .jGroup from .iGroup + 1 to .nGroups
-                    .pVal = emlDunnTest.pMatrix## [.iGroup, .jGroup]
-                    .zVal = emlDunnTest.zMatrix## [.iGroup, .jGroup]
+                    .pVal = emlDunnTest.pMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                    .zVal = emlDunnTest.zMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                    .rVal = emlDunnTest.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                    .g1Label$ = emlDunnTest.groupName$ [.sortMap[.iGroup]]
+                    .g2Label$ = emlDunnTest.groupName$ [.sortMap[.jGroup]]
+                    @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+                    ... .g1Label$
+                    .n1 = eml_getGroupData.n
+                    .v1# = eml_getGroupData.data#
+                    @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+                    ... .g2Label$
+                    .n2 = eml_getGroupData.n
+                    .v2# = eml_getGroupData.data#
+                    @emlMean: .v1#
+                    .m1 = emlMean.result
+                    @emlSD: .v1#
+                    .s1 = emlSD.result
+                    @emlMedian: .v1#
+                    .md1 = emlMedian.result
+                    @emlMean: .v2#
+                    .m2 = emlMean.result
+                    @emlSD: .v2#
+                    .s2 = emlSD.result
+                    @emlMedian: .v2#
+                    .md2 = emlMedian.result
+                    @emlFormatEffectLabel: .rVal, "r"
+                    .rLabel$ = emlFormatEffectLabel.label$
                     @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
-                    ... emlDunnTest.groupName$ [.iGroup],
-                    ... emlDunnTest.groupName$ [.jGroup],
+                    ... .g1Label$, .g2Label$,
                     ... "Dunn (" + .adjLabel$ + ")",
                     ... .zVal, 0, .pVal,
-                    ... 0, "", "",
-                    ... 0, 0, 0, 0, 0, 0, 0, 0
+                    ... .rVal, "rank-biserial r", .rLabel$,
+                    ... .n1, .n2,
+                    ... .m1, .s1, .md1, .m2, .s2, .md2
                 endfor
             endfor
         else
             appendInfoLine: newline$ + "Dunn's test error: " + emlDunnTest.error$
         endif
+    endif
+
+    # Pairwise rank-biserial r (ALWAYS — parallel to ANOVA Cohen's d fix)
+    # When called via orchestrator, rMatrix## is pre-computed.
+    # When called directly (backward compat), compute it here.
+    if .doDunn = 0
+        emlKruskalWallis.rMatrix## = zero## (.nGroups, .nGroups)
+        for .i from 1 to .nGroups - 1
+            @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+            ... emlKruskalWallis.groupName$[.i]
+            .tmpV1# = eml_getGroupData.data#
+            for .j from .i + 1 to .nGroups
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
+                ... emlKruskalWallis.groupName$[.j]
+                @emlRankBiserialR: .tmpV1#, eml_getGroupData.data#, 2
+                if emlRankBiserialR.error$ = ""
+                    emlKruskalWallis.rMatrix## [.i, .j] = emlRankBiserialR.r
+                    emlKruskalWallis.rMatrix## [.j, .i] = -emlRankBiserialR.r
+                endif
+            endfor
+        endfor
+    endif
+    @emlReportBlank
+    @emlReportSection: "Pairwise Effect Sizes (rank-biserial r)"
+    appendInfoLine: ""
+    .rHeaderLine$ = left$ ("" + "                ", 14)
+    for .jGroup from 1 to .nGroups
+        .colName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.jGroup]], "_", " ", 0)
+        if length (.colName$) > 10
+            .colName$ = left$ (.colName$, 10)
+        endif
+        .rHeaderLine$ = .rHeaderLine$ + left$ (.colName$ + "            ", 12)
+    endfor
+    appendInfoLine: .rHeaderLine$
+    for .iGroup from 1 to .nGroups
+        .rowName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
+        if length (.rowName$) > 12
+            .rowName$ = left$ (.rowName$, 12)
+        endif
+        .rRowLine$ = left$ (.rowName$ + "                ", 14)
+        for .jGroup from 1 to .nGroups
+            if .iGroup = .jGroup
+                .cellText$ = "---"
+            else
+                .rVal = emlKruskalWallis.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                .cellText$ = fixed$ (.rVal, 3)
+            endif
+            .rRowLine$ = .rRowLine$ + left$ (.cellText$ + "            ", 12)
+        endfor
+        appendInfoLine: .rRowLine$
+    endfor
+
+    # CSV rows for rank-biserial r (when Dunn did NOT run)
+    if .doDunn = 0
+        for .iGroup from 1 to .nGroups - 1
+            for .jGroup from .iGroup + 1 to .nGroups
+                .g1Label$ = emlKruskalWallis.groupName$ [.sortMap[.iGroup]]
+                .g2Label$ = emlKruskalWallis.groupName$ [.sortMap[.jGroup]]
+                .rVal = emlKruskalWallis.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g1Label$
+                .n1 = eml_getGroupData.n
+                .v1# = eml_getGroupData.data#
+                @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g2Label$
+                .n2 = eml_getGroupData.n
+                .v2# = eml_getGroupData.data#
+                @emlMean: .v1#
+                .m1 = emlMean.result
+                @emlSD: .v1#
+                .s1 = emlSD.result
+                @emlMedian: .v1#
+                .md1 = emlMedian.result
+                @emlMean: .v2#
+                .m2 = emlMean.result
+                @emlSD: .v2#
+                .s2 = emlSD.result
+                @emlMedian: .v2#
+                .md2 = emlMedian.result
+                @emlFormatEffectLabel: .rVal, "r"
+                .rLabel$ = emlFormatEffectLabel.label$
+                @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
+                ... .g1Label$, .g2Label$, "Pairwise rank-biserial r",
+                ... 0, 0, 0,
+                ... .rVal, "rank-biserial r", .rLabel$,
+                ... .n1, .n2,
+                ... .m1, .s1, .md1, .m2, .s2, .md2
+            endfor
+        endfor
     endif
 
     @emlReportFooter

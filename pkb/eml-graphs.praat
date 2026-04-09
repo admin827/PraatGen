@@ -4,7 +4,7 @@
 # EML Graphs Plugin
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+# License: Creative Commons Share-Alike
 # Version: 3.0
 # Date: 4 April 2026
 #

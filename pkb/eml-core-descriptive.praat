@@ -8,7 +8,7 @@
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 # Development: Claude (Anthropic)
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+# License: Creative Commons Share-Alike
 #
 # Provides: @emlMean, @emlMedian, @emlMode, @emlPercentile, @emlQuartiles,
 #   @emlVariance, @emlSD, @emlSEM, @emlSkewness, @emlKurtosis,

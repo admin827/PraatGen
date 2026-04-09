@@ -1,6 +1,6 @@
 # EML Procedure Guide
-# Version: 1.1
-# Date: 4 April 2026
+# Version: 1.2
+# Date: 8 April 2026
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 #
@@ -16,20 +16,21 @@
 #
 # VERSIONING
 # This guide reflects the following source file versions:
-#   eml-graph-procedures.praat      v3.18
-#   eml-draw-procedures.praat       v1.12
-#   eml-annotation-procedures.praat v3.8
+#   eml-graph-procedures.praat      v3.20
+#   eml-draw-procedures.praat       v1.16
+#   eml-annotation-procedures.praat v3.15
 #   eml-core-utilities.praat        v1.0
 #   eml-core-descriptive.praat      v1.0
-#   eml-extract.praat               v1.0
-#   eml-output.praat                v1.1
-#   eml-inferential.praat           v0.9
+#   eml-extract.praat               v1.2
+#   eml-output.praat                v1.3
+#   eml-inferential.praat           v1.2
 #   eml-vibrato-procedures.praat    v2.0
 #   eml-demo-procedures.praat       v1.2
 #   eml-batch-process.praat         v1.1
 #   eml-test-helpers.praat          v1.0
 #   eml-wizard.praat                v1.4
-#   eml-graphs.praat                v2.44
+#   eml-graphs.praat                v3.0
+#   eml-graphs-form.praat           v1.4
 #
 # When a source file is updated, bump its version here. A mismatch
 # between this table and the source file header signals the guide
@@ -281,7 +282,7 @@
 #           @emlExtractGroupVectors) → test procedure
 #
 # For k-group tests (ANOVA, KW), pass the Table ID directly —
-# they handle extraction internally via @emlExtractMultipleGroups.
+# they handle extraction internally via @eml_getGroupData.
 #
 # For acoustic objects:
 #   Pitch → @emlExtractPitchValues → vector → test

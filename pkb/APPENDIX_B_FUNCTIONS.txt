@@ -3,6 +3,7 @@
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
 # Authoritative list of all Praat scripting functions.
+# Updated: 8 April 2026 — 37 functions added from Formula.cpp analysis
 
 # ============================================================================
 # ERRATA AND SESSION-VERIFIED ADDITIONS
@@ -71,6 +72,27 @@
 # Provenance: Praat manual, Formulas 8: Attributes of objects.
 # See also Master Prompt Rule 9 (Formula context exception).
 #
+#
+# APPENDIX_B v2 UPDATE — 8 April 2026
+# Source: sys/Formula.cpp NAME_WITH_TENSORS macros analysis
+# Added 37 functions missing from the original Praat Functions manual page.
+# See HANDOFF_SYNTAX_HIGHLIGHTING_AND_CATALOGUE_V3_08_APR_2026.md.
+#
+# ITEMS NEEDING VERIFICATION (in current APPENDIX_B but not confirmed
+# in Formula.cpp function table — may be defined elsewhere or deprecated):
+#   demoExtraControlKeyPressed — not found in Formula.cpp
+#   repeat## — only repeat# found in Formula.cpp
+#   softmax## — only softmax# and softmaxPerRow## found in Formula.cpp
+#
+# MISCLASSIFIED ITEMS (valid highlighter tokens but not Formula functions):
+#   Scripting keywords: assert, asserterror, asynchronous, clearinfo,
+#     demo, endeditor, endproc, goto, label
+#   Object attributes: col, col$, dx, dy, ncol, nrow, nx, ny, row,
+#     row$, self, self$, x, xmax, xmin, y, ymax, ymin, object
+#   These remain in this file for completeness but are not Formula
+#   engine functions — they are scripting-layer constructs or
+#   Formula-context attribute names.
+#
 # ============================================================================
 
 ---
@@ -128,8 +150,8 @@
  chooseReadFile$ (title$) – file selector window for reading
  chooseWriteFile$ (title$, defaultFilename$) – file selector window for writing
  clearinfo – clear the Info window (no parentheses, no arguments)
- col – the column number (of the current cell) in a Formula command
  col$ [i] – the name of column i of an object
+ col – the column number (of the current cell) in a Formula command
  columnSums# (matrix##)
  cos (x) – cosine
  cos# (vector#) – cosine of each element of vector#
@@ -140,8 +162,8 @@
  createDirectory (path$) – create a new directory (also known as a folder)
  createFolder (folderPath$) – create a new folder, or do nothing if it already exists
  date$ ( ) – current local date and time
- date_utc$ ( ) – current UTC date and time
  date# ( ) – current local date and time as a vector
+ date_utc$ ( ) – current UTC date and time
  date_utc# ( ) – current UTC date and time as a vector
  defaultDirectory$ – the directory (folder) that Praat will use if you specify no directory
  deleteFile (path$) – delete a file
@@ -173,6 +195,10 @@
  erbToHertz (x) – from ERB-rate to acoustic frequency
  erf (x) – error function
  erfc (x) – complement of the error function
+ evaluate (...) – evaluate an expression string at runtime and return its numeric result
+ evaluate$ (...) – evaluate an expression string at runtime and return its string result
+ evaluate_nocheck (...) – evaluate an expression string at runtime; suppress errors and return undefined on failure
+ evaluate_nocheck$ (...) – evaluate an expression string at runtime; suppress errors and return empty string on failure
  exitScript (...) – show a message and terminate the script
  exp (x) – exponentiation
  exp# (vector#) – exponentiation of each element of vector#
@@ -194,13 +220,22 @@
  from_to_count# (from, to, n) – n numbers from from through to
  gaussP (z) – area under the normal curve up to z
  gaussQ (z) – area under the normal curve after z
+ hash (string$) – return a numeric hash code for a string
  hertzToBark (x) – from acoustic frequency to Bark-rate
  hertzToErb (x) – from acoustic frequency to ERB-rate
  hertzToMel (x) – from acoustic frequency to mel
  hertzToSemitones (x) – from acoustic frequency to logarithmic scale re 100 Hz
+ hex$ (integer) – convert an integer to a hexadecimal string
+ hexadecimal$ (integer) – convert an integer to a hexadecimal string (alias for hex$)
  homeDirectory$ – the home directory (folder) of the current user
  imax (v#) – location of maximum
+ imax_e (v#) – index of the maximum element, error if vector is empty
+ imax_removeUndefined (v#) – index of the maximum element, ignoring undefined values
  imin (v#) – location of minimum
+ imin_e (v#) – index of the minimum element, error if vector is empty
+ imin_removeUndefined (v#) – index of the minimum element, ignoring undefined values
+ incompleteBeta (a, b, x) – regularized incomplete beta function I_x(a, b)
+ incompleteGammaP (a, x) – regularized lower incomplete gamma function P(a, x)
  index (string$, part$) – look up a substring, or 0 if not found
  index (strings$#, s$) – look up whether and where s$ first occurs in strings$#
  index_caseInsensitive (string$, part$) – look up a substring, or 0 if not found
@@ -219,6 +254,8 @@
  left$ (string$, n) – the n first characters in string$
  length (string$) – number of characters
  linear$ (number, precision) – format a number as a string
+ linear# (xmin, xmax, n) – vector of n equally spaced values from xmin to xmax
+ linear## (nrow, ncol, supplier) – matrix filled by a supplier function
  linear$# (a#, precision) – format a vector as a string
  linear$## (a##, precision) – format a matrix as a string
  ln (x) – natural logarithm, base e
@@ -226,34 +263,44 @@
  ln## (matrix##) – natural logarithm of each cell of matrix##
  lnBeta (a, b) – logarithm of the beta function
  lnGamma (x) – logarithm of the Gamma function
- log2 (x) – logarithm, base 2
- log2# (vector#) – logarithm of each element of vector#
- log2## (matrix##) – logarithm of each cell of matrix##
  log10 (x) – logarithm, base 10
  log10# (vector#) – logarithm of each element of vector#
  log10## (matrix##) – logarithm of each cell of matrix##
+ log2 (x) – logarithm, base 2
+ log2# (vector#) – logarithm of each element of vector#
+ log2## (matrix##) – logarithm of each cell of matrix##
+ lowerCamelCase$ (string$) – convert string to lowerCamelCase
+ lowerSnakeCase$ (string$) – convert string to lower_snake_case
  macintosh – 1 if the script is running on a Macintosh, else 0
  max (a, ...) – maximum
  max (v#) – maximum of elements
+ max_e (v#) – maximum element, error if vector is empty
+ max_removeUndefined (v#) – maximum element, ignoring undefined values
  mean (v#) – mean of elements
  melToHertz (x) – from mel to acoustic frequency
  mid$ (string$, from, n) – the n characters in string$, starting at position from
  min (a, ...) – minimum
  min (v#) – minimum of elements
+ min_e (v#) – minimum element, error if vector is empty
+ min_removeUndefined (v#) – minimum element, ignoring undefined values
  minusObject (...) – deselect object(s) in the list
+ mul# (matrix##, vector#) – matrix-vector multiplication
  mul## (a##, b##) – matrix multiplication
+ mul_fast## (a##, b##) – fast matrix-matrix multiplication
+ mul_metal## (a##, b##) – Metal-accelerated matrix-matrix multiplication (macOS)
  ncol – the number of columns in a matrix object or Matrix-like object
  newline$ – the newline symbol
  norm (v#, power) – p-norm (Minkowski norm)
+ nrow – the number of rows in a matrix object or Matrix-like object
  numberOfColumns – the number of columns in a matrix object or Matrix-like object
  numberOfRows – the number of rows in a matrix object or Matrix-like object
  numberOfSelected ( ) – the number of selected objects
  numberOfSelected (type$) – the number of selected objects of type type$
- nrow – the number of rows in a matrix object or Matrix-like object
+ numbers# (n) – the integers 1 through n (alias for to#)
  object (id) – the object with the given ID, as a matrix, vector, string
+ object$ (id) – the name of the object with the given ID
  object# (id) – the object with the given ID, as a vector
  object## (id) – the object with the given ID, as a matrix
- object$ (id) – the name of the object with the given ID
  object$# (id) – the object with the given ID, as a string array
  objectsAreIdentical (id1, id2) – 1 if the two objects are identical, else 0
  outer## (a#, b#) – outer product of vectors
@@ -264,9 +311,12 @@
  plusObject (...) – select more object(s) in the list
  preferencesDirectory$ – the Praat preferences directory (folder)
  procedure – start a procedure definition
+ random_initializeSafelyAndUnpredictably ( ) – undoes the effects of the following function
+ random_initializeWithSeedUnsafelyButPredictably (seed) – reproducible sequence of random numbers
  randomBernoulli (p) – Bernoulli-distributed random deviate (0 or 1)
  randomBernoulli# (n, p) – n independent Bernoulli-distributed random numbers (0 or 1)
  randomBernoulli# (vector#, p) – duplicate vector#, and replace all elements with independent Bernoulli-distributed random numbers (0 or 1)
+ randomBinomial (numberOfTrials, probability) – binomial-distributed random number
  randomGamma (shape, rate) – gamma-distributed random deviate
  randomGamma# (n, shape, rate) – n independent gamma-distributed random numbers
  randomGamma# (vector#, shape, rate) – duplicate vector#, and replace all elements with independent gamma-distributed random numbers
@@ -292,8 +342,6 @@
  randomUniform# (vector#, min, max) – duplicate vector#, and replace all elements with independent uniformly distributed random numbers
  randomUniform## (nrow, ncol, min, max) – nrow x ncol independent uniformly distributed random numbers
  randomUniform## (matrix##, min, max) – duplicate matrix##, and replace all cells with independent uniformly distributed random numbers
- random_initializeSafelyAndUnpredictably ( ) – undoes the effects of the following function
- random_initializeWithSeedUnsafelyButPredictably (seed) – reproducible sequence of random numbers
  readFile (filePath$) – read a number from a text file
  readFile$ (filePath$) – read a whole text file into a string
  readFile# (filePath$) – read a vector from a text file
@@ -315,15 +363,19 @@
  round (x) – nearest integer
  round# (vector#) – nearest integer of each element of vector#
  round## (matrix##) – nearest integer of each cell of matrix##
- row – the row number (of the current cell) in a Formula command
  row$ [i] – the name of row i of an object
  row# (matrix##, rowNumber) - extract one row from a matrix
+ row – the row number (of the current cell) in a Formula command
+ rowInners# (a##, b##) – row-wise inner products of two matrices
  rowSums# (matrix##)
+ runNotebook (filePath$) – run a Praat notebook
  runScript (filePath$, ...) – run a script with the given arguments
+ runScriptWithForm (filePath$, ...) – run a script, showing its form dialog
  runSubprocess (executableFilePath$, ...) – run an external program with the given arguments
  runSubprocess$ (executableFilePath$, ...) – run an external program with the given arguments, and return its output
  runSystem (...) – run a system command line with the given arguments concatenated
  runSystem$ (...) – run a system command line with the given arguments concatenated, and return its output
+ runSystem_nocheck (...) – run a system command; suppress errors
  selected ( ) – the ID of the topmost selected object
  selected (i) – the ID of the ith selected object (as counted from the top, or from the bottom if negative)
  selected (type$) – the ID of the topmost selected object of type type$
@@ -338,6 +390,9 @@
  selected$# (type$) – the given names of all selected objects of type type$
  selectObject (...) – select object(s) in the list by ID and/or full name
  semitonesToHertz (x) – from logarithmic scale re 100 Hz to acoustic frequency
+ setWorkingDirectory (folderPath$) – set the working directory for subsequent file operations
+ shuffle# (vector#) – randomize order
+ shuffle$# (stringVector$#) – randomize order
  sigmoid (x) – 1 / (1 + e^-x)
  sigmoid# (vector#) – sigmoid of each element of vector#
  sigmoid## (matrix##) – sigmoid of each cell of matrix##
@@ -350,8 +405,6 @@
  sinh# (vector#) – hyperbolic sine of each element of vector#
  sinh## (matrix##) – hyperbolic sine of each cell of matrix##
  size (v#) – number of elements
- shuffle# (vector#) – randomize order
- shuffle$# (stringVector$#) – randomize order
  sleep (duration) – pause script for duration seconds
  softmax# (vector#)
  softmaxPerRow## (matrix##)
@@ -363,6 +416,9 @@
  sort# (vector#) – reshuffle in increasing order
  sort$# (stringVector$#) – reshuffle in Unicode-alphabetical order
  sort_numberAware$# (stringVector$#) – reshuffle in Unicode-alphabetical order, with special attention to numbers
+ sort_removeUndefined# (v#) – sort in increasing order, removing undefined values
+ soundPressureToPhon (frequency, soundPressure) – convert sound pressure level to phon (loudness level)
+ splitBy$# (string$, separator$) – split a string into a string array by separator
  splitByWhitespace$# (string$) – split a string into inks
  sqrt (x) – square root
  sqrt# (vector#) – square root of each element of vector#
@@ -388,11 +444,14 @@
  truncateRight$ (string$, newMaximumWidth [, pad$]) – right truncation of string$
  tryToAppendFile (filePath$) – check whether a file can be appended to
  tryToWriteFile (filePath$) – check whether a file can be written (destructive!)
+ unhex$ (hexString$) – convert a hexadecimal string back to characters
  unicode (c$) – the Unicode codepoint number that corresponds to character c$
  unicode$ (n) – the character that corresponds to Unicode codepoint n
  unicodeToBackslashTrigraphs$ (string$) – convert e.g. U+0254 to \ct
+ upperCamelCase$ (string$) – convert string to UpperCamelCase
  upperCase$ (string$) – turns all lower-case characters into capitals
  upperCaseAppName$ ( ) – the name of the app in upper camel case, e.g. Praat or PraatForHospitals
+ upperSnakeCase$ (string$) – convert string to UPPER_SNAKE_CASE
  variableExists (variableName$) – does the variable variableName$ exist?
  vertical$ (stringArray$#) – format a string array vertically
  writeFile (filePath$, ...) – create a new text file, and write texts, numbers, vectors and so on into it

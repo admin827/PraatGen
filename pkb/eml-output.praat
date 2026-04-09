@@ -2,13 +2,18 @@
 # EML Stats : Output Formatting
 # ============================================================================
 # Module: eml-output.praat
-# Version: 1.1
-# Date: 3 April 2026
+# Version: 1.3
+# Date: 7 April 2026
+# v1.3: Info window is now append-only. Removed emlReportFirstRun sentinel.
+#        @emlReportHeader never clears — always appends. New @emlClearInfo
+#        procedure for explicit clearing via dialog toggle. Timestamp kept.
+# v1.2: Accumulating Info window output — sentinel (removed in v1.3).
+#        Timestamp added to every report.
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 # Development: Claude (Anthropic)
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+# License: Creative Commons Share-Alike
 #
 # Provides: @emlReportHeader, @emlReportFooter, @emlReportSection,
 #   @emlReportLine, @emlReportLineString, @emlReportBlank,
@@ -16,7 +21,7 @@
 #   @emlReportDescriptiveRow, @emlReportDescriptiveHeader,
 #   @emlReportAPA, @emlReportToFile, @emlFormatEffectLabel,
 #   @emlPadRight, @emlUnderscoreToSpace, @emlSaveInfoToFile,
-#   @emlCSVInit, @emlCSVAddRow, @emlExportStatsCSV
+#   @emlCSVInit, @emlCSVAddRow, @emlExportStatsCSV, @emlClearInfo
 #
 # All procedures use the "eml" prefix (EML Stats).
 # ============================================================================
@@ -58,18 +63,29 @@ endproc
 # REPORT STRUCTURE PROCEDURES (write to Info window)
 # ============================================================================
 
+procedure emlClearInfo
+    # Explicit Info window clear. Call from dialog handlers when user
+    # checks "Clear Info window" toggle — never called automatically.
+    writeInfoLine: ""
+endproc
+
+
 procedure emlReportHeader: .title$
-    # Print report header with double-line borders
-    # This is the ONLY procedure that clears the Info window
+    # Print report header with double-line borders and timestamp.
+    # Always appends — never clears. Use @emlClearInfo for explicit clearing.
     .border$ = "══════════════════════════════════════════════"
     .indent$ = "  "
     .prefix$ = "EML Stats : "
     .titleLine$ = .indent$ + .prefix$ + .title$
-    writeInfoLine: .border$
-    appendInfoLine: .titleLine$
+    .timestamp$ = .indent$ + date$ ()
+    .sep$ = ""
+    appendInfoLine: .sep$
     appendInfoLine: .border$
-    .empty$ = ""
-    appendInfoLine: .empty$
+    appendInfoLine: .titleLine$
+    appendInfoLine: .timestamp$
+    appendInfoLine: .border$
+    .sep2$ = ""
+    appendInfoLine: .sep2$
 endproc
 
 

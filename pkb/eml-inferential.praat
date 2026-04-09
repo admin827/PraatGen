@@ -2,8 +2,15 @@
 # EML Stats : Inferential Statistics
 # ============================================================================
 # Module: eml-inferential.praat
-# Version: 1.0 (Batch 1-7+6B+9: t-tests, effect size, correlations, MWU, Wilcoxon, nonparametric effect sizes, p-value adjustment, ANOVA+eta², Tukey HSD refactor, two-way ANOVA+partial eta², Kruskal-Wallis, Dunn's, pairwise t, pairwise Wilcoxon, Scheffe; convergence: dMatrix in Tukey/ANOVA, rMatrix in Dunn's)
-# Date: 4 April 2026
+# Version: 1.2
+# Date: 6 April 2026
+#
+# v1.2: @emlTukeyHSD internal sort removed — group order now controlled
+#        by @emlCountGroups via emlGroupSortAlphabetical global.
+#        .sortMap set to identity. No computation change.
+# v1.1: 10-group limit removal: deleted @eml_getGroupData dispatcher,
+#        all 7 consumers rewritten to use @emlCountGroups + on-demand
+#        @eml_getGroupData from eml-extract.praat.
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
@@ -26,7 +33,7 @@
 #     include eml-core-utilities.praat
 #     include eml-inferential.praat
 #
-#   @emlTukeyHSD (v0.9+) requires @emlExtractMultipleGroups from
+#   @emlTukeyHSD (v0.9+) requires @emlCountGroups, @eml_getGroupData from
 #   eml-extract.praat. The calling script must include extract
 #   before inferential:
 #     include eml-extract.praat
@@ -1593,8 +1600,8 @@ endproc
 #   - Requires >= 2 groups with enough observations for dfWithin >= 1
 #   - Uses Get TukeyQ: (Goodies) for p-values and Get invTukeyQ:
 #     for critical q — no Report parsing or Table side effects
-#   - Dependencies: @emlExtractMultipleGroups (eml-extract.praat),
-#     @eml_getGroupData (eml-inferential.praat),
+#   - Dependencies: @emlCountGroups, @eml_getGroupData (eml-extract.praat),
+#     @eml_getGroupData (eml-extract.praat),
 #     @emlCohenD (eml-inferential.praat)
 #   - Original Table selection is restored on return
 # ============================================================================
@@ -1632,16 +1639,15 @@ procedure emlTukeyHSD: .tableId, .dataColumn$, .factorColumn$, .alpha
         endif
     endif
 
-    # --- Extract groups ---
+    # --- Discover groups ---
 
     if .error$ = ""
-        @emlExtractMultipleGroups: .tableId, .dataColumn$,
-        ... .factorColumn$
-        if emlExtractMultipleGroups.error$ <> ""
+        @emlCountGroups: .tableId, .factorColumn$
+        if emlCountGroups.error$ <> ""
             .error$ = "emlTukeyHSD: "
-            ... + emlExtractMultipleGroups.error$
+            ... + emlCountGroups.error$
         else
-            .nGroups = emlExtractMultipleGroups.nGroups
+            .nGroups = emlCountGroups.nGroups
         endif
     endif
 
@@ -1653,22 +1659,11 @@ procedure emlTukeyHSD: .tableId, .dataColumn$, .factorColumn$, .alpha
     # --- Sort groups alphabetically ---
 
     if .error$ = ""
-        .labels$# = empty$# (.nGroups)
-        for .g from 1 to .nGroups
-            .labels$#[.g] = emlExtractMultipleGroups.groupLabel$[.g]
-        endfor
-        .sortedLabels$# = sort$# (.labels$#)
-
-        # Map sorted index → encounter index
+        # Group order controlled by emlGroupSortAlphabetical via
+        # @emlCountGroups. Copy labels directly; sortMap = identity.
         for .s from 1 to .nGroups
-            .sortedLabel$ = .sortedLabels$#[.s]
-            for .e from 1 to .nGroups
-                if emlExtractMultipleGroups.groupLabel$[.e]
-                ... = .sortedLabel$
-                    .sortMap[.s] = .e
-                endif
-            endfor
-            .groupName$[.s] = .sortedLabel$
+            .groupName$[.s] = emlCountGroups.groupLabel$[.s]
+            .sortMap[.s] = .s
         endfor
     endif
 
@@ -1679,7 +1674,8 @@ procedure emlTukeyHSD: .tableId, .dataColumn$, .factorColumn$, .alpha
         .ssWithin = 0
 
         for .s from 1 to .nGroups
-            @eml_getGroupData: .sortMap[.s]
+            @eml_getGroupData: .tableId, .dataColumn$, .factorColumn$,
+            ... .groupName$[.s]
             .groupN[.s] = eml_getGroupData.n
             .groupMean[.s] = mean (eml_getGroupData.data#)
             .totalN = .totalN + .groupN[.s]
@@ -1733,9 +1729,11 @@ procedure emlTukeyHSD: .tableId, .dataColumn$, .factorColumn$, .alpha
                 .meanDiff##[.j, .i] = -.diff
 
                 # Cohen's d per pair (two-group pooled SD)
-                @eml_getGroupData: .sortMap[.i]
+                @eml_getGroupData: .tableId, .dataColumn$, .factorColumn$,
+                ... .groupName$[.i]
                 .vI# = eml_getGroupData.data#
-                @eml_getGroupData: .sortMap[.j]
+                @eml_getGroupData: .tableId, .dataColumn$, .factorColumn$,
+                ... .groupName$[.j]
                 @emlCohenD: .vI#, eml_getGroupData.data#
                 if emlCohenD.error$ = ""
                     .dMatrix##[.i, .j] = emlCohenD.d
@@ -1868,13 +1866,6 @@ procedure emlOneWayAnova: .tableId, .dataColumn$, .factorColumn$, .tukey
         ... + string$ (.nGroups)
     endif
 
-    if .error$ = ""
-        @emlExtractMultipleGroups: .tableId, .dataColumn$, .factorColumn$
-        if emlExtractMultipleGroups.error$ <> ""
-            .error$ = "emlOneWayAnova: " + emlExtractMultipleGroups.error$
-        endif
-    endif
-
     # --- Compute ANOVA (Hays 1988 computational formula) ---
     # Reference: Table_extensions.cpp lines 477-522
 
@@ -1885,7 +1876,8 @@ procedure emlOneWayAnova: .tableId, .dataColumn$, .factorColumn$, .tukey
         .c = 0
 
         for .g from 1 to .nGroups
-            @eml_getGroupData: .g
+            @eml_getGroupData: .tableId, .dataColumn$, .factorColumn$,
+            ... emlCountGroups.groupLabel$[.g]
             .gN = eml_getGroupData.n
             .gData# = eml_getGroupData.data#
 
@@ -2265,10 +2257,10 @@ endproc
 #   .error$        - error message, or "" if valid
 #
 # Limits:
-#   Max 10 groups (consistent with @emlExtractMultipleGroups).
+#   No group limit.
 #
 # Dependencies:
-#   @emlExtractMultipleGroups (eml-extract.praat)
+#   @emlCountGroups, @eml_getGroupData (eml-extract.praat)
 #   @emlRankVector (eml-core-utilities.praat)
 #   @emlEpsilonSquared (this file)
 #   chiSquareQ() (Praat built-in)
@@ -2284,15 +2276,15 @@ procedure emlKruskalWallis: .tableId, .dataCol$, .factorCol$
     .tieCorrection = undefined
     .error$ = ""
 
-    # --- Extract groups from Table ---
+    # --- Discover groups ---
 
-    @emlExtractMultipleGroups: .tableId, .dataCol$, .factorCol$
+    @emlCountGroups: .tableId, .factorCol$
 
-    if emlExtractMultipleGroups.error$ <> ""
+    if emlCountGroups.error$ <> ""
         .error$ = "emlKruskalWallis: "
-        ... + emlExtractMultipleGroups.error$
+        ... + emlCountGroups.error$
     else
-        .nGroups = emlExtractMultipleGroups.nGroups
+        .nGroups = emlCountGroups.nGroups
 
         if .nGroups < 2
             .error$ = "emlKruskalWallis: need >= 2 groups, got "
@@ -2301,117 +2293,33 @@ procedure emlKruskalWallis: .tableId, .dataCol$, .factorCol$
     endif
 
     if .error$ = ""
-        # Copy group labels and sizes into local indexed vars
+        # Get per-group sizes
+        .n = 0
         for .g from 1 to .nGroups
-            .groupName$[.g] = emlExtractMultipleGroups.groupLabel$[.g]
-        endfor
-        .groupN[1] = emlExtractMultipleGroups.groupSize1
-        .groupN[2] = emlExtractMultipleGroups.groupSize2
-        if .nGroups >= 3
-            .groupN[3] = emlExtractMultipleGroups.groupSize3
-        endif
-        if .nGroups >= 4
-            .groupN[4] = emlExtractMultipleGroups.groupSize4
-        endif
-        if .nGroups >= 5
-            .groupN[5] = emlExtractMultipleGroups.groupSize5
-        endif
-        if .nGroups >= 6
-            .groupN[6] = emlExtractMultipleGroups.groupSize6
-        endif
-        if .nGroups >= 7
-            .groupN[7] = emlExtractMultipleGroups.groupSize7
-        endif
-        if .nGroups >= 8
-            .groupN[8] = emlExtractMultipleGroups.groupSize8
-        endif
-        if .nGroups >= 9
-            .groupN[9] = emlExtractMultipleGroups.groupSize9
-        endif
-        if .nGroups >= 10
-            .groupN[10] = emlExtractMultipleGroups.groupSize10
-        endif
-
-        # Validate: no empty groups
-        for .g from 1 to .nGroups
+            .groupName$[.g] = emlCountGroups.groupLabel$[.g]
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
+            .groupN[.g] = eml_getGroupData.n
             if .groupN[.g] = 0
                 .error$ = "emlKruskalWallis: group "
                 ... + .groupName$[.g] + " has 0 observations"
             endif
+            .n = .n + .groupN[.g]
         endfor
     endif
 
     if .error$ = ""
-        # Compute total N
-        .n = 0
-        for .g from 1 to .nGroups
-            .n = .n + .groupN[.g]
-        endfor
-
-        # --- Build flat data vector from group data vectors ---
-        # Must follow the same order as @emlExtractMultipleGroups
-
+        # Build flat data vector in group order
         .allData# = zero# (.n)
         .idx = 0
-
-        # Group 1
-        for .j from 1 to .groupN[1]
-            .idx = .idx + 1
-            .allData#[.idx] = emlExtractMultipleGroups.groupData1#[.j]
+        for .g from 1 to .nGroups
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
+            for .j from 1 to eml_getGroupData.n
+                .idx = .idx + 1
+                .allData#[.idx] = eml_getGroupData.data#[.j]
+            endfor
         endfor
-        # Group 2
-        for .j from 1 to .groupN[2]
-            .idx = .idx + 1
-            .allData#[.idx] = emlExtractMultipleGroups.groupData2#[.j]
-        endfor
-        if .nGroups >= 3
-            for .j from 1 to .groupN[3]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData3#[.j]
-            endfor
-        endif
-        if .nGroups >= 4
-            for .j from 1 to .groupN[4]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData4#[.j]
-            endfor
-        endif
-        if .nGroups >= 5
-            for .j from 1 to .groupN[5]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData5#[.j]
-            endfor
-        endif
-        if .nGroups >= 6
-            for .j from 1 to .groupN[6]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData6#[.j]
-            endfor
-        endif
-        if .nGroups >= 7
-            for .j from 1 to .groupN[7]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData7#[.j]
-            endfor
-        endif
-        if .nGroups >= 8
-            for .j from 1 to .groupN[8]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData8#[.j]
-            endfor
-        endif
-        if .nGroups >= 9
-            for .j from 1 to .groupN[9]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData9#[.j]
-            endfor
-        endif
-        if .nGroups >= 10
-            for .j from 1 to .groupN[10]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData10#[.j]
-            endfor
-        endif
     endif
 
     if .error$ = ""
@@ -2539,8 +2447,8 @@ endproc
 #   .error$        - error message, or "" if valid
 #
 # Dependencies:
-#   @emlExtractMultipleGroups (eml-extract.praat)
-#   @eml_getGroupData (eml-inferential.praat)
+#   @emlCountGroups, @eml_getGroupData (eml-extract.praat)
+#   (eml_getGroupData now in eml-extract.praat)
 #   @emlRankVector (eml-core-utilities.praat)
 #   @emlRankBiserialR (eml-inferential.praat)
 #   @emlBonferroni / @emlHolm / @emlBenjaminiHochberg (this file)
@@ -2560,16 +2468,16 @@ procedure emlDunnTest: .tableId, .dataCol$, .factorCol$, .method$
         ... + "or bh, got: " + .method$
     endif
 
-    # --- Extract groups from Table ---
+    # --- Discover groups ---
 
     if .error$ = ""
-        @emlExtractMultipleGroups: .tableId, .dataCol$, .factorCol$
+        @emlCountGroups: .tableId, .factorCol$
 
-        if emlExtractMultipleGroups.error$ <> ""
+        if emlCountGroups.error$ <> ""
             .error$ = "emlDunnTest: "
-            ... + emlExtractMultipleGroups.error$
+            ... + emlCountGroups.error$
         else
-            .nGroups = emlExtractMultipleGroups.nGroups
+            .nGroups = emlCountGroups.nGroups
 
             if .nGroups < 2
                 .error$ = "emlDunnTest: need >= 2 groups, got "
@@ -2579,114 +2487,33 @@ procedure emlDunnTest: .tableId, .dataCol$, .factorCol$, .method$
     endif
 
     if .error$ = ""
-        # Copy group labels and sizes
+        # Get per-group sizes
+        .n = 0
         for .g from 1 to .nGroups
-            .groupName$[.g] = emlExtractMultipleGroups.groupLabel$[.g]
-        endfor
-        .groupN[1] = emlExtractMultipleGroups.groupSize1
-        .groupN[2] = emlExtractMultipleGroups.groupSize2
-        if .nGroups >= 3
-            .groupN[3] = emlExtractMultipleGroups.groupSize3
-        endif
-        if .nGroups >= 4
-            .groupN[4] = emlExtractMultipleGroups.groupSize4
-        endif
-        if .nGroups >= 5
-            .groupN[5] = emlExtractMultipleGroups.groupSize5
-        endif
-        if .nGroups >= 6
-            .groupN[6] = emlExtractMultipleGroups.groupSize6
-        endif
-        if .nGroups >= 7
-            .groupN[7] = emlExtractMultipleGroups.groupSize7
-        endif
-        if .nGroups >= 8
-            .groupN[8] = emlExtractMultipleGroups.groupSize8
-        endif
-        if .nGroups >= 9
-            .groupN[9] = emlExtractMultipleGroups.groupSize9
-        endif
-        if .nGroups >= 10
-            .groupN[10] = emlExtractMultipleGroups.groupSize10
-        endif
-
-        # Validate: no empty groups
-        for .g from 1 to .nGroups
+            .groupName$[.g] = emlCountGroups.groupLabel$[.g]
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
+            .groupN[.g] = eml_getGroupData.n
             if .groupN[.g] = 0
                 .error$ = "emlDunnTest: group "
                 ... + .groupName$[.g] + " has 0 observations"
             endif
+            .n = .n + .groupN[.g]
         endfor
     endif
 
     if .error$ = ""
-        # Compute total N
-        .n = 0
-        for .g from 1 to .nGroups
-            .n = .n + .groupN[.g]
-        endfor
-
-        # --- Build flat data vector ---
-
+        # Build flat data vector in group order
         .allData# = zero# (.n)
         .idx = 0
-
-        for .j from 1 to .groupN[1]
-            .idx = .idx + 1
-            .allData#[.idx] = emlExtractMultipleGroups.groupData1#[.j]
+        for .g from 1 to .nGroups
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
+            for .j from 1 to eml_getGroupData.n
+                .idx = .idx + 1
+                .allData#[.idx] = eml_getGroupData.data#[.j]
+            endfor
         endfor
-        for .j from 1 to .groupN[2]
-            .idx = .idx + 1
-            .allData#[.idx] = emlExtractMultipleGroups.groupData2#[.j]
-        endfor
-        if .nGroups >= 3
-            for .j from 1 to .groupN[3]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData3#[.j]
-            endfor
-        endif
-        if .nGroups >= 4
-            for .j from 1 to .groupN[4]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData4#[.j]
-            endfor
-        endif
-        if .nGroups >= 5
-            for .j from 1 to .groupN[5]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData5#[.j]
-            endfor
-        endif
-        if .nGroups >= 6
-            for .j from 1 to .groupN[6]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData6#[.j]
-            endfor
-        endif
-        if .nGroups >= 7
-            for .j from 1 to .groupN[7]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData7#[.j]
-            endfor
-        endif
-        if .nGroups >= 8
-            for .j from 1 to .groupN[8]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData8#[.j]
-            endfor
-        endif
-        if .nGroups >= 9
-            for .j from 1 to .groupN[9]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData9#[.j]
-            endfor
-        endif
-        if .nGroups >= 10
-            for .j from 1 to .groupN[10]
-                .idx = .idx + 1
-                .allData#[.idx] = emlExtractMultipleGroups.groupData10#[.j]
-            endfor
-        endif
     endif
 
     if .error$ = ""
@@ -2792,9 +2619,11 @@ procedure emlDunnTest: .tableId, .dataCol$, .factorCol$, .method$
         .rMatrix## = zero## (.nGroups, .nGroups)
         for .i from 1 to .nGroups - 1
             for .j from .i + 1 to .nGroups
-                @eml_getGroupData: .i
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.i]
                 .vI# = eml_getGroupData.data#
-                @eml_getGroupData: .j
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.j]
                 @emlRankBiserialR: .vI#, eml_getGroupData.data#, 2
                 if emlRankBiserialR.error$ = ""
                     .rMatrix##[.i, .j] = emlRankBiserialR.r
@@ -2814,58 +2643,8 @@ endproc
 
 
 # ============================================================================
-# INTERNAL HELPER: @eml_getGroupData
-# ============================================================================
-# Copies group data from @emlExtractMultipleGroups numbered variables
-# into a single output vector, dispatched by group index.
-#
-# Must be called AFTER @emlExtractMultipleGroups. Reads from that
-# procedure's namespace directly.
-#
-# Arguments:
-#   .groupIdx  - group number (1..10)
-#
-# Output:
-#   .data#     - copy of the group's data vector
-#   .n         - size of the group
-# ============================================================================
-
-procedure eml_getGroupData: .groupIdx
-    .n = 0
-    .data# = zero# (0)
-
-    if .groupIdx = 1
-        .n = emlExtractMultipleGroups.groupSize1
-        .data# = emlExtractMultipleGroups.groupData1#
-    elsif .groupIdx = 2
-        .n = emlExtractMultipleGroups.groupSize2
-        .data# = emlExtractMultipleGroups.groupData2#
-    elsif .groupIdx = 3
-        .n = emlExtractMultipleGroups.groupSize3
-        .data# = emlExtractMultipleGroups.groupData3#
-    elsif .groupIdx = 4
-        .n = emlExtractMultipleGroups.groupSize4
-        .data# = emlExtractMultipleGroups.groupData4#
-    elsif .groupIdx = 5
-        .n = emlExtractMultipleGroups.groupSize5
-        .data# = emlExtractMultipleGroups.groupData5#
-    elsif .groupIdx = 6
-        .n = emlExtractMultipleGroups.groupSize6
-        .data# = emlExtractMultipleGroups.groupData6#
-    elsif .groupIdx = 7
-        .n = emlExtractMultipleGroups.groupSize7
-        .data# = emlExtractMultipleGroups.groupData7#
-    elsif .groupIdx = 8
-        .n = emlExtractMultipleGroups.groupSize8
-        .data# = emlExtractMultipleGroups.groupData8#
-    elsif .groupIdx = 9
-        .n = emlExtractMultipleGroups.groupSize9
-        .data# = emlExtractMultipleGroups.groupData9#
-    elsif .groupIdx = 10
-        .n = emlExtractMultipleGroups.groupSize10
-        .data# = emlExtractMultipleGroups.groupData10#
-    endif
-endproc
+# @eml_getGroupData is now in eml-extract.praat (4-arg on-demand version).
+# Old 1-arg dispatcher deleted in v1.1.
 
 
 # ============================================================================
@@ -2897,8 +2676,8 @@ endproc
 #   .error$        - error message or ""
 #
 # Dependencies:
-#   @emlExtractMultipleGroups (eml-extract.praat)
-#   @eml_getGroupData (this file)
+#   @emlCountGroups, @eml_getGroupData (eml-extract.praat)
+#   @eml_getGroupData (eml-extract.praat)
 #   @emlTTest (Batch 1)
 #   @emlCohenD (Batch 1)
 #   @emlBonferroni / @emlHolm / @emlBenjaminiHochberg (Batch 5)
@@ -2926,16 +2705,16 @@ procedure emlPairwiseT: .tableId, .dataCol$, .factorCol$, .method$, .type$
         endif
     endif
 
-    # --- Extract groups ---
+    # --- Discover groups ---
 
     if .error$ = ""
-        @emlExtractMultipleGroups: .tableId, .dataCol$, .factorCol$
+        @emlCountGroups: .tableId, .factorCol$
 
-        if emlExtractMultipleGroups.error$ <> ""
+        if emlCountGroups.error$ <> ""
             .error$ = "emlPairwiseT: "
-            ... + emlExtractMultipleGroups.error$
+            ... + emlCountGroups.error$
         else
-            .nGroups = emlExtractMultipleGroups.nGroups
+            .nGroups = emlCountGroups.nGroups
             if .nGroups < 2
                 .error$ = "emlPairwiseT: need >= 2 groups, got "
                 ... + string$ (.nGroups)
@@ -2944,9 +2723,8 @@ procedure emlPairwiseT: .tableId, .dataCol$, .factorCol$, .method$, .type$
     endif
 
     if .error$ = ""
-        # Copy group labels
         for .g from 1 to .nGroups
-            .groupName$[.g] = emlExtractMultipleGroups.groupLabel$[.g]
+            .groupName$[.g] = emlCountGroups.groupLabel$[.g]
         endfor
 
         # --- Determine equalVariances flag ---
@@ -2969,9 +2747,11 @@ procedure emlPairwiseT: .tableId, .dataCol$, .factorCol$, .method$, .type$
                 .pairIdx = .pairIdx + 1
 
                 # Get group vectors
-                @eml_getGroupData: .i
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.i]
                 .vI# = eml_getGroupData.data#
-                @eml_getGroupData: .j
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.j]
                 .vJ# = eml_getGroupData.data#
 
                 # t-test
@@ -3071,8 +2851,8 @@ endproc
 #   .error$        - error message or ""
 #
 # Dependencies:
-#   @emlExtractMultipleGroups (eml-extract.praat)
-#   @eml_getGroupData (this file)
+#   @emlCountGroups, @eml_getGroupData (eml-extract.praat)
+#   @eml_getGroupData (eml-extract.praat)
 #   @emlRankBiserialR (Batch 4, which calls @emlMannWhitneyU internally)
 #   @emlBonferroni / @emlHolm / @emlBenjaminiHochberg (Batch 5)
 # ============================================================================
@@ -3090,16 +2870,16 @@ procedure emlPairwiseWilcoxon: .tableId, .dataCol$, .factorCol$, .method$
         ... + "holm, or bh, got: " + .method$
     endif
 
-    # --- Extract groups ---
+    # --- Discover groups ---
 
     if .error$ = ""
-        @emlExtractMultipleGroups: .tableId, .dataCol$, .factorCol$
+        @emlCountGroups: .tableId, .factorCol$
 
-        if emlExtractMultipleGroups.error$ <> ""
+        if emlCountGroups.error$ <> ""
             .error$ = "emlPairwiseWilcoxon: "
-            ... + emlExtractMultipleGroups.error$
+            ... + emlCountGroups.error$
         else
-            .nGroups = emlExtractMultipleGroups.nGroups
+            .nGroups = emlCountGroups.nGroups
             if .nGroups < 2
                 .error$ = "emlPairwiseWilcoxon: need >= 2 groups, "
                 ... + "got " + string$ (.nGroups)
@@ -3108,9 +2888,15 @@ procedure emlPairwiseWilcoxon: .tableId, .dataCol$, .factorCol$, .method$
     endif
 
     if .error$ = ""
-        # Copy group labels
         for .g from 1 to .nGroups
-            .groupName$[.g] = emlExtractMultipleGroups.groupLabel$[.g]
+            .groupName$[.g] = emlCountGroups.groupLabel$[.g]
+        endfor
+
+        # Cache per-group sizes (avoids redundant extraction in matrix fill)
+        for .g from 1 to .nGroups
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
+            .groupN[.g] = eml_getGroupData.n
         endfor
 
         # --- Pairwise tests ---
@@ -3125,9 +2911,11 @@ procedure emlPairwiseWilcoxon: .tableId, .dataCol$, .factorCol$, .method$
             for .j from .i + 1 to .nGroups
                 .pairIdx = .pairIdx + 1
 
-                @eml_getGroupData: .i
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.i]
                 .vI# = eml_getGroupData.data#
-                @eml_getGroupData: .j
+                @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+                ... .groupName$[.j]
                 .vJ# = eml_getGroupData.data#
 
                 # MWU + rank-biserial r
@@ -3175,11 +2963,7 @@ procedure emlPairwiseWilcoxon: .tableId, .dataCol$, .factorCol$, .method$
                 .pMatrix##[.j, .i] = .adjustedP#[.pairIdx]
                 .uMatrix##[.i, .j] = .uFlat#[.pairIdx]
                 # U2 = n1*n2 - U1; store in lower triangle
-                @eml_getGroupData: .i
-                .nI = eml_getGroupData.n
-                @eml_getGroupData: .j
-                .nJ = eml_getGroupData.n
-                .uMatrix##[.j, .i] = .nI * .nJ
+                .uMatrix##[.j, .i] = .groupN[.i] * .groupN[.j]
                 ... - .uFlat#[.pairIdx]
                 .rMatrix##[.i, .j] = .rFlat#[.pairIdx]
                 .rMatrix##[.j, .i] = -.rFlat#[.pairIdx]
@@ -3235,8 +3019,8 @@ endproc
 #   .error$        - error message or ""
 #
 # Dependencies:
-#   @emlExtractMultipleGroups (eml-extract.praat)
-#   @eml_getGroupData (this file)
+#   @emlCountGroups, @eml_getGroupData (eml-extract.praat)
+#   @eml_getGroupData (eml-extract.praat)
 #   fisherQ() (Praat built-in)
 # ============================================================================
 
@@ -3247,15 +3031,15 @@ procedure emlScheffe: .tableId, .dataCol$, .factorCol$
     .dfWithin = undefined
     .error$ = ""
 
-    # --- Extract groups ---
+    # --- Discover groups ---
 
-    @emlExtractMultipleGroups: .tableId, .dataCol$, .factorCol$
+    @emlCountGroups: .tableId, .factorCol$
 
-    if emlExtractMultipleGroups.error$ <> ""
+    if emlCountGroups.error$ <> ""
         .error$ = "emlScheffe: "
-        ... + emlExtractMultipleGroups.error$
+        ... + emlCountGroups.error$
     else
-        .nGroups = emlExtractMultipleGroups.nGroups
+        .nGroups = emlCountGroups.nGroups
         if .nGroups < 2
             .error$ = "emlScheffe: need >= 2 groups, got "
             ... + string$ (.nGroups)
@@ -3263,9 +3047,8 @@ procedure emlScheffe: .tableId, .dataCol$, .factorCol$
     endif
 
     if .error$ = ""
-        # Copy group labels
         for .g from 1 to .nGroups
-            .groupName$[.g] = emlExtractMultipleGroups.groupLabel$[.g]
+            .groupName$[.g] = emlCountGroups.groupLabel$[.g]
         endfor
 
         # --- Compute group means, sizes, and SSwithin ---
@@ -3274,7 +3057,8 @@ procedure emlScheffe: .tableId, .dataCol$, .factorCol$
         .ssWithin = 0
 
         for .g from 1 to .nGroups
-            @eml_getGroupData: .g
+            @eml_getGroupData: .tableId, .dataCol$, .factorCol$,
+            ... .groupName$[.g]
             .gN[.g] = eml_getGroupData.n
             .gData# = eml_getGroupData.data#
             .totalN = .totalN + .gN[.g]

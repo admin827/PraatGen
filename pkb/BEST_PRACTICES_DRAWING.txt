@@ -62,6 +62,117 @@
 # These patterns must be followed whenever the script writes to the
 # Picture window. Violation of any pattern is a SELF-AUDIT failure.
 
+## Font state invariant (MANDATORY)
+
+# Font size affects the physical-to-world coordinate mapping for ALL
+# margin-dependent drawing commands: Select inner viewport, Select outer
+# viewport, Draw inner box, One mark, Marks, Text left/right/top/bottom.
+#
+# Praat manual (Font menu + Margins pages): "The widths of the margins
+# depend on the current font size, so if you want to change the font
+# size, do so before making your drawing."
+#
+# This means that if Draw inner box is called at font size 12, but
+# Marks left is called at font size 10, the tick marks will NOT align
+# with the box edges. The same applies to gridlines, axis labels, and
+# any other element whose position depends on the inner viewport margins.
+#
+# RULE: Set `Font size: bodySize` ONCE before the drawing sequence and
+# do not change it until all coordinate-dependent commands are complete.
+# All graph elements — inner box, tick marks, gridlines, axis value
+# numbers, axis name labels — must be drawn at the same ambient font
+# size so that margins are computed identically and everything aligns.
+#
+# Use `Text special:` for any text that needs a different visual size
+# (e.g., titles, annotations). Text special takes its own font size
+# parameter but does NOT change the global Font size state. This is
+# the correct way to render mixed-size text without breaking alignment.
+#
+# CORRECT:
+#   Font size: 10
+#   Select inner viewport: ...
+#   Axes: ...
+#   Draw inner box
+#   Marks left: 5, "yes", "yes", "no"
+#   Marks bottom: 5, "yes", "yes", "no"
+#   Text left: "yes", "Amplitude (dB)"
+#   # Title at a larger size — uses Text special, font state unchanged
+#   Text special: xCenter, "centre", yTitle, "half", "Helvetica", 14, "0", title$
+#
+# WRONG:
+#   Font size: 14
+#   Text top: "no", title$
+#   Font size: 10
+#   Draw inner box            ← margins now differ from earlier commands
+#   Marks left: 5, "yes", "yes", "no"   ← misaligned with box
+#
+# Provenance: BUG-007/008 tick displacement (26 March 2026). Verified
+# empirically and confirmed against Praat manual.
+
+## Procedure-informed drawing (MANDATORY)
+
+# The EML library (eml-graph-procedures.praat, eml-draw-procedures.praat,
+# eml-annotation-procedures.praat) encodes extensive domain knowledge
+# about Praat Picture window drawing: adaptive theming, nice-number tick
+# placement, font-aware label truncation, alpha compositing, CVD-safe
+# colour palettes, legend placement, annotation stacking, axis range
+# computation, and dozens of other patterns refined through iterative
+# debugging.
+#
+# When generating standalone scripts (outside the plugin), this knowledge
+# must not be ignored. Before hand-coding ANY drawing logic, consult:
+#
+#   1. EML_PROCEDURE_REGISTRY.md — find whether a procedure exists for
+#      the task (axis drawing, tick placement, colour selection, label
+#      fitting, legend rendering, gridlines, jittered points, etc.)
+#
+#   2. EML_PROCEDURE_GUIDE.md — understand the methodology, conventions,
+#      and routing logic (font state invariant, measure-then-draw,
+#      garnish suppression, special character escaping, etc.)
+#
+#   3. The procedure source code itself — read the implementation to
+#      understand the logic, edge cases handled, and constants used.
+#
+# For standalone scripts where the library is not available via include:
+#
+#   - FLATTEN the relevant procedures into the script. Copy the logic
+#     faithfully — do not "simplify" or "approximate" what the procedure
+#     does. The procedures handle edge cases (small viewports, long
+#     labels, extreme data ranges, empty groups) that naive hand-coding
+#     will miss.
+#
+#   - At minimum, follow the same PATTERNS even if not copying code
+#     verbatim: suppress garnish, use nice-number tick intervals, set
+#     font size before all coordinate-dependent commands, sanitize
+#     labels, compute axis ranges with buffer, assert viewport before
+#     save.
+#
+# WRONG — ignoring the library and hand-coding from scratch:
+#   Marks left: 5, "yes", "yes", "no"
+#   Font size: 14
+#   Text top: "no", title$
+#   Paint circle: "Red", x, y, 0.02
+#
+# CORRECT — following library patterns (flattened):
+#   # Nice-number tick interval (from @emlComputeNiceStep logic)
+#   rawStep = (yMax - yMin) / targetTicks
+#   magnitude = 10 ^ floor (log10 (rawStep))
+#   normalized = rawStep / magnitude
+#   if normalized <= 1.5
+#       niceStep = 1 * magnitude
+#   elsif normalized <= 3.5
+#       niceStep = 2 * magnitude
+#   elsif normalized <= 7.5
+#       niceStep = 5 * magnitude
+#   else
+#       niceStep = 10 * magnitude
+#   endif
+#   # Draw aligned marks (from @emlDrawAlignedMarksLeft logic)
+#   firstTick = ceiling (yMin / niceStep) * niceStep
+#   ...
+#
+# The procedures exist because naive approaches failed. Use them.
+
 ## Sound + TextGrid combined display (MANDATORY)
 
 # When displaying Sound + TextGrid together:
