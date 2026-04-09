@@ -12,8 +12,8 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)  
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)  
-**Version:** 0.9.0-beta.1  
-**Release date:** 3 April 2026  
+**Version:** 0.9.1-beta.12  
+**Release date:** 8 April 2026  
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
 ---
@@ -117,7 +117,7 @@ If you run into any errors with your scripts, or you want to refactor something,
 
 ### Master Prompt
 
-`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 36 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards.
+`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 36 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards. Current content version: 13.2.
 
 ### Project Knowledge Base (PKB)
 
@@ -148,6 +148,8 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `COMMANDS_Ltas.txt` | Long-term average spectrum |
 | `COMMANDS_LongSound.txt` | LongSound objects |
 | `COMMANDS_Electroglottogram.txt` | EGG analysis |
+| `COMMANDS_SpeechRecognizer.txt` | Whisper ASR and speech recognition |
+| `COMMANDS_SpeechSynthesizer.txt` | eSpeak synthesis, forced alignment, IPA transcription |
 | `COMMANDS_DemoWindow.txt` | Demo window interactive applications |
 | `COMMANDS_PictureWindow.txt` | Picture window drawing commands |
 | `COMMANDS_Universal.txt` | Commands common to all object types |
@@ -175,8 +177,9 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 |------|---------|
 | `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text label safety, spectrum/Ltas/PowerCepstrum axis alignment |
 | `BEST_PRACTICES_CONFIDENCE_FIGURES.txt` | Guidelines for publication-quality statistical figures |
+| `BEST_PRACTICES_AUTO_TEXTGRID_ANNOTATION.md` | Automatic TextGrid annotation, VAD-based segmentation, speech-to-text pipelines |
 | `EML_PROCEDURE_GUIDE.md` | Methodology rules, test selection logic, graph type routing, script generation model |
-| `EML_PROCEDURE_REGISTRY.md` | Master index of all EML library procedures (255 procedures across 14 files) |
+| `EML_PROCEDURE_REGISTRY.md` | Master index of all EML library procedures (251 procedures across 15 files) |
 
 **EML procedure source files** — Verified implementations that PraatGen reads as algorithmic templates. PraatGen emits flat, self-contained scripts inspired by these procedures — no `include` directives, no companion files:
 
@@ -190,13 +193,20 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `eml-extract.praat` | Table and acoustic object data extraction |
 | `eml-output.praat` | Formatted reporting: APA style, p-value formatting, CSV export |
 | `eml-inferential.praat` | Inferential tests: t-tests, correlations, MWU, Wilcoxon, ANOVA, KW, post-hoc, p-value adjustment |
+| `eml-graphs.praat` | Graphs entry point (includes form system and draw layers) |
+| `eml-graphs-form.praat` | Form system, workflow orchestration, config persistence |
+| `eml-wizard.praat` | Statistical analysis wizard with guided test selection |
+| `eml-vibrato-procedures.praat` | Vibrato detection, cycle analysis, and summary statistics |
+| `eml-demo-procedures.praat` | Demo window layout engine for interactive tutorials |
 | `eml-batch-process.praat` | Batch infrastructure: date stamps, stop sentinel |
+| `eml-test-helpers.praat` | Test harness for procedure verification |
 
 **Workflow support:**
 
 | File | Purpose |
 |------|---------|
 | `HANDOFF_TEMPLATE.md` | Template for session handoff documents during debugging |
+| `DEVELOPER_MODE_ADDON.md` | Developer mode extensions for EML Tools contributors |
 
 ---
 
@@ -206,9 +216,9 @@ PraatGen tracks three version numbers:
 
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
-| **Release** | 0.9.0-beta.1 | The combined package (prompt + PKB). This is the version that matters to users. |
-| **Master Prompt** | 13.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
-| **PKB Snapshot** | 2026-04-05 | The reference file set. Date-stamped when files are added or revised. |
+| **Release** | 0.9.0-beta.12 | The combined package (prompt + PKB). This is the version that matters to users. |
+| **Master Prompt** | 13.2 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **PKB Snapshot** | 2026-04-08 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **0.x.y** — Beta. Expect changes based on tester feedback.
