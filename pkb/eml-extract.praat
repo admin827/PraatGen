@@ -2,16 +2,28 @@
 # EML Stats : Data Extraction Layer
 # ============================================================================
 # Module: eml-extract.praat
-# Version: 1.0
-# Date: 20 February 2026
+# Version: 1.2
+# Date: 6 April 2026
+#
+# v1.2: Group sort order — @emlCountGroups optionally sorts labels
+#        alphabetically when emlGroupSortAlphabetical = 1. Default 0
+#        (table/discovery order). Global initialized in this file.
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 # Development: Claude (Anthropic)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
+# v1.1: Deleted @emlExtractMultipleGroups (10-group limit, vector
+#        index overflow bug). Replaced with on-demand extraction:
+#        @emlCountGroups rewritten (no group limit, no .groupSize
+#        outputs), @eml_getGroupData added (4-arg, self-contained,
+#        filters undefined values, auto-sized vector via C-level
+#        Table extraction). Moved @eml_getGroupData here from
+#        eml-inferential.praat (extraction, not inference).
+#
 # Provides: @emlExtractColumn, @emlExtractColumnAsStrings,
-#   @emlExtractGroupVectors, @emlExtractMultipleGroups,
+#   @emlExtractGroupVectors, @eml_getGroupData,
 #   @emlExtractPairedColumns, @emlExtractPitchValues,
 #   @emlExtractFormantValues, @emlExtractIntensityFrames,
 #   @emlExtractHarmonicityFrames, @emlValidateTable,
@@ -245,215 +257,6 @@ procedure emlExtractGroupVectors: .tableId, .measureCol$, .groupCol$, .label1$, 
     endif
 endproc
 
-
-# ============================================================================
-# @emlExtractMultipleGroups
-# Extract vectors for all groups (unknown number). Max 10 groups.
-#
-# Arguments:
-#   tableId     - ID of the Table object
-#   measureCol$ - column containing numeric values
-#   groupCol$   - column containing group labels
-#
-# Output:
-#   .nGroups              - number of distinct groups found
-#   .groupLabel$[1..n]    - labels for each group
-#   .groupData1# ... .groupData10# - data vectors
-#   .groupSize1 ... .groupSize10   - sizes of each group
-#   .error$               - error message if > 10 groups
-# ============================================================================
-procedure emlExtractMultipleGroups: .tableId, .measureCol$, .groupCol$
-    # Initialize outputs
-    .nGroups = 0
-    .error$ = ""
-    
-    # Initialize group labels and sizes
-    for .g from 1 to 10
-        .groupLabel$[.g] = ""
-    endfor
-    .groupSize1 = 0
-    .groupSize2 = 0
-    .groupSize3 = 0
-    .groupSize4 = 0
-    .groupSize5 = 0
-    .groupSize6 = 0
-    .groupSize7 = 0
-    .groupSize8 = 0
-    .groupSize9 = 0
-    .groupSize10 = 0
-    
-    # Initialize data vectors
-    .groupData1# = zero#(0)
-    .groupData2# = zero#(0)
-    .groupData3# = zero#(0)
-    .groupData4# = zero#(0)
-    .groupData5# = zero#(0)
-    .groupData6# = zero#(0)
-    .groupData7# = zero#(0)
-    .groupData8# = zero#(0)
-    .groupData9# = zero#(0)
-    .groupData10# = zero#(0)
-    
-    # Select table and get row count
-    selectObject: .tableId
-    .nRows = Get number of rows
-    
-    if .nRows = 0
-        .error$ = "Table is empty"
-    else
-        # First pass: discover unique groups and count sizes
-        .overflowed = 0
-        for .row from 1 to .nRows
-          if .overflowed = 0
-            selectObject: .tableId
-            .grp$ = Get value: .row, .groupCol$
-            .val = Get value: .row, .measureCol$
-            
-            if .val <> undefined
-                # Check if this group already exists
-                .found = 0
-                for .g from 1 to .nGroups
-                    if .groupLabel$[.g] = .grp$
-                        .found = .g
-                    endif
-                endfor
-                
-                if .found = 0
-                    # New group
-                    .nGroups = .nGroups + 1
-                    if .nGroups > 10
-                        .error$ = "More than 10 groups found"
-                        .nGroups = 10
-                        .overflowed = 1
-                    else
-                        .groupLabel$[.nGroups] = .grp$
-                        .found = .nGroups
-                    endif
-                endif
-                
-                if .overflowed = 0
-                # Increment count for this group using explicit conditionals
-                if .found = 1
-                    .groupSize1 = .groupSize1 + 1
-                elsif .found = 2
-                    .groupSize2 = .groupSize2 + 1
-                elsif .found = 3
-                    .groupSize3 = .groupSize3 + 1
-                elsif .found = 4
-                    .groupSize4 = .groupSize4 + 1
-                elsif .found = 5
-                    .groupSize5 = .groupSize5 + 1
-                elsif .found = 6
-                    .groupSize6 = .groupSize6 + 1
-                elsif .found = 7
-                    .groupSize7 = .groupSize7 + 1
-                elsif .found = 8
-                    .groupSize8 = .groupSize8 + 1
-                elsif .found = 9
-                    .groupSize9 = .groupSize9 + 1
-                elsif .found = 10
-                    .groupSize10 = .groupSize10 + 1
-                endif
-                endif
-            endif
-          endif
-        endfor
-        
-        # Allocate vectors based on counts
-        if .groupSize1 > 0
-            .groupData1# = zero#(.groupSize1)
-        endif
-        if .groupSize2 > 0
-            .groupData2# = zero#(.groupSize2)
-        endif
-        if .groupSize3 > 0
-            .groupData3# = zero#(.groupSize3)
-        endif
-        if .groupSize4 > 0
-            .groupData4# = zero#(.groupSize4)
-        endif
-        if .groupSize5 > 0
-            .groupData5# = zero#(.groupSize5)
-        endif
-        if .groupSize6 > 0
-            .groupData6# = zero#(.groupSize6)
-        endif
-        if .groupSize7 > 0
-            .groupData7# = zero#(.groupSize7)
-        endif
-        if .groupSize8 > 0
-            .groupData8# = zero#(.groupSize8)
-        endif
-        if .groupSize9 > 0
-            .groupData9# = zero#(.groupSize9)
-        endif
-        if .groupSize10 > 0
-            .groupData10# = zero#(.groupSize10)
-        endif
-        
-        # Reset counters for second pass (use as indices)
-        .idx1 = 0
-        .idx2 = 0
-        .idx3 = 0
-        .idx4 = 0
-        .idx5 = 0
-        .idx6 = 0
-        .idx7 = 0
-        .idx8 = 0
-        .idx9 = 0
-        .idx10 = 0
-        
-        # Second pass: populate vectors
-        for .row from 1 to .nRows
-            selectObject: .tableId
-            .grp$ = Get value: .row, .groupCol$
-            .val = Get value: .row, .measureCol$
-            
-            if .val <> undefined
-                # Find which group
-                .found = 0
-                for .g from 1 to .nGroups
-                    if .groupLabel$[.g] = .grp$
-                        .found = .g
-                    endif
-                endfor
-                
-                # Populate using explicit conditionals
-                if .found = 1
-                    .idx1 = .idx1 + 1
-                    .groupData1#[.idx1] = .val
-                elsif .found = 2
-                    .idx2 = .idx2 + 1
-                    .groupData2#[.idx2] = .val
-                elsif .found = 3
-                    .idx3 = .idx3 + 1
-                    .groupData3#[.idx3] = .val
-                elsif .found = 4
-                    .idx4 = .idx4 + 1
-                    .groupData4#[.idx4] = .val
-                elsif .found = 5
-                    .idx5 = .idx5 + 1
-                    .groupData5#[.idx5] = .val
-                elsif .found = 6
-                    .idx6 = .idx6 + 1
-                    .groupData6#[.idx6] = .val
-                elsif .found = 7
-                    .idx7 = .idx7 + 1
-                    .groupData7#[.idx7] = .val
-                elsif .found = 8
-                    .idx8 = .idx8 + 1
-                    .groupData8#[.idx8] = .val
-                elsif .found = 9
-                    .idx9 = .idx9 + 1
-                    .groupData9#[.idx9] = .val
-                elsif .found = 10
-                    .idx10 = .idx10 + 1
-                    .groupData10#[.idx10] = .val
-                endif
-            endif
-        endfor
-    endif
-endproc
 
 
 # ============================================================================
@@ -1006,9 +809,14 @@ procedure emlTableColumnNames: .tableId
 endproc
 
 
+# Global: group sort order (0 = table/discovery order, 1 = alphabetical).
+# Set by graphs UI (eml-graphs-form.praat) or manually before calling.
+# Stats wrappers without UI default to 0 (table order).
+emlGroupSortAlphabetical = 0
+
 # ============================================================================
 # @emlCountGroups
-# Count distinct groups in a column.
+# Discover distinct groups in a column. No group limit.
 #
 # Arguments:
 #   tableId   - ID of the Table object
@@ -1016,36 +824,19 @@ endproc
 #
 # Output:
 #   .nGroups           - number of distinct groups
-#   .groupLabel$[1..n] - labels for each group
-#   .groupSize1 through .groupSize10 - size of each group (indexed numeric)
+#   .groupLabel$[1..n] - labels (order controlled by
+#                        emlGroupSortAlphabetical: 0 = discovery, 1 = alpha)
 #   .error$            - error message if column not found
 # ============================================================================
 procedure emlCountGroups: .tableId, .groupCol$
-    # Initialize outputs
     .nGroups = 0
     .error$ = ""
-    
-    # Initialize group labels
-    for .g from 1 to 10
-        .groupLabel$[.g] = ""
-    endfor
-    .groupSize1 = 0
-    .groupSize2 = 0
-    .groupSize3 = 0
-    .groupSize4 = 0
-    .groupSize5 = 0
-    .groupSize6 = 0
-    .groupSize7 = 0
-    .groupSize8 = 0
-    .groupSize9 = 0
-    .groupSize10 = 0
-    
-    # Select table and get dimensions
+
     selectObject: .tableId
     .nRows = Get number of rows
     .nCols = Get number of columns
-    
-    # Check if column exists
+
+    # Verify column exists
     .colExists = 0
     for .c from 1 to .nCols
         selectObject: .tableId
@@ -1054,63 +845,70 @@ procedure emlCountGroups: .tableId, .groupCol$
             .colExists = 1
         endif
     endfor
-    
+
     if .colExists = 0
-        .error$ = "Column not found: "
-        .error$ = .error$ + .groupCol$
-    elsif .nRows = 0
-        .nGroups = 0
-    else
-        # Iterate through rows, tracking unique groups
+        .error$ = "Column not found: " + .groupCol$
+    elsif .nRows > 0
         for .row from 1 to .nRows
-            # Stop counting once we exceed the 10-group cap
-            # (.nGroups > 10 is the error condition callers check)
-            if .nGroups > 10
-                .row = .nRows
-            else
-                selectObject: .tableId
-                .grp$ = Get value: .row, .groupCol$
+            selectObject: .tableId
+            .grp$ = Get value: .row, .groupCol$
 
-                # Check if this group already exists
-                .found = 0
-                for .g from 1 to .nGroups
-                    if .groupLabel$[.g] = .grp$
-                        .found = .g
-                    endif
-                endfor
-
-                if .found = 0
-                    # New group
-                    .nGroups = .nGroups + 1
-                    if .nGroups <= 10
-                        .groupLabel$[.nGroups] = .grp$
-                        .found = .nGroups
-                    endif
+            .found = 0
+            for .g from 1 to .nGroups
+                if .groupLabel$[.g] = .grp$
+                    .found = 1
                 endif
+            endfor
 
-                # Increment count for this group
-                if .found = 1
-                    .groupSize1 = .groupSize1 + 1
-                elsif .found = 2
-                    .groupSize2 = .groupSize2 + 1
-                elsif .found = 3
-                    .groupSize3 = .groupSize3 + 1
-                elsif .found = 4
-                    .groupSize4 = .groupSize4 + 1
-                elsif .found = 5
-                    .groupSize5 = .groupSize5 + 1
-                elsif .found = 6
-                    .groupSize6 = .groupSize6 + 1
-                elsif .found = 7
-                    .groupSize7 = .groupSize7 + 1
-                elsif .found = 8
-                    .groupSize8 = .groupSize8 + 1
-                elsif .found = 9
-                    .groupSize9 = .groupSize9 + 1
-                elsif .found = 10
-                    .groupSize10 = .groupSize10 + 1
-                endif
+            if .found = 0
+                .nGroups = .nGroups + 1
+                .groupLabel$[.nGroups] = .grp$
             endif
         endfor
+
+        # Optional alphabetical sort
+        if emlGroupSortAlphabetical = 1 and .nGroups > 1
+            .tempVec$# = empty$# (.nGroups)
+            for .g from 1 to .nGroups
+                .tempVec$#[.g] = .groupLabel$[.g]
+            endfor
+            .tempVec$# = sort$# (.tempVec$#)
+            for .g from 1 to .nGroups
+                .groupLabel$[.g] = .tempVec$#[.g]
+            endfor
+        endif
     endif
+endproc
+
+
+# ============================================================================
+# @eml_getGroupData
+# Extract one group's numeric data from a Table. Self-contained:
+# filters rows by group label, removes undefined values, returns
+# auto-sized vector. No group limit, no shared state.
+#
+# Arguments:
+#   tableId    - ID of the Table object
+#   dataCol$   - name of the numeric data column
+#   groupCol$  - name of the grouping column
+#   groupLabel$ - label value to match
+#
+# Output:
+#   .n     - number of valid (non-undefined) observations
+#   .data# - vector of values
+# ============================================================================
+procedure eml_getGroupData: .tableId, .dataCol$, .groupCol$, .groupLabel$
+    selectObject: .tableId
+    .tempGroup = Extract rows where column (text): .groupCol$, "is equal to", .groupLabel$
+    selectObject: .tempGroup
+    .tempClean = Extract rows where: ~self [.dataCol$] <> undefined
+    removeObject: .tempGroup
+    selectObject: .tempClean
+    .n = Get number of rows
+    if .n > 0
+        .data# = Get all numbers in column: .dataCol$
+    else
+        .data# = zero# (0)
+    endif
+    removeObject: .tempClean
 endproc

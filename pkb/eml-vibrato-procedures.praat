@@ -4,7 +4,7 @@
 # Author: Ian Howell & Theodora Nestorova, Embodied Music Lab
 #         www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+# License: Creative Commons Non-Commercial with Attribution
 # Version: 2.0
 # Date: 18 March 2026
 #

@@ -8,7 +8,6 @@
 #          segment.
 # Date: 3 April 2026
 # Version: 1.1
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
 # ATTRIBUTION
 # Framework: EML Praat Assistant by Ian Howell

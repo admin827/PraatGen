@@ -4,8 +4,22 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
-# Version: 1.12
-# Date: 4 April 2026
+# Version: 1.16
+# Date: 6 April 2026
+#
+# v1.16: Group sort unification — replaced all inline group discovery
+#         with @emlCountGroups calls: @emlDrawViolinPlot,
+#         @emlDrawBoxPlot, @emlDrawGroupedViolin, @emlDrawGroupedBoxPlot,
+#         @emlDrawSpaghettiPlot (conditions and subjects). Legend labels
+#         sanitized in @emlDrawTimeSeries, @emlDrawTimeSeriesCI, and
+#         @emlDrawSpaghettiPlot (underscore→subscript fix). All draw
+#         procedures now use single source for group ordering.
+#
+# v1.15: Bug #3 — 1-group faceted histogram forced through ungrouped
+#        path (hasGroups=0, displayMode=1) to prevent viewport mismatch.
+#        Bug #11 — semitone auto-range minimum span enforcement now uses
+#        direct 6-st rounding instead of re-calling @emlComputeAxisRange.
+#        Prevents overshoot to ~30 st for constant-pitch input.
 #
 # v1.12: @emlDrawTimeSeriesCI: CI critical value changed from hardcoded
 #         1.96 (normal approximation) to invStudentQ(annotAlpha/2, n-1)
@@ -159,12 +173,11 @@ procedure emlDrawF0Contour: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
         .autoFreqMax = emlComputeAxisRange.axisMax
         # Enforce minimum visible span
         if .yUnit = 2
-            # Semitones: minimum 12 st span
+            # Semitones: minimum 12 st span, rounded to 6 st
             if .autoFreqMax - .autoFreqMin < 12
                 .midVal = (.pitchMin + .pitchMax) / 2
-                @emlComputeAxisRange: .midVal - 6, .midVal + 6, 10, 0
-                .autoFreqMin = emlComputeAxisRange.axisMin
-                .autoFreqMax = emlComputeAxisRange.axisMax
+                .autoFreqMin = floor ((.midVal - 6) / 6) * 6
+                .autoFreqMax = ceiling ((.midVal + 6) / 6) * 6
             endif
         else
             # Hertz: minimum 50 Hz span
@@ -547,11 +560,6 @@ procedure emlDrawTimeSeries: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
         if emlCountGroups.error$ = "" and emlCountGroups.nGroups > 1
             .hasGroup = 1
             .nGroups = emlCountGroups.nGroups
-            if .nGroups > 10
-                appendInfoLine: "NOTE: Group column has ", .nGroups,
-                ... " groups — capping at 10."
-                .nGroups = 10
-            endif
             @emlOptimizePaletteContrast: .nGroups
             for .g from 1 to .nGroups
                 .grpLabel$[.g] = emlCountGroups.groupLabel$[.g]
@@ -719,7 +727,8 @@ procedure emlDrawTimeSeries: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
         legendN = .nGroups
         for .g from 1 to .nGroups
             legendColor$[.g] = emlSetColorPalette.line$[.g]
-            legendLabel$[.g] = .grpLabel$[.g]
+            @emlSanitizeLabel: .grpLabel$[.g]
+            legendLabel$[.g] = emlSanitizeLabel.result$
         endfor
         @emlDrawLegend: .xMin, .xMax, .yMin, .yMax, emlPlaceElements.corner1$,
         ... emlSetAdaptiveTheme.annotSize
@@ -757,9 +766,6 @@ procedure emlDrawTimeSeriesCI: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vp
         if emlCountGroups.error$ = "" and emlCountGroups.nGroups > 1
             .hasGroup = 1
             .nGroups = emlCountGroups.nGroups
-            if .nGroups > 10
-                .nGroups = 10
-            endif
             @emlOptimizePaletteContrast: .nGroups
             for .g from 1 to .nGroups
                 .grpLabel$[.g] = emlCountGroups.groupLabel$[.g]
@@ -944,7 +950,7 @@ procedure emlDrawTimeSeriesCI: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vp
     # Draw CI bands and mean lines per group
     for .g from 1 to .nGroups
         .nUT = .gNUT'.g'
-        .colorIdx = (((.g - 1) mod 10) + 1)
+        .colorIdx = .g
 
         # CI band (alpha-composited)
         for .k from 1 to .nUT - 1
@@ -1017,7 +1023,8 @@ procedure emlDrawTimeSeriesCI: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vp
         legendN = .nGroups
         for .g from 1 to .nGroups
             legendColor$[.g] = emlSetColorPalette.line$[.g]
-            legendLabel$[.g] = .grpLabel$[.g]
+            @emlSanitizeLabel: .grpLabel$[.g]
+            legendLabel$[.g] = emlSanitizeLabel.result$
         endfor
         @emlDrawLegend: .xMin, .xMax, .yMin, .yMax, emlPlaceElements.corner1$,
         ... emlSetAdaptiveTheme.annotSize
@@ -1079,25 +1086,17 @@ procedure emlDrawSpaghettiPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
     @emlSetColorPalette: .colorMode$
 
     # ----------------------------------------------------------------
-    # Extract unique conditions in encounter order
+    # Extract unique conditions via single source
     # ----------------------------------------------------------------
+    @emlCountGroups: .objectId, .condCol$
+    .nCond = emlCountGroups.nGroups
+    for .c from 1 to .nCond
+        .condLabel$[.c] = emlCountGroups.groupLabel$[.c]
+    endfor
+
     selectObject: .objectId
     .nRows = Get number of rows
-    .nCond = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisCond$ = Get value: .i, .condCol$
-        .found = 0
-        for .c from 1 to .nCond
-            if .thisCond$ = .condLabel$[.c]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nCond = .nCond + 1
-            .condLabel$[.nCond] = .thisCond$
-        endif
-    endfor
+
     if .nCond < 2
         appendInfoLine: "WARNING: Spaghetti plot requires at least 2 conditions. Found ", .nCond, "."
     endif
@@ -1112,9 +1111,6 @@ procedure emlDrawSpaghettiPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
         if emlCountGroups.error$ = "" and emlCountGroups.nGroups > 1
             .hasGroup = 1
             .nGroups = emlCountGroups.nGroups
-            if .nGroups > 10
-                .nGroups = 10
-            endif
             @emlOptimizePaletteContrast: .nGroups
             for .g from 1 to .nGroups
                 .grpLabel$[.g] = emlCountGroups.groupLabel$[.g]
@@ -1183,20 +1179,12 @@ procedure emlDrawSpaghettiPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
     endif
 
     # ----------------------------------------------------------------
-    # Collect unique subject IDs (encounter order)
+    # Collect unique subject IDs via single source
     # ----------------------------------------------------------------
-    .nSubjects = 0
-    for .i from 1 to .nRows
-        .found = 0
-        for .s from 1 to .nSubjects
-            if .rowId$[.i] = .subjId$[.s]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nSubjects = .nSubjects + 1
-            .subjId$[.nSubjects] = .rowId$[.i]
-        endif
+    @emlCountGroups: .objectId, .idCol$
+    .nSubjects = emlCountGroups.nGroups
+    for .s from 1 to .nSubjects
+        .subjId$[.s] = emlCountGroups.groupLabel$[.s]
     endfor
 
     # ----------------------------------------------------------------
@@ -1404,7 +1392,8 @@ procedure emlDrawSpaghettiPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
         legendN = .nGroups
         for .g from 1 to .nGroups
             legendColor$[.g] = emlSetColorPalette.line$[.g]
-            legendLabel$[.g] = .grpLabel$[.g]
+            @emlSanitizeLabel: .grpLabel$[.g]
+            legendLabel$[.g] = emlSanitizeLabel.result$
         endfor
         @emlDrawLegend: .xMin, .xMax, .yMin, .yMax, emlPlaceElements.corner1$,
         ... emlSetAdaptiveTheme.annotSize
@@ -1484,7 +1473,7 @@ procedure emlDrawBarChart: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .
 
     for .g from 1 to .nGroups
         .xCenter = .g
-        .colorIdx = (((.g - 1) mod 6) + 1)
+        .colorIdx = .g
 
         # Clamp bar top to axis maximum (TODO-055 fix)
         .barTop = min (emlBarData_mean[.g], .yMax)
@@ -1563,34 +1552,16 @@ procedure emlDrawViolinPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
     @emlSanitizeLabel: .title$
     .title$ = emlSanitizeLabel.result$
 
-    # Step 2: Extract unique group names from the Table
+    # Step 2: Extract unique group names via single source
+    @emlCountGroups: .objectId, .groupCol$
+    .nGroups = emlCountGroups.nGroups
+    for .g from 1 to .nGroups
+        .grpLabel$[.g] = emlCountGroups.groupLabel$[.g]
+    endfor
+
     selectObject: .objectId
     .nRows = Get number of rows
 
-    .nGroups = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisGroup$ = Get value: .i, .groupCol$
-
-        # Check if this group already seen
-        .found = 0
-        for .g from 1 to .nGroups
-            if .thisGroup$ = .uniqueGroup$[.g]
-                .found = 1
-            endif
-        endfor
-
-        if .found = 0
-            .nGroups = .nGroups + 1
-            .uniqueGroup$[.nGroups] = .thisGroup$
-        endif
-    endfor
-
-    if .nGroups > 10
-        appendInfoLine: "NOTE: Group column has ", .nGroups,
-        ... " groups — capping at 10."
-        .nGroups = 10
-    endif
     @emlOptimizePaletteContrast: .nGroups
 
     # Step 3: Count observations per group and extract values
@@ -1606,7 +1577,7 @@ procedure emlDrawViolinPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
 
         # Find which group this belongs to
         for .g from 1 to .nGroups
-            if .thisGroup$ = .uniqueGroup$[.g]
+            if .thisGroup$ = .grpLabel$[.g]
                 .groupCount'.g' = .groupCount'.g' + 1
                 .c = .groupCount'.g'
                 .groupData'.g'_'.c' = .thisVal
@@ -1670,7 +1641,7 @@ procedure emlDrawViolinPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
         endfor
 
         # Determine color index (cycle through palette)
-        .colorIdx = (((.g - 1) mod 6) + 1)
+        .colorIdx = .g
 
         @emlDrawViolin: .g, .data#, emlSetColorPalette.fill$[.colorIdx], emlSetColorPalette.line$[.colorIdx], .yMin, .yMax, 0.35
     endfor
@@ -1684,7 +1655,7 @@ procedure emlDrawViolinPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
                 for .k from 1 to .n
                     jitterData#[.k] = .groupData'.g'_'.k'
                 endfor
-                .colorIdx = (((.g - 1) mod 6) + 1)
+                .colorIdx = .g
                 @emlDrawJitteredPoints: .g, emlSetColorPalette.line$[.colorIdx], emlSetAdaptiveTheme.markerSize * 0.5, 0.12
             endfor
         endif
@@ -2025,17 +1996,12 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
         @emlCountGroups: .objectId, .groupCol$
         .nGroups = emlCountGroups.nGroups
 
-        if .nGroups > 10
-            appendInfoLine: "WARNING: " + string$ (.nGroups) + " groups detected. Only first 10 will be plotted."
-            appendInfoLine: "  (Scatter plot supports a maximum of 10 groups.)"
-            .nGroups = 10
-        endif
         @emlOptimizePaletteContrast: .nGroups
 
         # Set up legend (use line$ for visual weight match with dots)
         legendN = .nGroups
         for .g from 1 to .nGroups
-            .colorIdx = (((.g - 1) mod 10) + 1)
+            .colorIdx = .g
             legendColor$[.g] = emlSetColorPalette.line$[.colorIdx]
             @emlSanitizeLabel: emlCountGroups.groupLabel$[.g]
             legendLabel$[.g] = emlSanitizeLabel.result$
@@ -2055,7 +2021,7 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
                             .gIdx = .g
                         endif
                     endfor
-                    .colorIdx = (((.gIdx - 1) mod 10) + 1)
+                    .colorIdx = .gIdx
                     if .useAlpha = 1 and emlInitAlphaSprites.available = 1
                         @emlDrawAlphaDot: .xVal, .yVal, .gIdx, .colorMode$, .alphaLevel$, .pointColor$[.colorIdx]
                     else
@@ -2177,7 +2143,7 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
                             endfor
 
                             # Draw in group's palette color
-                            .colorIdx = (((.g - 1) mod 10) + 1)
+                            .colorIdx = .g
                             @emlDrawRegressionLine: .gXMin, .gXMax, .gSlope, .gIntercept, .axisYMin, .axisYMax, emlSetColorPalette.line$[.colorIdx]
 
                             # Formula to Info window always
@@ -2261,26 +2227,14 @@ procedure emlDrawBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .c
     .title$ = emlSanitizeLabel.result$
 
     # Step 2: Extract groups and data
+    @emlCountGroups: .objectId, .groupCol$
+    .nGroups = emlCountGroups.nGroups
+    for .g from 1 to .nGroups
+        .grpLabel$[.g] = emlCountGroups.groupLabel$[.g]
+    endfor
+
     selectObject: .objectId
     .nRows = Get number of rows
-
-    .nGroups = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisGroup$ = Get value: .i, .groupCol$
-
-        .found = 0
-        for .g from 1 to .nGroups
-            if .thisGroup$ = .uniqueGroup$[.g]
-                .found = 1
-            endif
-        endfor
-
-        if .found = 0
-            .nGroups = .nGroups + 1
-            .uniqueGroup$[.nGroups] = .thisGroup$
-        endif
-    endfor
 
     @emlOptimizePaletteContrast: .nGroups
 
@@ -2296,7 +2250,7 @@ procedure emlDrawBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .c
         .thisVal = number (.val$)
 
         for .g from 1 to .nGroups
-            if .thisGroup$ = .uniqueGroup$[.g]
+            if .thisGroup$ = .grpLabel$[.g]
                 .groupCount'.g' = .groupCount'.g' + 1
                 .c = .groupCount'.g'
                 .groupData'.g'_'.c' = .thisVal
@@ -2358,7 +2312,7 @@ procedure emlDrawBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .c
             .data#[.k] = .groupData'.g'_'.k'
         endfor
 
-        .colorIdx = (((.g - 1) mod 10) + 1)
+        .colorIdx = .g
 
         @emlDrawBox: .g, .data#, emlSetColorPalette.fill$[.colorIdx], emlSetColorPalette.line$[.colorIdx], .yMin, .yMax, 0.25
     endfor
@@ -2372,7 +2326,7 @@ procedure emlDrawBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .c
                 for .k from 1 to .n
                     jitterData#[.k] = .groupData'.g'_'.k'
                 endfor
-                .colorIdx = (((.g - 1) mod 10) + 1)
+                .colorIdx = .g
                 @emlDrawJitteredPoints: .g, emlSetColorPalette.line$[.colorIdx], emlSetAdaptiveTheme.markerSize * 0.5, 0.12
             endfor
         endif
@@ -2495,10 +2449,14 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
         .hasGroups = 1
         @emlCountGroups: .objectId, .groupCol$
         .nGroups = emlCountGroups.nGroups
-        if .nGroups > 10
-            appendInfoLine: "WARNING: " + string$ (.nGroups) + " groups. Only first 10 plotted."
-            .nGroups = 10
-        endif
+
+    endif
+
+    # 1-group edge case: faceting a single group produces viewport
+    # mismatch between bar rendering and garnish. Treat as ungrouped.
+    if .nGroups = 1
+        .hasGroups = 0
+        .displayMode = 1
     endif
 
     if .hasGroups = 1
@@ -2614,7 +2572,7 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
             endif
 
             # Bars
-            .colorIdx = (((.g - 1) mod 10) + 1)
+            .colorIdx = .g
             for .b from 1 to .nBins
                 .barLeft = .xMin + (.b - 1) * .binWidth
                 .barRight = .barLeft + .binWidth
@@ -2722,7 +2680,7 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
 
                 for .g from 1 to .nGroups
                     .barTop = .count'.g'_'.b'
-                    .colorIdx = (((.g - 1) mod 10) + 1)
+                    .colorIdx = .g
 
                     if .barTop > 0
                         .clamped = min (.barTop, .yMax)
@@ -2770,7 +2728,7 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
 
         legendN = .nGroups
         for .g from 1 to .nGroups
-            .colorIdx = (((.g - 1) mod 10) + 1)
+            .colorIdx = .g
             legendColor$[.g] = emlSetColorPalette.line$[.colorIdx]
             @emlSanitizeLabel: emlCountGroups.groupLabel$[.g]
             legendLabel$[.g] = emlSanitizeLabel.result$
@@ -2841,47 +2799,22 @@ procedure emlDrawGroupedViolin: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
     @emlSanitizeLabel: .title$
     .title$ = emlSanitizeLabel.result$
 
-    # Step 2: Extract unique categories
+    # Step 2: Extract unique categories via single source
+    @emlCountGroups: .objectId, .catCol$
+    .nCats = emlCountGroups.nGroups
+    for .c from 1 to .nCats
+        .cat$[.c] = emlCountGroups.groupLabel$[.c]
+    endfor
+
+    # Step 3: Extract unique sub-groups via single source
+    @emlCountGroups: .objectId, .subCol$
+    .nSubs = emlCountGroups.nGroups
+    for .s from 1 to .nSubs
+        .sub$[.s] = emlCountGroups.groupLabel$[.s]
+    endfor
+
     selectObject: .objectId
     .nRows = Get number of rows
-
-    .nCats = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisCat$ = Get value: .i, .catCol$
-        .found = 0
-        for .c from 1 to .nCats
-            if .thisCat$ = .cat$[.c]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nCats = .nCats + 1
-            .cat$[.nCats] = .thisCat$
-        endif
-    endfor
-
-    # Step 3: Extract unique sub-groups
-    .nSubs = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisSub$ = Get value: .i, .subCol$
-        .found = 0
-        for .s from 1 to .nSubs
-            if .thisSub$ = .sub$[.s]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nSubs = .nSubs + 1
-            .sub$[.nSubs] = .thisSub$
-        endif
-    endfor
-
-    if .nSubs > 10
-        appendInfoLine: "WARNING: " + string$ (.nSubs) + " sub-groups. Only first 10 plotted."
-        .nSubs = 10
-    endif
 
     @emlOptimizePaletteContrast: .nSubs
 
@@ -2993,7 +2926,7 @@ procedure emlDrawGroupedViolin: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
                 .totalGroupWidth = (.nSubs - 1) * .spacing
                 .subCenter = .c - .totalGroupWidth / 2 + (.s - 1) * .spacing
 
-                .colorIdx = (((.s - 1) mod 10) + 1)
+                .colorIdx = .s
                 @emlDrawViolin: .subCenter, .data#, emlSetColorPalette.fill$[.colorIdx], emlSetColorPalette.line$[.colorIdx], .yMin, .yMax, .subViolinWidth
             endif
         endfor
@@ -3012,7 +2945,7 @@ procedure emlDrawGroupedViolin: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
                         endfor
                         .totalGroupWidth = (.nSubs - 1) * .spacing
                         .subCenter = .c - .totalGroupWidth / 2 + (.s - 1) * .spacing
-                        .colorIdx = (((.s - 1) mod 10) + 1)
+                        .colorIdx = .s
                         .jitterW = .subViolinWidth * 0.3
                         @emlDrawJitteredPoints: .subCenter, emlSetColorPalette.line$[.colorIdx], emlSetAdaptiveTheme.markerSize * 0.4, .jitterW
                     endif
@@ -3052,7 +2985,7 @@ procedure emlDrawGroupedViolin: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
     @emlPlaceElements: .qTL, .qTR, .qBL, .qBR, .xMid, 1
     legendN = .nSubs
     for .s from 1 to .nSubs
-        .colorIdx = (((.s - 1) mod 10) + 1)
+        .colorIdx = .s
         legendColor$[.s] = emlSetColorPalette.line$[.colorIdx]
         @emlSanitizeLabel: .sub$[.s]
         legendLabel$[.s] = emlSanitizeLabel.result$
@@ -3099,43 +3032,22 @@ procedure emlDrawGroupedBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .
     @emlSanitizeLabel: .title$
     .title$ = emlSanitizeLabel.result$
 
-    selectObject: .objectId
-    .nRows = Get number of rows
-    .nCats = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisCat$ = Get value: .i, .catCol$
-        .found = 0
-        for .c from 1 to .nCats
-            if .thisCat$ = .cat$[.c]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nCats = .nCats + 1
-            .cat$[.nCats] = .thisCat$
-        endif
+    # Extract unique categories and sub-groups via single source
+    @emlCountGroups: .objectId, .catCol$
+    .nCats = emlCountGroups.nGroups
+    for .c from 1 to .nCats
+        .cat$[.c] = emlCountGroups.groupLabel$[.c]
     endfor
 
-    .nSubs = 0
-    for .i from 1 to .nRows
-        selectObject: .objectId
-        .thisSub$ = Get value: .i, .subCol$
-        .found = 0
-        for .s from 1 to .nSubs
-            if .thisSub$ = .sub$[.s]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nSubs = .nSubs + 1
-            .sub$[.nSubs] = .thisSub$
-        endif
+    @emlCountGroups: .objectId, .subCol$
+    .nSubs = emlCountGroups.nGroups
+    for .s from 1 to .nSubs
+        .sub$[.s] = emlCountGroups.groupLabel$[.s]
     endfor
-    if .nSubs > 10
-        appendInfoLine: "WARNING: " + string$ (.nSubs) + " sub-groups. Capping at 10."
-        .nSubs = 10
-    endif
+
+    selectObject: .objectId
+    .nRows = Get number of rows
+
     @emlOptimizePaletteContrast: .nSubs
 
     for .c from 1 to .nCats
@@ -3226,7 +3138,7 @@ procedure emlDrawGroupedBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .
                 endfor
                 .totalGroupWidth = (.nSubs - 1) * .spacing
                 .subCenter = .c - .totalGroupWidth / 2 + (.s - 1) * .spacing
-                .colorIdx = (((.s - 1) mod 10) + 1)
+                .colorIdx = .s
                 @emlDrawBox: .subCenter, .data#, emlSetColorPalette.fill$[.colorIdx], emlSetColorPalette.line$[.colorIdx], .yMin, .yMax, .subBoxWidth
             endif
         endfor
@@ -3244,7 +3156,7 @@ procedure emlDrawGroupedBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .
                         endfor
                         .totalGroupWidth = (.nSubs - 1) * .spacing
                         .subCenter = .c - .totalGroupWidth / 2 + (.s - 1) * .spacing
-                        .colorIdx = (((.s - 1) mod 10) + 1)
+                        .colorIdx = .s
                         @emlDrawJitteredPoints: .subCenter, emlSetColorPalette.line$[.colorIdx], emlSetAdaptiveTheme.markerSize * 0.4, .subBoxWidth * 0.3
                     endif
                 endfor
@@ -3284,7 +3196,7 @@ procedure emlDrawGroupedBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .
 
     legendN = .nSubs
     for .s from 1 to .nSubs
-        .colorIdx = (((.s - 1) mod 10) + 1)
+        .colorIdx = .s
         legendColor$[.s] = emlSetColorPalette.line$[.colorIdx]
         @emlSanitizeLabel: .sub$[.s]
         legendLabel$[.s] = emlSanitizeLabel.result$

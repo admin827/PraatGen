@@ -12,7 +12,6 @@
 # Development: Claude (Anthropic)
 # Version: 1.2
 # Date: 2 April 2026
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
 # Provides:
 #   Core:  @emlResetSans, @emlClearPage, @emlAccentLine, @emlGuideTick,

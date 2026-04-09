@@ -1,6 +1,6 @@
 # EML Praat Tools — Procedure Registry
 
-Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedures (250 public, 5 internal)
+Generated: 8 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 251 procedures (246 public, 5 internal)
 
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -53,14 +53,13 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlRepeatVector` | Repeat a vector nReps times | .v#, .nReps | public |
 
 ## Stats: Extraction
-**File:** `stats/eml-extract.praat` (v1.0) — 13 procedures
+**File:** `stats/eml-extract.praat` (v1.2) — 13 procedures (12 public, 1 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlExtractColumn` | Extract numeric column from Table as vector | .tableId, .columnName$ | public |
 | `@emlExtractColumnAsStrings` | Extract string column from Table as string array | .tableId, .columnName$ | public |
 | `@emlExtractGroupVectors` | Split column into two vectors by group labels | .tableId, .measureCol$, .groupCol$, .label1$, .label2$ | public |
-| `@emlExtractMultipleGroups` | Split column into k vectors by group (auto-detect groups) | .tableId, .measureCol$, .groupCol$ | public |
 | `@emlExtractPairedColumns` | Extract two paired numeric columns as vectors | .tableId, .col1$, .col2$ | public |
 | `@emlExtractPitchValues` | Extract defined F0 frames from Pitch object as vector | .pitchId, .unit$ | public |
 | `@emlExtractFormantValues` | Extract formant values from Formant object as vector | .formantId, .formantNumber, .unit$ | public |
@@ -70,14 +69,16 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlValidateNumericColumn` | Check column contains numeric data | .tableId, .columnName$ | public |
 | `@emlTableColumnNames` | List all column names in a Table | .tableId | public |
 | `@emlCountGroups` | Count distinct group labels in a column | .tableId, .groupCol$ | public |
+| `@eml_getGroupData` | Extract one group's data from Table by label (internal helper) | .tableId, .dataCol$, .groupCol$, .groupLabel$ | internal |
 
 ## Stats: Output
-**File:** `stats/eml-output.praat` (v1.1) — 20 procedures
+**File:** `stats/eml-output.praat` (v1.3) — 21 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlPadRight` | Pad string with trailing spaces to target length | .text$, .targetLength | public |
 | `@emlUnderscoreToSpace` | Replace all underscores with spaces | .text$ | public |
+| `@emlClearInfo` | Explicit Info window clear for dialog handlers | — | public |
 | `@emlReportHeader` | Print report header with borders (clears Info window) | .title$ | public |
 | `@emlReportFooter` | Print report footer with borders | — | public |
 | `@emlReportSection` | Print section divider with title | .title$ | public |
@@ -98,7 +99,7 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlExportStatsCSV` | Export accumulated CSV data to file | .filePath$ | public |
 
 ## Stats: Inferential
-**File:** `stats/eml-inferential.praat` (v0.9) — 26 procedures (22 public, 4 internal)
+**File:** `stats/eml-inferential.praat` (v1.2) — 25 procedures (22 public, 3 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -124,13 +125,12 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlEpsilonSquared` | Epsilon-squared effect size for Kruskal-Wallis | .h, .n | public |
 | `@emlKruskalWallis` | Kruskal-Wallis H test (nonparametric k-group comparison) | .tableId, .dataCol$, .factorCol$ | public |
 | `@emlDunnTest` | Dunn's test with Holm adjustment after Kruskal-Wallis | .tableId, .dataCol$, .factorCol$, .method$ | public |
-| `@eml_getGroupData` | Extract group data by index from emlTableFromGroups (internal) | .groupIdx | internal |
 | `@emlPairwiseT` | All pairwise t-tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$, .type$ | public |
 | `@emlPairwiseWilcoxon` | All pairwise Wilcoxon tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$ | public |
 | `@emlScheffe` | Scheffe post-hoc test after ANOVA | .tableId, .dataCol$, .factorCol$ | public |
 
 ## Graphs: Core
-**File:** `graphs/eml-graph-procedures.praat` (v3.18) — 45 procedures
+**File:** `graphs/eml-graph-procedures.praat` (v3.20) — 45 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -181,27 +181,27 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlMeasureBarData` | Extract means, errors, and ranges for bar chart groups | .tableId, .groupCol$, .valueCol$, .errorMode, .errorCol$ | public |
 
 ## Graphs: Draw
-**File:** `graphs/eml-draw-procedures.praat` (v1.12) — 14 procedures
+**File:** `graphs/eml-draw-procedures.praat` (v1.16) — 14 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
-| `@emlDrawF0Contour` | Draw F0 pitch contour from Pitch object | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawWaveform` | Draw Sound waveform | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawSpectrum` | Draw Spectrum (frequency domain) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawLTAS` | Draw Long-Term Average Spectrum (multi-method support) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawTimeSeries` | Draw time series line plot from Table columns | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawTimeSeriesCI` | Draw time series with confidence interval band | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawSpaghettiPlot` | Draw individual subject lines overlaid (spaghetti plot) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawBarChart` | Draw grouped bar chart with error bars | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawViolinPlot` | Draw violin plot with embedded box plot and data points | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawScatterPlot` | Draw scatter plot with optional regression line | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawBoxPlot` | Draw box-and-whisker plot | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawHistogram` | Draw frequency histogram with optional faceting | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawGroupedViolin` | Draw side-by-side violin plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
-| `@emlDrawGroupedBoxPlot` | Draw side-by-side box plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .nGroups | public |
+| `@emlDrawF0Contour` | Draw F0 pitch contour from Pitch object | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .tMin, .tMax, .fMin, .fMax, .yUnit | public |
+| `@emlDrawWaveform` | Draw Sound waveform | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .tMin, .tMax, .aMin, .aMax | public |
+| `@emlDrawSpectrum` | Draw Spectrum (frequency domain) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .fMin, .fMax, .pMin, .pMax | public |
+| `@emlDrawLTAS` | Draw Long-Term Average Spectrum (multi-method support) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .fMin, .fMax, .pMin, .pMax, .showCurve, .showBars, .showPoles, .showSpeckles | public |
+| `@emlDrawTimeSeries` | Draw time series line plot from Table columns | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .timeCol$, .valueCol$, .groupCol$, .tMin, .tMax, .vMin, .vMax | public |
+| `@emlDrawTimeSeriesCI` | Draw time series with confidence interval band | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .timeCol$, .valueCol$, .groupCol$, .tMin, .tMax, .vMin, .vMax | public |
+| `@emlDrawSpaghettiPlot` | Draw individual subject lines overlaid (spaghetti plot) | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .condCol$, .valueCol$, .idCol$, .groupCol$, .showMean, .vMin, .vMax | public |
+| `@emlDrawBarChart` | Draw grouped bar chart with error bars | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .groupCol$, .valueCol$, .errorMode, .errorCol$, .vMin, .vMax | public |
+| `@emlDrawViolinPlot` | Draw violin plot with embedded box plot and data points | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .groupCol$, .valueCol$, .vMin, .vMax | public |
+| `@emlDrawScatterPlot` | Draw scatter plot with optional regression line | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .colX$, .colY$, .groupCol$, .xMin, .xMax, .yMin, .yMax, .annotate | public |
+| `@emlDrawBoxPlot` | Draw box-and-whisker plot | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .groupCol$, .valueCol$, .vMin, .vMax | public |
+| `@emlDrawHistogram` | Draw frequency histogram with optional faceting | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .valueCol$, .groupCol$, .binCount, .displayMode, .vMin, .vMax, .freqMax | public |
+| `@emlDrawGroupedViolin` | Draw side-by-side violin plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .catCol$, .subCol$, .valueCol$, .vMin, .vMax | public |
+| `@emlDrawGroupedBoxPlot` | Draw side-by-side box plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .catCol$, .subCol$, .valueCol$, .vMin, .vMax | public |
 
 ## Graphs: Annotation & Shared Reporters
-**File:** `graphs/eml-annotation-procedures.praat` (v3.8) — 23 procedures
+**File:** `graphs/eml-annotation-procedures.praat` (v3.15) — 23 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -230,7 +230,10 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlReportTwoWayAnova` | Shared reporter for two-way ANOVA (Info + CSV) | .tableName$, .dataCol$, .factor1$, .factor2$ | public |
 
 ## Scripts: Graphs Main
-**File:** `scripts/eml-graphs.praat` (v2.44) — 7 procedures
+**File:** `scripts/eml-graphs.praat` (v3.0) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
+
+## Scripts: Graphs Form & Workflow
+**File:** `graphs/eml-graphs-form.praat` (v1.4) — 8 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -241,6 +244,7 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlSaveConfig` | Save current graph settings to preferences file | — | public |
 | `@emlDetectContext` | Detect selected object type and configure graph options | — | public |
 | `@emlBuildFilteredMenu` | Build graph type menu filtered by selected object type | — | public |
+| `@emlGraphsWorkflow` | Unified graph creation workflow (standalone and stats-wrapper entry) | .objectId | public |
 
 ## Scripts: Wizard
 **File:** `scripts/eml-wizard.praat` (v1.4) — 15 procedures
@@ -248,8 +252,8 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@wizardNormDiag` | Run normality diagnostics (skewness, kurtosis) for wizard | .data#, .label$ | public |
-| `@wizardRunIndepT` | Execute independent t-test from wizard selections | .g1#, .g2#, .label1$, .label2$ | public |
-| `@wizardRunMWU` | Execute Mann-Whitney U test from wizard selections | .g1#, .g2#, .label1$, .label2$ | public |
+| `@wizardRunIndepT` | Execute independent t-test from wizard selections | .g1#, .g2#, .label1$, .label2$, .dataCol$, .groupCol$ | public |
+| `@wizardRunMWU` | Execute Mann-Whitney U test from wizard selections | .g1#, .g2#, .label1$, .label2$, .dataCol$, .groupCol$ | public |
 | `@wizardRunPairedT` | Execute paired t-test from wizard selections | .v1#, .v2#, .col1$, .col2$ | public |
 | `@wizardRunWilcoxonSR` | Execute Wilcoxon signed-rank test from wizard selections | .v1#, .v2#, .col1$, .col2$ | public |
 | `@wizardRunAnova` | Execute one-way ANOVA from wizard selections | .tableId, .dataCol$, .groupCol$ | public |
@@ -273,26 +277,21 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlCheckStopSentinel` | Check if user requested batch stop via sentinel file | .sentinelPath$ | public |
 
 ## Vibrato
-**File:** `vibrato/eml-vibrato-procedures.praat` (v2.0) — 16 procedures
+**File:** `vibrato/eml-vibrato-procedures.praat` (v2.0) — 11 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlVibratoScanTextGrid` | Find labeled intervals in TextGrid for vibrato analysis | .textGridId, .tierNum | public |
 | `@emlVibratoSelectIntervals` | Let user select which intervals to analyze | — | public |
-| `@emlVibratoAxisRange` | Compute axis ranges for vibrato scatter/summary plots | .min, .max, .median, .nDivisions | public |
+| `@emlVibratoAxisRange` | Compute axis ranges for vibrato scatter/summary plots | .min, .max, .median, .nDivisions, .allowNegative, .expand | public |
 | `@emlVibratoAutoFilename` | Generate output filename from source Sound name | .baseName$, .suffix$, .extension$ | public |
 | `@emlVibratoPitchSetup` | Create and configure Pitch object for vibrato detection | .soundId, .lowPitch, .highPitch, .interpolate | public |
-| `@emlVibratoDetectCycles` | Detect vibrato cycles via peak/valley detection in PitchTier | .pitchSmoothId, .ppAudioId, .intensityId | public |
+| `@emlVibratoDetectCycles` | Detect vibrato cycles via peak/valley detection in PitchTier | .ppSmoothId, .ppAudioId, .intensityId, .avgIntensity, .silThreshold | public |
 | `@emlVibratoInsertHalfCycles` | Insert half-cycle boundaries into TextGrid | .tableId | public |
 | `@emlVibratoSmooth` | Apply smoothing to PitchTier for cycle detection | .tableId, .avgCycles, .lowRate, .highRate | public |
-| `@emlVibratoFilter` | Filter vibrato cycles by rate and extent thresholds | .tableId, .lowRate, .highRate | public |
-| `@emlVibratoJitter` | Compute cycle-to-cycle jitter for vibrato regularity | .tableId, .lowRate, .highRate | public |
-| `@emlVibratoSummary` | Compute summary statistics for detected vibrato | .includeId, .smoothIncludeId | public |
-| `@emlVibratoDrawDualScatter` | Draw rate vs. extent scatter plot | .includeId, .excludeId | public |
-| `@emlVibratoDrawCoV` | Draw coefficient of variation bar chart | .tableId, .startTime, .endTime | public |
-| `@emlVibratoDrawPitchIntensity` | Draw pitch + intensity contour overlay | .pitchSmoothId, .intensityId | public |
-| `@emlVibratoDrawSummaryTable` | Draw formatted summary statistics table in figure | .vpLeft, .vpRight, .vpTop, .vpBottom | public |
-| `@emlVibratoDrawFigure` | Draw complete multi-panel vibrato analysis figure | .smoothedTableId, .includeId, .excludeId | public |
+| `@emlVibratoFilter` | Filter vibrato cycles by rate and extent thresholds | .tableId, .lowRate, .highRate, .lowExtent, .highExtent | public |
+| `@emlVibratoJitter` | Compute cycle-to-cycle jitter for vibrato regularity | .tableId, .lowRate, .highRate, .startTime, .endTime | public |
+| `@emlVibratoSummary` | Compute summary statistics for detected vibrato | .includeId, .smoothIncludeId, .pitchId, .intensityId | public |
 
 ## Demo Window
 **File:** `tutorial/eml-demo-procedures.praat` (v1.2) — 31 procedures
@@ -347,4 +346,4 @@ Generated: 4 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 255 procedu
 | `@emlTestSummary` | Print pass/fail summary and exit with status | — | public |
 
 ---
-**Total: 255 procedures** (250 public, 5 internal) across 14 files
+**Total: 251 procedures** (246 public, 5 internal) across 15 files

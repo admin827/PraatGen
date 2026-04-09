@@ -3,9 +3,13 @@
 # ============================================================================
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
-# Version: 3.18
-# Date: 4 April 2026
+# License: Creative Commons Share-Alike
+# Version: 3.20
+# Date: 6 April 2026
+#
+# v3.20: Group sort unification — @emlExtractUniqueValues and
+#         @emlMeasureBarData now call @emlCountGroups instead of inline
+#         discovery. All group ordering flows through single source.
 #
 # v3.18: Stereo channel handling — @emlCheckChannels no longer silently
 #         converts to mono. Refactored to present user dialog via new
@@ -478,6 +482,14 @@ procedure emlSetColorPalette: .mode$
         .sprite$[8] = "black"
         .sprite$[9] = "blue"
         .sprite$[10] = "orange"
+        # Cycle 8 Okabe-Ito hues for groups beyond 10
+        for .i from 11 to 30
+            .cycleIdx = ((.i - 1) mod 8) + 1
+            .line$[.i] = .line$[.cycleIdx]
+            .fill$[.i] = .fill$[.cycleIdx]
+            .lightLine$[.i] = .lightLine$[.cycleIdx]
+            .sprite$[.i] = .sprite$[.cycleIdx]
+        endfor
     else
         # B&W line colors
         .line$[1] = "{0.00, 0.00, 0.00}"
@@ -527,6 +539,14 @@ procedure emlSetColorPalette: .mode$
         .sprite$[8] = "bw07"
         .sprite$[9] = "bw10"
         .sprite$[10] = "bw01"
+        # Cycle BW sprites for groups beyond 10
+        for .i from 11 to 30
+            .cycleIdx = ((.i - 1) mod 8) + 1
+            .line$[.i] = .line$[.cycleIdx]
+            .fill$[.i] = .fill$[.cycleIdx]
+            .lightLine$[.i] = .lightLine$[.cycleIdx]
+            .sprite$[.i] = .sprite$[.cycleIdx]
+        endfor
     endif
 endproc
 
@@ -540,8 +560,8 @@ endproc
 # Side effect: overwrites emlSetColorPalette arrays [1..nGroups]
 # ----------------------------------------------------------------------------
 procedure emlOptimizePaletteContrast: .nGroups
-    # Only remap for 2-10 groups
-    if .nGroups >= 2 and .nGroups <= 10
+    # Only remap for 2+ groups
+    if .nGroups >= 2
         # Save originals
         for .i from 1 to 10
             .origLine$[.i] = emlSetColorPalette.line$[.i]
@@ -632,17 +652,32 @@ procedure emlOptimizePaletteContrast: .nGroups
                 .src[8] = 8
                 .src[9] = 9
                 .src[10] = 10
+            else
+                # >10 groups: 8-hue optimized order, then cycle
+                .src[1] = 1
+                .src[2] = 2
+                .src[3] = 4
+                .src[4] = 6
+                .src[5] = 7
+                .src[6] = 3
+                .src[7] = 5
+                .src[8] = 8
+                for .i from 9 to .nGroups
+                    .src[.i] = ((.i - 1) mod 8) + 1
+                endfor
             endif
         else
             # === B/W MODE ===
             # Default B/W fills (0.82-0.96) are too narrow for overlap.
             # Compute evenly-spaced fills across usable greyscale range.
             # Lines are 0.30 darker than fill for consistent contrast.
+            # Compute up to 8 distinct greys, then cycle for >8 groups.
             .fillMin = 0.25
             .fillMax = 0.90
-            for .i from 1 to .nGroups
-                if .nGroups > 1
-                    .fillVal = .fillMin + (.i - 1) * (.fillMax - .fillMin) / (.nGroups - 1)
+            .distinctN = min (.nGroups, 8)
+            for .i from 1 to .distinctN
+                if .distinctN > 1
+                    .fillVal = .fillMin + (.i - 1) * (.fillMax - .fillMin) / (.distinctN - 1)
                 else
                     .fillVal = 0.85
                 endif
@@ -651,6 +686,13 @@ procedure emlOptimizePaletteContrast: .nGroups
                 emlSetColorPalette.fill$[.i] = "{" + fixed$ (.fillVal, 2) + ", " + fixed$ (.fillVal, 2) + ", " + fixed$ (.fillVal, 2) + "}"
                 emlSetColorPalette.line$[.i] = "{" + fixed$ (.lineVal, 2) + ", " + fixed$ (.lineVal, 2) + ", " + fixed$ (.lineVal, 2) + "}"
                 emlSetColorPalette.lightLine$[.i] = "{" + fixed$ (.lightVal, 2) + ", " + fixed$ (.lightVal, 2) + ", " + fixed$ (.lightVal, 2) + "}"
+            endfor
+            # Cycle for groups beyond 8
+            for .i from .distinctN + 1 to .nGroups
+                .cycleIdx = ((.i - 1) mod .distinctN) + 1
+                emlSetColorPalette.fill$[.i] = emlSetColorPalette.fill$[.cycleIdx]
+                emlSetColorPalette.line$[.i] = emlSetColorPalette.line$[.cycleIdx]
+                emlSetColorPalette.lightLine$[.i] = emlSetColorPalette.lightLine$[.cycleIdx]
             endfor
         endif
 
@@ -2339,24 +2381,12 @@ endproc
 # ============================================================================
 
 procedure emlExtractUniqueValues: .tableId, .colName$
-    selectObject: .tableId
-    .nRows = Get number of rows
-    .nLabels = 0
-    for .i from 1 to .nRows
-        selectObject: .tableId
-        .thisVal$ = Get value: .i, .colName$
-        .found = 0
-        for .j from 1 to .nLabels
-            if .thisVal$ = .raw$[.j]
-                .found = 1
-            endif
-        endfor
-        if .found = 0
-            .nLabels = .nLabels + 1
-            .raw$[.nLabels] = .thisVal$
-            @emlSanitizeLabel: .thisVal$
-            emlCatLabel$[.nLabels] = emlSanitizeLabel.result$
-        endif
+    @emlCountGroups: .tableId, .colName$
+    .nLabels = emlCountGroups.nGroups
+    for .i from 1 to .nLabels
+        .raw$[.i] = emlCountGroups.groupLabel$[.i]
+        @emlSanitizeLabel: .raw$[.i]
+        emlCatLabel$[.i] = emlSanitizeLabel.result$
     endfor
 endproc
 
@@ -2595,22 +2625,11 @@ procedure emlMeasureBarData: .tableId, .groupCol$, .valueCol$, .errorMode, .erro
     selectObject: .tableId
     .nRows = Get number of rows
 
-    emlBarData_nGroups = 0
-    for .i from 1 to .nRows
-        selectObject: .tableId
-        .thisGroup$ = Get value: .i, .groupCol$
-
-        .found = 0
-        for .g from 1 to emlBarData_nGroups
-            if .thisGroup$ = emlBarData_label$[.g]
-                .found = 1
-            endif
-        endfor
-
-        if .found = 0
-            emlBarData_nGroups = emlBarData_nGroups + 1
-            emlBarData_label$[emlBarData_nGroups] = .thisGroup$
-        endif
+    # Extract unique groups via single source
+    @emlCountGroups: .tableId, .groupCol$
+    emlBarData_nGroups = emlCountGroups.nGroups
+    for .g from 1 to emlBarData_nGroups
+        emlBarData_label$[.g] = emlCountGroups.groupLabel$[.g]
     endfor
 
     # Initialize accumulators

@@ -89,7 +89,14 @@ Create SpeechRecognizer: "ggml-base.en.bin", "English"
 # Transcription — no arguments, cross-type command (SpeechRecognizer & Sound)
 # Both objects must be selected
 selectObject: recognizerId, soundId
-Recognize sound
+Recognize sound ;<-- This is NOT in the documentation but was a workaround in Praat 6.4.62
+
+# OR
+
+selectObject: recognizerId, soundId
+Transcribe ;<-- This IS in the documentation and is likely the correct syntax
+
+
 
 # Query commands on SpeechRecognizer
 Get Whisper model name
