@@ -1,3 +1,5 @@
+# ⚠️ Best practice: Use Claude Opus 4.6 with Extended Thinking for anything beyond simple projects. Opus 4.7 is not capable of holding the required information in context. Start every session in Opus 4.6 + ET unless PraatGen tells you otherwise during pre-flight.
+
 # NOTE: To start, all of the files you need are in the current zip folder
 
 # EML PraatGen
@@ -12,8 +14,8 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)  
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)  
-**Version:** 0.9.1-beta.12  
-**Release date:** 8 April 2026  
+**Version:** 0.9.2-beta.14  
+**Release date:** 22 April 2026  
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
 ---
@@ -40,7 +42,7 @@ PraatGen is not a plugin or a standalone application. It is a **Claude Project**
 
 - **Claude Pro, Team, or Enterprise account** (Projects require a paid plan). Note that PraatGen can burn tokens quickly on complex projects. You may want to at least use the Max plan (currently $100/month) for serious code production.
 - **Other AI options:** As of early April 2026, no other frontier model accommodates the modular design of PraatGen. I do not endorse using ChatGPT, Gemini, etc. They have not been tested and I make no guarantees. 
-- **Claude model:** Claude Opus 4.6 or later with Extended Thinking enabled. Sonnet may handle simpler scripts but is not the default recommendation. See the model guidance PraatGen provides during pre-flight.
+- **Claude model:** Claude Opus 4.6 with Extended Thinking enabled. **Not Opus 4.7** — it cannot hold the full prompt and PKB in context. Sonnet may handle simpler scripts but is not the default recommendation. See the model guidance PraatGen provides during pre-flight.
 - **Claude modality:** PraatGen presumes that most users will use the Claude.ai or desktop environment. It can be modified to use with Claude Code by changing references to the pkb (project knowledge base) files in the Master Prompt to the local directory. You may also want to separate the Master Prompt file from your `CLAUDE.md` file. 
 - **Praat:** Version 6.4 or later (current stable release)
 
@@ -78,7 +80,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 ### The Basic Workflow
 
-0. **Verify your model and settings:** Opus 4.6 or higher with Extended Thinking turned on.
+0. **Verify your model and settings:** Opus 4.6 (not 4.7) with Extended Thinking turned on.
 
 1. **Describe your task.** PraatGen asks for four things:
    - What should the script accomplish?
@@ -110,6 +112,7 @@ If you run into any errors with your scripts, or you want to refactor something,
 - **Mention your voice type or analysis context.** PraatGen adjusts pitch tracking parameters for speech vs. singing, and clinical vs. research contexts.
 - **Paste exact error messages.** Include the line number. PraatGen's debugging protocol depends on precise error information.
 - **Verify everything.** Ask PraatGen to review scripts it provides you and to look for errors or inelegant solutions. Some projects are large enough that it makes sense to spend an entire session planing and then taking a handoff document to another session to write the code. 
+- **Accessible color palettes.** When generating multi-color figures, PraatGen will ask if you want an accessible color palette (Okabe-Ito, safe for color vision deficiency). The exact RGB values are loaded from the PKB, not approximated. B/W with line-style redundancy is also available.
 
 ---
 
@@ -117,7 +120,7 @@ If you run into any errors with your scripts, or you want to refactor something,
 
 ### Master Prompt
 
-`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 36 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards. Current content version: 13.2.
+`MASTER_PROMPT_CORE_v13.md` — The system instructions that configure Claude as a Praat scripting specialist. Contains 36 rules governing syntax validation, command verification, clinical defaults, debugging protocol, and code quality standards. Current content version: 13.5.
 
 ### Project Knowledge Base (PKB)
 
@@ -158,7 +161,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 | File | Purpose |
 |------|---------|
-| `APPENDIX_B_FUNCTIONS.txt` | All Praat scripting functions with signatures |
+| `APPENDIX_B_FUNCTIONS.txt` | All Praat scripting functions (375 entries) — rebuilt from official Praat Functions manual page + Formula.cpp source verification |
 | `APPENDIX_C_GUI.txt` | Form and dialog syntax (beginPause/endPause) |
 | `APPENDIX_D_CLINICAL_DEFAULTS.txt` | Clinically validated parameter sets for voice analysis |
 | `APPENDIX_E_SPECIAL_CHARACTERS.txt` | Special character encoding for Picture window text |
@@ -175,7 +178,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 | File | Purpose |
 |------|---------|
-| `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text label safety, spectrum/Ltas/PowerCepstrum axis alignment |
+| `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text label safety, spectrum/Ltas/PowerCepstrum axis alignment, accessible color palette (Okabe-Ito exact RGB values) |
 | `BEST_PRACTICES_CONFIDENCE_FIGURES.txt` | Guidelines for publication-quality statistical figures |
 | `BEST_PRACTICES_AUTO_TEXTGRID_ANNOTATION.md` | Automatic TextGrid annotation, VAD-based segmentation, speech-to-text pipelines |
 | `EML_PROCEDURE_GUIDE.md` | Methodology rules, test selection logic, graph type routing, script generation model |
@@ -216,9 +219,9 @@ PraatGen tracks three version numbers:
 
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
-| **Release** | 0.9.0-beta.12 | The combined package (prompt + PKB). This is the version that matters to users. |
-| **Master Prompt** | 13.2 | The system instructions. Bumped when rules, workflow, or protocols change. |
-| **PKB Snapshot** | 2026-04-08 | The reference file set. Date-stamped when files are added or revised. |
+| **Release** | 0.9.2-beta.14 | The combined package (prompt + PKB). This is the version that matters to users. |
+| **Master Prompt** | 13.5 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **PKB Snapshot** | 2026-04-22 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **0.x.y** — Beta. Expect changes based on tester feedback.
@@ -235,7 +238,7 @@ PraatGen tracks three version numbers:
 
 **Extended thinking dependency.** Complex scripts benefit significantly from Claude's extended thinking capability. The prompt includes gates that recommend when to enable it, but this requires the user to manage the setting manually.
 
-**Opus model dependency.** Sonnet is *NOT* capable of the advanced reasoning required to write these scripts. And if you start the session in Sonnet, Claude will not know that Opus exists. Start in and stay in Opus unless it tells you to use Sonnet for specific tasks. 
+**Opus model dependency.** Sonnet is *NOT* capable of the advanced reasoning required to write these scripts. Opus 4.7 cannot hold the full prompt and PKB in context reliably — use **Opus 4.6** specifically. If you start the session in the wrong model, Claude will not know that Opus 4.6 exists. Start in and stay in Opus 4.6 unless PraatGen tells you to use Sonnet for specific tasks.
 
 **Context window limits.** Very long debugging sessions can exhaust Claude's context window. PraatGen monitors this and offers handoff documents, but prevention (testing scripts carefully before reporting errors, providing exact error messages) is better than cure.
 
