@@ -179,25 +179,35 @@ layers:
   values — 150.00 Hz recovered from a 150 Hz signal by all three pitch
   algorithms, HNR 33.1/34.9 dB, jitter 0.047%, shimmer 0.367%, CPPS 10.67 dB. A
   call returning the right answer has the right parameter order.
-- **Executed from pasted examples.** 207 `COMMANDS_*.txt` entries carry a
-  `# Verified: <exact call>` line. Every one was executed this release rather
-  than trusted. Five were wrong and are corrected — four had a REALVECTOR
-  argument written as bare whitespace-separated numbers (`0 0.5 1`), which Praat
-  rejects; one had four arguments where the command takes five. Every corrected
-  call now runs. The rest that could be executed did so cleanly.
+- **Executed from pasted examples.** The `COMMANDS_*.txt` files carry 169
+  `# Verified: <exact call>` lines. **111 (66%) were executed against Praat
+  6.6.30** this release rather than trusted; all 111 now run clean. Nine were
+  wrong and are corrected: five command defects — four REALVECTOR arguments
+  written as bare whitespace-separated numbers (`0 0.5 1`), which Praat rejects,
+  and one command given four arguments where it takes five — plus four examples
+  whose call was split across lines or carried trailing prose, which made them
+  unexecutable and so untestable.
+
+  The 58 not executed are not unverified in principle, only outside this
+  harness: 47 are commands documented in a target object's file but run on a
+  different type (FormantPath queries inside `COMMANDS_Formant.txt`, creation
+  commands that run on Sound), and 5 need a real audio or text file on disk.
+  Extending the harness to those is the obvious next increment.
 - **Arity-checked.** ~630 commands were probed for existence and parameter count
   by invoking each with excess arguments; three further defects were found and
-  corrected.
+  corrected (`Sound Multiply`, `TextGrid Scale times`, and an undocumented
+  co-selection requirement across the TextGrid Draw/Speckle block).
 
-The remaining gap: for commands with no pasted example, order derives from the
+The remaining gap: most commands have no pasted example at all — 169 examples
+against roughly 800 documented commands — and for those, order derives from the
 Praat C API, the manual and Paste Commands sessions, and no automated check
 covers it — a wrongly-ordered call of the correct arity is accepted silently, so
 the arity probe cannot see it. Concretely, swapping the 6th and 7th arguments of
 `To Pitch (raw cross-correlation)` (silence threshold and voicing threshold,
 both reals) on a signal with a quiet passage yields 441 voiced frames in
 canonical order and 295 swapped, with no error — and identical output on a clean
-tone, so the class is invisible to casual testing too. Extending the pasted-
-example coverage is the way to close it.
+tone, so the class is invisible to casual testing too. Extending pasted-example coverage, and
+the harness that executes it, is the way to close it.
 
 **The fallback catalogue under-specifies range-taking commands.** Praat renders
 a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
