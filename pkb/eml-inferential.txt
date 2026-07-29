@@ -1258,7 +1258,7 @@ procedure emlHolm: .pValues#
 
     if .k = 0
         .error$ = "Empty p-value vector."
-    elif .k = 1
+    elsif .k = 1
         .adjusted# [1] = .pValues# [1]
     else
         # Sort ascending, track original indices
@@ -1319,7 +1319,7 @@ procedure emlBenjaminiHochberg: .pValues#
 
     if .k = 0
         .error$ = "Empty p-value vector."
-    elif .k = 1
+    elsif .k = 1
         .adjusted# [1] = .pValues# [1]
     else
         # Sort ascending, track original indices

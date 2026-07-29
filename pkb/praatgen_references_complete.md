@@ -1,6 +1,6 @@
 # PraatGen — Complete Reference List (Corrected)
 
-Extracted from the EML PraatGen Project Knowledge Base (v13.5), Master Prompt, and associated procedure libraries. All references cited or invoked in the codebase, command files, and appendices.
+Extracted from the EML PraatGen Project Knowledge Base, Master Prompt, and associated procedure libraries. All references cited or invoked in the codebase, command files, and appendices.
 
 Verified against publisher databases 22 April 2026. 
 
@@ -11,11 +11,12 @@ Verified against publisher databases 22 April 2026.
 Boersma, P., & Weenink, D. (2024). *Praat: Doing phonetics by computer* (Version 6.4.62) [Computer software]. Institute of Phonetic Sciences, University of Amsterdam. https://www.fon.hum.uva.nl/praat/
 
 - Praat manual: https://www.fon.hum.uva.nl/praat/manual/
-- Praat source repository: https://github.com/praat/praat.github.io
+- Praat source repository: https://github.com/praat/praat
+- Praat website repository: https://github.com/praat/praat.github.io
 - Special symbols reference: https://www.fon.hum.uva.nl/praat/manual/Special_symbols.html
 - Functions reference: https://www.fon.hum.uva.nl/praat/manual/Functions.html
 
-Howell, I. (2026). *EML PraatGen Scripting Assistant* (v13.5). Embodied Music Lab. https://www.embodiedmusiclab.com / https://github.com/embodied-music-lab/PraatGen
+Howell, I. (2026). *EML PraatGen Scripting Assistant*. Embodied Music Lab. https://www.embodiedmusiclab.com / https://github.com/embodied-music-lab/PraatGen
 
 ---
 

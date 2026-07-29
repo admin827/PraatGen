@@ -1,4 +1,4 @@
-# EML Praat Assistant — Developer Mode Addon
+# EML PraatGen — Developer Mode Addon
 #
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -52,7 +52,7 @@ Inline the content.
 the session generates:
 - Prompt text revisions (section replacements, insertions, or deletions)
 - WHITELIST_CURRENT.txt entries (per Rule 16B)
-- New or revised procedures for EML_DRAWING_PROCEDURES.txt
+- New or revised EML library procedures (eml-graph-procedures.txt, eml-draw-procedures.txt, eml-annotation-procedures.txt)
 - New COMMANDS_*.txt entries or corrections
 - APPENDIX_*.txt corrections or additions
 - Errata discoveries

@@ -138,7 +138,11 @@
   # Convert
   Down to Table (optimal interval): from time, to time, coefficients$, power, include frame number?, include time?, number of time decimals, include intensity?, number of intensity decimals, include number of formants?, number of frequency decimals, include bandwidths?, include optimal ceiling?, include bandwidth of each candidate?
   # Source: PRAAT_DEFINITIVE_CATALOGUE.txt (14 parameters)
-  # [NEEDS PASTE for exact verified syntax]
+  # ⚠️ NOT SANDBOX-VERIFIED. Field order above is from the catalogue
+  #   registration layer only; the catalogue is pinned to 6.4.62 and has
+  #   known under-specification in query blocks. Verify against the dialog
+  #   (Paste history) before emitting this call, and flag the uncertainty
+  #   in SELF-AUDIT rather than asserting verified syntax.
 
   # Draw
   Draw as grid: from time, to time, max frequency, left formant, right formant, show bandwidths$, colour f1 f3 f5$, colour f2 f4$, n rows, n cols, x space fraction, y space fraction, h line every, x cursor, y cursor, coefficients$, mark candidates$, mark colour$, show stress$, power, show estimated$, garnish$
@@ -227,46 +231,12 @@
   # Verified: Draw tracks: 0, 0, 5500, "no"
   #
   # BEHAVIORAL NOTE — Draw tracks vs. Speckle:
-  #
-  # Draw tracks: applies an internal connectivity filter that evaluates
-  # formant candidate continuity across frames. Lower-confidence formants
-  # (commonly F4 and F5, but any formant with weak candidates or
-  # discontinuous tracks) may be partially or fully suppressed. The filter
-  # favors smooth, well-connected formant trajectories — this is a feature
-  # for F1–F3 visualization but a liability when all formant data matters.
-  #
-  # Speckle: draws every formant value for every frame unconditionally,
-  # without connectivity filtering. All formants appear regardless of
-  # confidence. The result is a scatter of dots rather than connected tracks.
-  #
-  # RECOMMENDED LAYERING PATTERN:
-  # When both connectivity and completeness matter (e.g., confidence
-  # figures, QA, formant overlay on spectrograms), use both in sequence:
-  #
-  #   1. Speckle first — shows ALL formant data including weak candidates
-  #   2. Draw tracks on top — highlights the stronger, continuous signal
-  #
-  # Example (with spectrogram underlay):
-  #
-  #   selectObject: spectrogramId
-  #   Paint: 0, 0, 0, 5500, 100, "yes", 50, 6, 0, "no"
-  #
-  #   selectObject: formantId
-  #   # Layer 1: all formant values (lighter color or smaller markers)
-  #   Colour: "{0.75, 0.75, 0.75}"
-  #   Speckle: 0, 0, 5500, 30, "no"
-  #   # Layer 2: connected tracks (stronger color)
-  #   Colour: "{0.90, 0.60, 0.0}"
-  #   Draw tracks: 0, 0, 5500, "no"
-  #
-  # The dynamic range parameter in Speckle (default 30 dB) controls which
-  # formant candidates are drawn based on their amplitude relative to the
-  # frame maximum. Lower values = fewer candidates shown per frame.
-  #
-  # Provenance: Empirical testing, 22 April 2026. F4–F5 suppression
-  # observed with Draw tracks on voice recordings; Speckle showed all
-  # five formants. Connectivity filter is internal to Praat, not
-  # configurable via parameters.
+  #   Draw tracks applies an internal connectivity filter and may suppress
+  #   low-confidence formants (commonly F4/F5). Speckle draws every value
+  #   unconditionally. For the full comparison, the recommended Speckle+
+  #   Draw tracks layering pattern, and provenance, see the standalone
+  #   section "BEHAVIORAL NOTES: Draw tracks vs. Speckle" near the end of
+  #   this file.
 
   # Other
   Scatter plot: from time, to time, horizontal formant number, left, right, vertical formant number, bottom, top, mark size, garnish?, mark string$

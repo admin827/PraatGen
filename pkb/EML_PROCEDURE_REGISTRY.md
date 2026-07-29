@@ -1,9 +1,16 @@
 # EML Praat Tools — Procedure Registry
 
-Generated: 8 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 251 procedures (246 public, 5 internal)
+Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 pre-release | 238 procedures (233 public, 5 internal)
 
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
+> **Path convention.** Every `**File:**` entry below uses the *plugin tree* path
+> (`stats/…`, `graphs/…`, `egg/…`, `*.praat`). In Project Knowledge these files
+> are shipped **flattened**: the plugin path `graphs/eml-graph-procedures.praat`
+> is the file `eml-graph-procedures.txt`. To retrieve an implementation, search
+> PK for the procedure name or the flattened stem (drop the subdir, swap
+> `.praat`→`.txt`); the `include ../graphs/….praat` lines inside source files are
+> plugin-tree references and are not expected to resolve in the flat PK layout.
 
 ---
 
@@ -97,26 +104,6 @@ Generated: 8 April 2026 | Source: plugin_EMLTools v1.0 pre-release | 251 procedu
 | `@emlCSVInit` | Initialize CSV export accumulator arrays | — | public |
 | `@emlCSVAddRow` | Add one row to CSV accumulator | .table$, .dataCol$, .groupCol$, .g1$, .g2$, .test$, .stat, .df, .p, .es, .esType$, .esLabel$, .n1, .n2, .mean1, .sd1, .median1, .mean2, .sd2, .median2 | public |
 | `@emlExportStatsCSV` | Export accumulated CSV data to file | .filePath$ | public |
-| `@emlWrapperCommonFields` | Injects shared fields ("Clear Info window") into active beginPause dialog | (none) | public |
-| `@emlHandleCommonFields` | Post-endPause handler for shared fields (clears Info if toggled) | (none) | public |
-| `@emlWizardExplainP` | P-value interpretation (significance thresholds) | .p | public |
-| `@emlWizardExplainEffectD` | Cohen's d magnitude label | .d | public |
-| `@emlWizardExplainEffectR` | Rank-biserial r magnitude label | .r | public |
-| `@emlWizardExplainEffectEta2` | Eta-squared magnitude with % variance | .eta2 | public |
-| `@emlWizardExplainCorrelation` | Correlation strength + direction label | .r | public |
-| `@emlWizardExplainR2` | R-squared as % variance explained | .r2 | public |
-| `@emlWizardExplainT` | t-statistic as signal-to-noise ratio | .t | public |
-| `@emlWizardExplainF` | F-statistic as variance ratio | .f | public |
-| `@emlWizardExplainDfBetween` | ANOVA between-groups df explanation | .df, .nGroups | public |
-| `@emlWizardExplainDfWithin` | ANOVA within-groups df explanation | .df, .nTotal, .nGroups | public |
-| `@emlWizardExplainDfTTest` | t-test df explanation (Welch vs standard) | .df, .method$ | public |
-| `@emlWizardExplainDfPaired` | Paired t-test df explanation | .df, .nPairs | public |
-| `@emlWizardExplainDfCorrelation` | Correlation df explanation | .df, .n | public |
-| `@emlWizardExplainNormW` | Shapiro-Wilk W interpretation | .w | public |
-| `@emlWizardExplainSkewness` | Skewness direction and magnitude label | .skew | public |
-| `@emlWizardExplainKurtosis` | Kurtosis tail weight label | .kurt | public |
-
-All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlReportLine` or `@emlReportLineString` call. They are no-ops when `emlWizardMode = 0` (callers gate on the flag before calling).
 
 ## Stats: Inferential
 **File:** `stats/eml-inferential.praat` (v1.2) — 25 procedures (22 public, 3 internal)
@@ -148,8 +135,6 @@ All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlRe
 | `@emlPairwiseT` | All pairwise t-tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$, .type$ | public |
 | `@emlPairwiseWilcoxon` | All pairwise Wilcoxon tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$ | public |
 | `@emlScheffe` | Scheffe post-hoc test after ANOVA | .tableId, .dataCol$, .factorCol$ | public |
-| `@emlLinearRegression` | OLS simple linear regression (slope, intercept, R², SE, F, p) | .x#, .y# | public |
-| `@emlTheilSen` | Theil-Sen robust median-based regression (Conover intercept, scipy-verified) | .x#, .y# | public |
 
 
 ## Graphs: Core
@@ -224,7 +209,7 @@ All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlRe
 | `@emlDrawGroupedBoxPlot` | Draw side-by-side box plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .catCol$, .subCol$, .valueCol$, .vMin, .vMax | public |
 
 ## Graphs: Annotation & Shared Reporters
-**File:** `graphs/eml-annotation-procedures.praat` (v3.15) — 23 procedures
+**File:** `graphs/eml-annotation-procedures.praat` → PKB `eml-annotation-procedures.txt` (v3.15) — 23 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -247,12 +232,10 @@ All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlRe
 | `@emlReportBridgeStats` | Thin dispatcher — routes to shared reporters by test type | .tableId, .dataCol$, .groupCol$ | public |
 | `@emlReportTwoGroupComparison` | Shared reporter for 2-group tests (Info window + CSV) | .tableName$, .dataCol$, .groupCol$, .group1$, .group2$, .n1, .mean1, .sd1, .median1, .n2, .mean2, .sd2, .median2, .testType$ | public |
 | `@emlReportAnovaComparison` | Shared reporter for ANOVA with optional Tukey HSD (Info + CSV) | .tableName$, .dataCol$, .groupCol$, .tableId, .nGroups, .doTukey | public |
-| `@emlReportKWComparison` | Shared reporter for Kruskal-Wallis with optional Dunn's (Info + CSV) | .tableName$, .dataCol$, .groupCol$, .nGroups, .doDunn | public |
+| `@emlReportKWComparison` | Shared reporter for Kruskal-Wallis with optional Dunn's (Info + CSV) | .tableName$, .dataCol$, .groupCol$, .tableId, .nGroups, .doDunn | public |
 | `@emlReportPairedComparison` | Shared reporter for paired t-test / Wilcoxon SR (Info + CSV) | .tableName$, .col1$, .col2$, .n, .mean1, .sd1, .median1, .mean2, .sd2, .median2, .testType$ | public |
 | `@emlReportCorrelationAnalysis` | Shared reporter for Pearson / Spearman correlation (Info + CSV) | .tableName$, .colX$, .colY$, .n, .testType$ | public |
 | `@emlReportTwoWayAnova` | Shared reporter for two-way ANOVA (Info + CSV) | .tableName$, .dataCol$, .factor1$, .factor2$ | public |
-| `@emlReportRegressionAnalysis` | Formatted Info window report for simple linear regression | .tableName$, .depCol$, .predCol$, .nValid, .nUndefined | public |
-| `@emlReportNormalityAnalysis` | Formatted Info window report for normality assessment (Shapiro-Wilk, skewness, kurtosis, recommendation) | .tableName$, .dataCol$, .nValid, .nUndefined | public |
 
 ## Scripts: Graphs Main
 **File:** `scripts/eml-graphs.praat` (v3.0) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
@@ -270,27 +253,6 @@ All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlRe
 | `@emlDetectContext` | Detect selected object type and configure graph options | — | public |
 | `@emlBuildFilteredMenu` | Build graph type menu filtered by selected object type | — | public |
 | `@emlGraphsWorkflow` | Unified graph creation workflow (standalone and stats-wrapper entry) | .objectId | public |
-
-## Scripts: Wizard
-**File:** `scripts/eml-wizard.praat` (v1.4) — 15 procedures
-
-| Procedure | Purpose | Parameters | Scope |
-|-----------|---------|------------|-------|
-| `@wizardNormDiag` | Run normality diagnostics (skewness, kurtosis) for wizard | .data#, .label$ | public |
-| `@wizardRunIndepT` | Execute independent t-test from wizard selections | .g1#, .g2#, .label1$, .label2$, .dataCol$, .groupCol$ | public |
-| `@wizardRunMWU` | Execute Mann-Whitney U test from wizard selections | .g1#, .g2#, .label1$, .label2$, .dataCol$, .groupCol$ | public |
-| `@wizardRunPairedT` | Execute paired t-test from wizard selections | .v1#, .v2#, .col1$, .col2$ | public |
-| `@wizardRunWilcoxonSR` | Execute Wilcoxon signed-rank test from wizard selections | .v1#, .v2#, .col1$, .col2$ | public |
-| `@wizardRunAnova` | Execute one-way ANOVA from wizard selections | .tableId, .dataCol$, .groupCol$ | public |
-| `@wizardRunKW` | Execute Kruskal-Wallis test from wizard selections | .tableId, .dataCol$, .groupCol$ | public |
-| `@wizardRunTwoWay` | Execute two-way ANOVA from wizard selections | .tableId, .dataCol$, .factor1$, .factor2$ | public |
-| `@wizardRunPearson` | Execute Pearson correlation from wizard selections | .x#, .y#, .col1$, .col2$ | public |
-| `@wizardRunSpearman` | Execute Spearman correlation from wizard selections | .x#, .y#, .col1$, .col2$ | public |
-| `@wizardRunDescribe` | Execute descriptive stats from wizard selections | .data#, .col$ | public |
-| `@wizardRunDescribeByGroup` | Execute grouped descriptive stats from wizard selections | .tableId, .dataCol$, .groupCol$ | public |
-| `@wizardReportPairwise` | Report pairwise post-hoc results from wizard | .nGroups, .method$ | public |
-| `@wizardCreateExample` | Create example Table for wizard demo | .hint$ | public |
-| `@wizardStub` | Placeholder for unimplemented wizard branches | .analysis$, .batch$ | public |
 
 ## Scripts: Batch Processing
 **File:** `scripts/eml-batch-process.praat` (v1.1) — 3 procedures
@@ -370,5 +332,15 @@ All wizard helpers set `emlWizardExplain$` which is consumed by the next `@emlRe
 | `@emlTestAssertVectorsEqual` | Assert vector equality within tolerance | .name$, .v1#, .v2#, .tolerance | public |
 | `@emlTestSummary` | Print pass/fail summary and exit with status | — | public |
 
+## EGG: Electroglottogram
+**File:** `egg/eml-egg-procedures.praat` (v1.0) — 2 procedures
+
+| Procedure | Purpose | Parameters | Scope |
+|-----------|---------|------------|-------|
+| `@emlEggCycleGuard` | Segfault guard for To TextGrid (closed glottis) / To AmplitudeTier (levels); sets `.safe` (1 = analyzable) | .eggId, .floor, .ceiling | public |
+| `@emlEggSpectralThreshold` | Spectral-threshold de-noiser (4:1 downward expansion) to rescue low-SNR EGG for CQ; returns `.resultId` | .soundId, .thresholdBelowPeak, .lowPassHz | public |
+
+Canonical source for both is `eml-egg-procedures.txt` (flattened `.txt` copy of `egg/eml-egg-procedures.praat`). The guard is also printed, commented, in `COMMANDS_Electroglottogram.txt` and the de-noiser in `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` for documentation — those copies are illustrative; copy exactly from the source file per MP Rule 223.
+
 ---
-**Total: 251 procedures** (246 public, 5 internal) across 15 files
+**Total: 238 procedures** (233 public, 5 internal) across 15 files

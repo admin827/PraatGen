@@ -523,9 +523,14 @@ Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "parabolic", 0.001, 0, "Straight", "
 #   fit method = "Robust"
 #
 # NOTE: These parameters differ from the Praat dialog defaults on
-# three values: Praat defaults use subtract tilt = "yes", quefrency
-# ceiling = 0.05, and fit method = "Robust slow". The Maryn values
-# above are what the clinical CPPS literature consistently uses.
+# five values. Praat dialog defaults use:
+#   subtract tilt before smoothing = "yes"   (Maryn: "no")
+#   time averaging window          = 0.02 s  (Maryn: 0.01 s)
+#   quefrency averaging window     = 0.0005 s (Maryn: 0.001 s)
+#   tilt line quefrency ceiling    = 0.05 s  (Maryn: 0 = no upper bound)
+#   fit method                     = "Robust slow" (Maryn: "Robust")
+# The Maryn values above are what the clinical CPPS literature
+# consistently uses.
 #
 # ERRATUM (21 April 2026): Prior version of this section had the
 # Praat dialog defaults labeled as "Maryn et al." parameters. Corrected
@@ -626,8 +631,9 @@ To Intensity: 100, 0.0, "yes"
 # those were Praat dialog defaults, not Maryn's clinical parameters.
 # Corrected 21 April 2026.
 #
-# For the complete AVQI parameter specification, see the Script A2
-# handoff document (HANDOFF_A2_Batch_Analyzer.md §4).
+# For the complete AVQI parameter specification, see Section 10 below
+# (AVQI COMPLETE SPECIFICATION), extracted directly from the canonical
+# Phonanium script.
 
 ---
 
@@ -698,7 +704,7 @@ To Intensity: 100, 0.0, "yes"
 #   maximum frequency = 5000 Hz (same as clinical)
 #   pre-emphasis from = 50 Hz  (same as clinical)
 
-# Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "Parabolic", 0.001, 0, "Straight", "Robust"
+# Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "parabolic", 0.001, 0, "Straight", "Robust"
 #
 #   subtract tilt before smoothing = "no"
 #   time averaging window = 0.01 s
@@ -706,7 +712,7 @@ To Intensity: 100, 0.0, "yes"
 #   pitch floor = 60 Hz
 #   pitch ceiling = 330 Hz
 #   tolerance = 0.05
-#   interpolation = "Parabolic"
+#   interpolation = "parabolic"
 #   tilt line quefrency range floor = 0.001
 #   tilt line quefrency range ceiling = 0
 #   line type = "Straight"

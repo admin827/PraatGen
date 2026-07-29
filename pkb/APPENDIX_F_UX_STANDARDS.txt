@@ -1028,8 +1028,8 @@
 # ============================================================================
 #
 # The following reusable procedures implement Appendix F patterns.
-# They may be included in EML_DRAWING_PROCEDURES.txt or shipped as
-# a separate include file.
+# They are EML Graphs procedures in eml-graph-procedures.txt
+# (see EML_PROCEDURE_REGISTRY.md, Graphs: Core).
 #
 # S12A: @checkStopSentinel
 #
@@ -1238,7 +1238,7 @@
 #   unchanged.
 # - The reusable procedures @emlHandleStereo (interactive, single-file)
 #   and @emlApplyChannelChoice (non-interactive, batch) implement
-#   these patterns. See EML_DRAWING_PROCEDURES.txt.
+#   these patterns. See eml-graph-procedures.txt (registry: Graphs: Core).
 
 ---
 

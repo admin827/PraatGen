@@ -14,8 +14,8 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)
-**Version:** 0.9.3-beta.02
-**Release:** 4 June 2026
+**Version:** 0.9.4-beta.01
+**Release:** 29 July 2026
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
 ---
@@ -24,7 +24,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 PraatGen is not a plugin or a standalone application. It is a **Claude Project** — a structured prompt and a set of verified reference files that give Claude deep, accurate knowledge of Praat's scripting language. When you open a conversation in this project, Claude operates as a Praat scripting specialist that:
 
-- **Validates every command** against source-verified reference files covering 136 object types and 3,000+ commands — not from memory, which is unreliable for Praat syntax
+- **Validates every command** against source-verified reference files covering 136 object types and 3,300+ registered commands — not from memory, which is unreliable for Praat syntax
 - **Uses clinically validated defaults** for voice analysis parameters (pitch tracking, jitter, shimmer, HNR, CPPS, formants), sourced from published norms
 - **Handles Praat's idiosyncrasies** — selection discipline, object identity, time-domain queries, string typing, variable derivation from dialog labels, and dozens of other gotchas that trip up even experienced scripters
 - **Follows a structured workflow** with pre-flight verification, command planning, and self-audit — catching errors before they reach Praat
@@ -43,7 +43,7 @@ PraatGen is not a plugin or a standalone application. It is a **Claude Project**
 
 - **Claude Pro, Team, Max, or Enterprise account** (Projects require a paid plan). PraatGen can burn tokens quickly on complex projects; for serious code production, the Max plan is recommended.
 - **Other AI options:** As of mid-2026, no other frontier model accommodates the modular design of PraatGen. Use with ChatGPT, Gemini, etc. is untested and unsupported — no guarantees.
-- **Claude model:** Claude Opus 4.8 is recommended. Opus 4.7 and 4.6 (with Extended Thinking) are also fine. See "Choosing a model" below.
+- **Claude model:** Claude Opus 5 is the current recommendation; Opus 4.8 also performs well. Opus 4.6 (with Extended Thinking) remains a solid token-conscious choice. Sonnet and Haiku are not supported. See "Choosing a model" below.
 - **Claude modality:** PraatGen presumes most users will use the Claude.ai web or desktop environment. It can be adapted for Claude Code by changing the Master Prompt's references to the PKB files so they point at a local directory; you may also want to separate the Master Prompt from your `CLAUDE.md` file.
 - **Praat:** Version 6.4 or later (current stable release). Sandbox Mode installs the current stable Praat build, resolved at fetch time (no pinned version), for in-environment verification.
 
@@ -51,12 +51,13 @@ PraatGen is not a plugin or a standalone application. It is a **Claude Project**
 
 The model is a variable — keep the one you're using in mind.
 
-- **Opus 4.8** is the current recommendation — start with Thinking in high-effort mode for non-trivial work. It was recently released and, by all signs, excels at this work.
-- **Opus 4.7** is also fine, but is more agentic by default — it wants to take initiative. That can be excellent for large-scale code refactors in AUTO SANDBOX mode; in close collaborative work, watch that it doesn't run ahead of your decisions.
-- **Opus 4.6 + Extended Thinking** is the original training baseline for PraatGen and remains a solid choice.
-- **Sonnet** may handle simpler scripts, but is not the default recommendation; command-verification reliability decreases with complexity, and silent failures are possible.
+- **Opus 5** is the current recommendation and what the author uses most of the time.
+- **Opus 4.8** also performs well — high reasoning effort for non-trivial work.
+- **Opus 4.7** is fine but more agentic by default; it wants to take initiative. That suits large-scale refactors in AUTO SANDBOX mode, but in close collaborative work watch that it doesn't run ahead of your decisions. Superseded by Opus 5.
+- **Opus 4.6 + Extended Thinking** is the original development-and-validation baseline for PraatGen and remains solid, particularly if you are token-conscious.
+- **Sonnet and Haiku are not supported.** Simple scripts may succeed, but command-verification reliability decreases with complexity and silent failures are possible.
 
-Thinking helps with complex command planning; PraatGen will tell you during pre-flight when you can safely turn it off.
+**A note on thinking and effort.** Extended thinking as a user-facing on/off toggle was retired in Opus 4.8. On 4.8 and later, PraatGen's pre-flight and Phase 3B complexity score read as a *reasoning-effort* recommendation instead: high effort for command planning, where the real reasoning happens, and a lower tier is generally sufficient for code emission, which is largely transcription from verified sources. On 4.6/4.7, where the toggle still exists, PraatGen will tell you during pre-flight when you can safely turn thinking off.
 
 ---
 
@@ -72,7 +73,7 @@ In Claude (claude.ai or the Claude app):
 ### 2. Set the System Prompt
 
 1. In your new project, click **instructions**
-2. Paste the entire contents of `MASTER_PROMPT_CORE_v13_9_4.md` into the instructions field
+2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_0_0.md` into the instructions field
 3. Scroll to the bottom and edit the "Canary" text if you wish. PraatGen reports this value back to you in pre-flight as a confidence measure that it read the entire Master Prompt.
 4. Save
 
@@ -92,7 +93,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 ### The Basic Workflow
 
-0. **Verify your model and settings:** Opus 4.8 recommended (4.7 and 4.6 with Extended Thinking also fine — see "Choosing a model"), with Thinking on (high-effort mode) for non-trivial work.
+0. **Verify your model and settings:** Opus 5 recommended (4.8 also strong; 4.6 with Extended Thinking fine — see "Choosing a model"), at high reasoning effort for non-trivial work.
 
 1. **Describe your task.** PraatGen asks for four things:
    - What should the script accomplish?
@@ -140,7 +141,7 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 
 | File | Purpose |
 |------|---------|
-| `MASTER_PROMPT_CORE_v13_9_4.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 13.9.4. |
+| `MASTER_PROMPT_CORE_v14_0_0.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.0.0. |
 | `README.md` | This file. |
 
 ### Project Knowledge Base (PKB)
@@ -193,7 +194,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 | File | Purpose |
 |------|---------|
-| `PRAAT_DEFINITIVE_CATALOGUE.txt` | Complete Praat capability inventory — 136 object types, 3,000+ commands, 336 Formula functions — extracted from v6.4.62 source code. The fallback/verification source. |
+| `PRAAT_DEFINITIVE_CATALOGUE.txt` | Complete Praat capability inventory — 136 object types, 3,300+ registered commands (2,536 single-class + 405 cross-class + 364 menu), 365 Formula engine functions — extracted from v6.4.62 source code. The fallback/verification source; carries a staleness banner and known-gap list. |
 | `WHITELIST_CURRENT.txt` | Recently verified commands not yet merged into the primary references |
 
 **Drawing and methodology references:**
@@ -212,22 +213,26 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 | File | Coverage |
 |------|----------|
-| `eml-graph-procedures.praat` | Drawing core: adaptive theming, color palette, axes, gridlines, violin/box primitives, stereo handling |
-| `eml-draw-procedures.praat` | Draw orchestrators: F0 contour, waveform, spectrum, LTAS, time series, bar, violin, box, scatter, histogram |
-| `eml-annotation-procedures.praat` | Stats-to-graph bridge, brackets, comparison matrix, shared reporters |
-| `eml-core-utilities.praat` | Vector operations: ranking, sorting, subsetting, z-scores, binning |
-| `eml-core-descriptive.praat` | Descriptive statistics: mean, median, SD, quartiles, skewness, kurtosis, CI |
-| `eml-extract.praat` | Table and acoustic-object data extraction |
-| `eml-output.praat` | Formatted reporting: APA style, p-value formatting, CSV export |
-| `eml-inferential.praat` | Inferential tests and guided test selection: t-tests, correlations, MWU, Wilcoxon, ANOVA, KW, post-hoc, p-value adjustment |
-| `eml-graphs.praat` | Graphs entry point (loads the form system and draw layers) |
-| `eml-graphs-form.praat` | Form system, guided statistical workflow, config persistence |
-| `eml-vibrato-procedures.praat` | Vibrato detection, cycle analysis, summary statistics |
-| `eml-demo-procedures.praat` | Demo window layout engine for interactive tutorials |
-| `eml-batch-process.praat` | Batch infrastructure: file stamps, stop sentinel, unique-path generation |
-| `eml-test-helpers.praat` | Test harness for procedure verification |
+| `eml-graph-procedures.txt` | Drawing core: adaptive theming, color palette, axes, gridlines, violin/box primitives, stereo handling |
+| `eml-draw-procedures.txt` | Draw orchestrators: F0 contour, waveform, spectrum, LTAS, time series, bar, violin, box, scatter, histogram |
+| `eml-annotation-procedures.txt` | Stats-to-graph bridge, brackets, comparison matrix, shared reporters |
+| `eml-core-utilities.txt` | Vector operations: ranking, sorting, subsetting, z-scores, binning |
+| `eml-core-descriptive.txt` | Descriptive statistics: mean, median, SD, quartiles, skewness, kurtosis, CI |
+| `eml-extract.txt` | Table and acoustic-object data extraction |
+| `eml-output.txt` | Formatted reporting: APA style, p-value formatting, CSV export |
+| `eml-inferential.txt` | Inferential tests and guided test selection: t-tests, correlations, MWU, Wilcoxon, ANOVA, KW, post-hoc, p-value adjustment |
+| `eml-graphs.txt` | Graphs entry point (loads the form system and draw layers) |
+| `eml-graphs-form.txt` | Form system, guided statistical workflow, config persistence |
+| `eml-vibrato-procedures.txt` | Vibrato detection, cycle analysis, summary statistics |
+| `eml-demo-procedures.txt` | Demo window layout engine for interactive tutorials |
+| `eml-batch-process.txt` | Batch infrastructure: file stamps, stop sentinel, unique-path generation |
+| `eml-egg-procedures.txt` | EGG support: mandatory cycle guard (segfault protection), spectral-threshold de-noiser |
+| `eml-test-helpers.txt` | Test harness for procedure verification |
 
-For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md`.
+These are flattened `.txt` copies of the plugin tree's `.praat` sources; the
+`include ../graphs/….praat` lines and the registry's `**File:**` paths refer to
+the plugin layout, not to the flat PKB. For the full procedure catalogue and
+signatures, see `EML_PROCEDURE_REGISTRY.md`.
 
 **Workflow support:**
 
@@ -248,7 +253,7 @@ PraatGen tracks three version numbers:
 |-----------|---------|----------------|
 | **Release** | 0.9.3-beta.02 | The combined package (prompt + PKB). This is the version that matters to users. |
 | **Master Prompt** | 13.9.4 | The system instructions. Bumped when rules, workflow, or protocols change. |
-| **PKB Snapshot** | 2026-06-05 | The reference file set. Date-stamped when files are added or revised. |
+| **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **0.x.y** — Beta. Expect changes based on tester feedback.

@@ -587,7 +587,7 @@
 # WORKING SOLUTION — SCANLINE RASTERIZATION WITH Paint rectangle:
 # Decompose any arbitrary filled shape into horizontal (or vertical)
 # strips and fill each strip with `Paint rectangle:`. This is the same
-# strategy used by `@drawViolin` in EML_DRAWING_PROCEDURES.txt and by
+# strategy used by `@emlDrawViolin` in eml-graph-procedures.txt and by
 # `@fillQuad` / `@demoFillQuad` in the 3D Scatter Plot.
 #
 # `Paint rectangle:` correctly respects the Axes: coordinate system
@@ -857,7 +857,7 @@
 # Selective repaint accumulates drawing commands without clearing
 # old ones — over 1000+ frames this causes visible performance
 # degradation as the display list grows unbounded.
-# See BEST_PRACTICES_DEMO_WINDOW.txt §2.
+# See BEST_PRACTICES_DEMO_WINDOW.md §2.
 
 # ============================================================================
 # SECTION 13: APPENDIX_B_FUNCTIONS.txt ADDENDUM
@@ -962,7 +962,7 @@
 #   - APPENDIX_E_SPECIAL_CHARACTERS.txt applies to Demo window text
 #     (same rendering engine as Picture window)
 #
-# The EML_DRAWING_PROCEDURES.txt procedures target Picture window
+# The EML Graphs drawing procedures target Picture window
 # output and are NOT directly compatible with the Demo window due to
 # the y-direction inversion. Colour palettes and math can be adapted
 # but viewport logic must be reworked.
@@ -981,7 +981,7 @@
 #     - Audio-synced animation via stopwatch (BP_DEMO §3)
 #     - Matrix-buffered waveform display (BP_DEMO §5)
 #
-# BEST_PRACTICES_DEMO_WINDOW.txt covers canonical patterns for
+# BEST_PRACTICES_DEMO_WINDOW.md covers canonical patterns for
 # animation rendering, audio sync, matrix-buffered waveforms,
 # session state machines, click-to-pause, button rendering,
 # keyboard navigation, playback controls, and more.

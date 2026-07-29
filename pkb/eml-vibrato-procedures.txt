@@ -4,7 +4,7 @@
 # Author: Ian Howell & Theodora Nestorova, Embodied Music Lab
 #         www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# License: Creative Commons Non-Commercial with Attribution
+# License: GPL-3.0-or-later
 # Version: 2.0
 # Date: 18 March 2026
 #
@@ -79,7 +79,7 @@ procedure emlVibratoScanTextGrid: .textGridId, .tierNum
         # Store non-empty intervals
         if .rawLabel$ <> ""
             if .nIntervals < 30
-                .nIntervals += 1
+                .nIntervals = .nIntervals + 1
                 .label$[.nIntervals] = .rawLabel$
                 .startTime[.nIntervals] = Get start time of interval: .tierNum, .i
                 .endTime[.nIntervals] = Get end time of interval: .tierNum, .i
@@ -350,181 +350,181 @@ procedure emlVibratoSelectIntervals
             # Read back checkbox values
             .nSelected = 0
             if .nFound >= 1 and interval_1 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[1]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[1]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[1]
             endif
             if .nFound >= 2 and interval_2 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[2]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[2]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[2]
             endif
             if .nFound >= 3 and interval_3 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[3]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[3]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[3]
             endif
             if .nFound >= 4 and interval_4 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[4]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[4]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[4]
             endif
             if .nFound >= 5 and interval_5 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[5]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[5]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[5]
             endif
             if .nFound >= 6 and interval_6 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[6]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[6]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[6]
             endif
             if .nFound >= 7 and interval_7 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[7]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[7]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[7]
             endif
             if .nFound >= 8 and interval_8 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[8]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[8]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[8]
             endif
             if .nFound >= 9 and interval_9 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[9]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[9]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[9]
             endif
             if .nFound >= 10 and interval_10 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[10]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[10]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[10]
             endif
             if .nFound >= 11 and interval_11 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[11]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[11]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[11]
             endif
             if .nFound >= 12 and interval_12 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[12]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[12]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[12]
             endif
             if .nFound >= 13 and interval_13 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[13]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[13]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[13]
             endif
             if .nFound >= 14 and interval_14 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[14]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[14]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[14]
             endif
             if .nFound >= 15 and interval_15 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[15]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[15]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[15]
             endif
             if .nFound >= 16 and interval_16 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[16]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[16]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[16]
             endif
             if .nFound >= 17 and interval_17 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[17]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[17]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[17]
             endif
             if .nFound >= 18 and interval_18 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[18]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[18]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[18]
             endif
             if .nFound >= 19 and interval_19 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[19]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[19]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[19]
             endif
             if .nFound >= 20 and interval_20 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[20]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[20]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[20]
             endif
             if .nFound >= 21 and interval_21 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[21]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[21]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[21]
             endif
             if .nFound >= 22 and interval_22 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[22]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[22]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[22]
             endif
             if .nFound >= 23 and interval_23 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[23]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[23]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[23]
             endif
             if .nFound >= 24 and interval_24 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[24]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[24]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[24]
             endif
             if .nFound >= 25 and interval_25 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[25]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[25]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[25]
             endif
             if .nFound >= 26 and interval_26 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[26]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[26]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[26]
             endif
             if .nFound >= 27 and interval_27 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[27]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[27]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[27]
             endif
             if .nFound >= 28 and interval_28 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[28]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[28]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[28]
             endif
             if .nFound >= 29 and interval_29 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[29]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[29]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[29]
             endif
             if .nFound >= 30 and interval_30 = 1
-                .nSelected += 1
+                .nSelected = .nSelected + 1
                 .selectedLabel$[.nSelected] = emlVibratoScanTextGrid.label$[30]
                 .selectedStart[.nSelected] = emlVibratoScanTextGrid.startTime[30]
                 .selectedEnd[.nSelected] = emlVibratoScanTextGrid.endTime[30]
@@ -597,8 +597,8 @@ procedure emlVibratoAxisRange: .min, .max, .median, .nDivisions,
     # Clamp negatives if not allowed
     if .allowNegative = 0 and .axisMin < 0
         .shift = abs (.axisMin)
-        .axisMin += .shift
-        .axisMax += .shift
+        .axisMin = .axisMin + .shift
+        .axisMax = .axisMax + .shift
     endif
 endproc
 
@@ -751,7 +751,7 @@ procedure emlVibratoDetectCycles: .ppSmoothId, .ppAudioId, .intensityId,
         if .intCheck > .avgIntensity - .silThreshold
             # Peak detection: freq[i+1] is local maximum
             if .iFreq[.i + 1] > .iFreq[.i] and .iFreq[.i + 1] > .iFreq[.i + 2]
-                .peakCounter += 1
+                .peakCounter = .peakCounter + 1
                 .peakTime = .tStart[.i + 1]
 
                 # Measure Hz from 3-period average of audio PointProcess
@@ -787,7 +787,7 @@ procedure emlVibratoDetectCycles: .ppSmoothId, .ppAudioId, .intensityId,
 
             # Trough detection: freq[i+1] is local minimum
             if .iFreq[.i + 1] < .iFreq[.i] and .iFreq[.i + 1] < .iFreq[.i + 2]
-                .troughCounter += 1
+                .troughCounter = .troughCounter + 1
                 .troughTime = .tStart[.i + 1]
 
                 # Measure Hz from 3-period average of audio PointProcess
@@ -1033,7 +1033,7 @@ procedure emlVibratoSmooth: .tableId, .avgCycles, .lowRate, .highRate
             .noX = 1
             .counter = 0
             repeat
-                .counter += 1
+                .counter = .counter + 1
                 if .pwLetters$#[.counter] = "X"
                     .noX = 0
                 endif
@@ -1076,7 +1076,7 @@ procedure emlVibratoSmooth: .tableId, .avgCycles, .lowRate, .highRate
             .noX = 1
             .counter = 0
             repeat
-                .counter += 1
+                .counter = .counter + 1
                 if .cvLetters$#[.counter] = "X"
                     .noX = 0
                 endif

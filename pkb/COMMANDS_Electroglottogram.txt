@@ -157,7 +157,9 @@
 # in a folder destroys the session.
 #
 # GUARD — validated. Blocks all five conditions; passes all valid signals
-# including one at 10 dB SNR:
+# including one at 10 dB SNR. This is a registered library procedure; its
+# canonical source is eml-egg-procedures.txt (registry: EGG section). The
+# copy below is illustrative — copy exactly from the source file (MP Rule 223):
 #
 #   procedure emlEggCycleGuard: .eggId, .floor, .ceiling
 #       selectObject: .eggId

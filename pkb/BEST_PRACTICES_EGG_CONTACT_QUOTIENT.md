@@ -152,6 +152,8 @@ At SNR 20, 15, and 10 the raw signal yielded **zero** GCIs. After spectral thres
 
 4:1 downward dB expansion below threshold, phase preserved. Expansion rather than zeroing avoids transients as components cross the threshold.
 
+`emlEggSpectralThreshold` is a registered library procedure; its canonical source is `eml-egg-procedures.txt` (registry: EGG section). The listing below is illustrative — copy exactly from the source file (MP Rule 223).
+
 ```praat
 procedure emlEggSpectralThreshold: .soundId, .thresholdBelowPeak, .lowPassHz
     selectObject: .soundId

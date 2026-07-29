@@ -97,8 +97,10 @@
 #   Select inner viewport: ...
 #   Axes: ...
 #   Draw inner box
-#   Marks left: 5, "yes", "yes", "no"
-#   Marks bottom: 5, "yes", "yes", "no"
+#   # Nice-number ticks via the EML procedures, per the rule above —
+#   # never bare Marks left:/Marks bottom:
+#   @emlDrawAlignedMarksLeft: yMin, yMax, 5, 0
+#   @emlDrawAlignedMarksBottom: xMin, xMax, 5, 0
 #   Text left: "yes", "Amplitude (dB)"
 #   # Title at a larger size — uses Text special, font state unchanged
 #   Text special: xCenter, "centre", yTitle, "half", "Helvetica", 14, "0", title$

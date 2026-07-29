@@ -611,8 +611,10 @@
 # "Analyze vibrato"
 #   → Vibrato family — full pipeline from @emlVibratoPitchSetup
 #     through @emlVibratoSummary
-#   → Drawing: @emlVibratoDrawFigure for complete 8-panel output
-#   → See vibrato-procedures-manual.md for step-by-step guide
+#   → Drawing: the vibrato library is analysis-only (no drawing
+#     procedures). Build figures from the general drawing/plotting
+#     procedures in eml-draw-procedures.txt (e.g. @emlDrawTimeSeries,
+#     @emlDrawScatterPlot) driven by the vibrato Table output.
 #
 # 5.7 TESTING TASKS
 #

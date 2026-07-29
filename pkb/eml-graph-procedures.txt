@@ -3,7 +3,7 @@
 # ============================================================================
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# License: Creative Commons Share-Alike
+# License: GPL-3.0-or-later
 # Version: 3.20
 # Date: 6 April 2026
 #

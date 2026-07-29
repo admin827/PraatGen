@@ -7,6 +7,169 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### 14.0.0 — 29 July 2026
+
+**Major version.** Full-codebase audit remediation ahead of the frozen benchmark
+run. Promoted from a point release because the pass changes the routing layer
+(retrieval table, registry contents and counts, a new source file), the gate
+semantics (Phase 3B is now model-conditional; a new mode section), and the
+license declared in nine source headers — all breaking-ish changes for anyone
+running an older PKB against the new prompt or vice versa. **The Master Prompt
+file is renamed `MASTER_PROMPT_CORE_v14_0_0.md`; re-paste it into your project
+instructions and re-upload the PKB folder together — the two are not
+independently versioned.** Fixes are
+keyed to the audit report's item IDs (C = critical, M = moderate, E = EGG
+addendum, T3 = tier-3 cosmetic).
+
+**Routing layer (the ghost-file class of defect):**
+- **C1 — `EML_DRAWING_PROCEDURES.txt` no longer exists anywhere.** The retrieval
+  table's only drawing row pointed at a file that does not exist, while
+  `BEST_PRACTICES_DRAWING.txt` (mandatory co-load per protocol step 2) had no
+  row at all. Row replaced; the stale name swept from all six PKB files
+  (APPENDIX_F ×2, DEVELOPER_MODE_ADDON, COMMANDS_DemoWindow ×2,
+  BEST_PRACTICES_CONFIDENCE_FIGURES ×5) and repointed to the real source files.
+- **C2 — registry regenerated against measured ground truth.** Header claimed
+  251/15, body carried 273 rows, MP claimed 255/14; actual is 236 defined
+  procedures across 14 files. Deleted the entire ghost Wizard section (15
+  procedures, no such file), 18 ghost Output rows (`emlWrapperCommonFields`,
+  `emlHandleCommonFields`, 16× `emlWizardExplain*`), `emlLinearRegression` /
+  `emlTheilSen` (unimplemented), and `emlReportRegressionAnalysis` /
+  `emlReportNormalityAnalysis`. With the two newly registered EGG procedures
+  (E5) the total is **238 across 15 files**; MP retrieval row synced.
+- **M4 / E1 / E2 — five missing retrieval rows added:** `COMMANDS_DemoWindow.txt`,
+  `BEST_PRACTICES_DEMO_WINDOW.md`, `BEST_PRACTICES_CONFIDENCE_FIGURES.txt`
+  (1,296 lines with zero inbound references), `COMMANDS_Electroglottogram.txt`,
+  and `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`. The Demo deck and EGG analysis
+  are both scored benchmark tasks that were previously unreachable by the
+  stated trigger mechanism.
+- **M9 — `emlReportKWComparison` signature corrected.** Registry listed 5
+  params; source takes 6 including `.tableId` in 4th position, so a
+  registry-faithful call misbound three arguments.
+- **M10 — Guide dead references removed.** `@emlVibratoDrawFigure` and
+  `vibrato-procedures-manual.md` exist nowhere; the vibrato library is
+  analysis-only. Repointed to the general drawing procedures.
+- **M11 — plugin-path vs flat-PKB mapping stated explicitly** at the top of the
+  registry. `**File:**` entries use the plugin tree (`graphs/….praat`); PKB
+  ships flattened `.txt`. Previously implicit and unstated.
+
+**EGG integration (E-series):**
+- **E5 — `emlEggCycleGuard` and `emlEggSpectralThreshold` promoted to registered
+  library procedures.** Both were complete runnable procedures living only
+  inside documentation (a `.txt` comment block and a `.md` fenced block),
+  indexed nowhere — a drift-generating state. New source file
+  `eml-egg-procedures.txt`; both documentation copies now marked illustrative
+  with a pointer to canonical source per Rule 223.
+- **E3 — mandatory EGG co-load** added as loading-protocol step 4a, sibling to
+  the APPENDIX_D clinical rule. An EGG task now auto-pulls both EGG files
+  rather than depending on a judgement call.
+- **E4 / M12 / M13 — catalogue "not found" is no longer read as "does not
+  exist."** Protocol step 10 rewritten with an explicit gap carve-out, and the
+  catalogue itself gained a staleness-and-completeness banner (pinned 6.4.62
+  while other files are verified at 6.4.65/6.4.67/6.6.30) plus a §2 note on the
+  dropped from-time/to-time fields in Formant and Pitch query blocks. Where they
+  disagree, the object-specific COMMANDS file governs.
+- New AUTO pre-delivery domain row for EGG (cycle guard + CQ plausibility bound).
+
+**Gate logic (contradictions that made gate-compliance scoring ill-defined):**
+- **C3 — AUTO domain table said "Rule 28 A–K."** The whole point of 13.9.4 was
+  promoting the font-state invariant to sub-rule L; the AUTO check — the *only*
+  compliance check when gates are suppressed — still keyed on the pre-fix list,
+  so AUTO would re-ship exactly the defect 13.9.4 closed. Now A–L.
+- **C4 + extended-thinking retirement — Phase 3B reworked as model-conditional.**
+  HARD GATE said "continue in the same turn if no thinking change is
+  recommended"; Phase 3B said "wait for GO — this is a hard gate." Both were
+  marked hard and could not both be obeyed. Compounding this, extended thinking
+  as a user-facing toggle was retired in Opus 4.8, so the gate's on/off
+  vocabulary no longer described reality. Resolution: the complexity score is
+  retained unchanged, but its *reporting* is now model-conditional — on toggle
+  models (4.6/4.7) it recommends thinking on/off and a recommended **change**
+  opens the wait; on effort models (4.8+) it is an advisory reasoning-effort
+  recommendation and opens **no wait**. Gate-behavior table added; HARD GATE,
+  Rule 31 thinking-gates block, and both SELF-AUDIT templates synced.
+- **C5 — the STEP 1 menu offered a forbidden combination.** It advertised "AUTO
+  … Combines with SANDBOX and DEBUGGING" while MP:638 declares AUTO and
+  DEBUGGING mutually exclusive. A user replying "AUTO DEBUGGING" per the menu
+  invoked an undefined state. Menu corrected with the reason stated inline.
+- **M1 — DEBUGGING mode had no defining section.** STEP 1 sold it, STEP 2A/2B/2C
+  defined SCAFFOLD/SANDBOX/AUTO, and nothing handled "user replies DEBUGGING"
+  (STEP 4 triggers on an error report, not the keyword, and never states the
+  approval-for-any-changes property). Added **STEP 2D** with the five behaviors
+  the STEP 1 text promises.
+- **M2 — VERBOSE was silently cancelled by GO.** GO is the proceed keyword at
+  every gate, so a VERBOSE user replying GO at the thinking gate reverted to
+  SPARSE unintentionally. GO/EXECUTE no longer change compression mode; SPARSE
+  is the sole return keyword.
+- **M5 — AUTO domain table had no file-output/GUI/UX row.** With SELF-AUDIT
+  suppressed in AUTO, Rules 26/27 (file safety), 18/19/20 (GUI derivation), and
+  33/App F had no compliance check at all — an AUTO batch script could hardcode
+  paths and overwrite files with nothing firing. Row added.
+- **M6 — dangling "I know the following commands:"** in the mandated verbatim
+  STEP 1 response now reads "I understand the following mode keywords:".
+
+**SELF-AUDIT templates (M3):**
+- Added `File output (26,27)` line items to **both** templates. The 13.9.4
+  evidence rule names file-output safety as a silent-failure item requiring
+  citation, but neither template had a slot, so the requirement could never
+  fire. Also added Rule 4B (object preservation) and Rule 37 to the compressed
+  template, added 5E to the compressed Syntax line, and de-duplicated the
+  twice-listed "No unverified commitments" item in the verbose template.
+
+**Source-of-truth hygiene:**
+- **M7 —** `BEST_PRACTICES_DRAWING.txt` said "NEVER use `Marks left:`/`Marks
+  bottom:`" and its very next "# CORRECT:" example used both. Example rewritten
+  with the `@emlDrawAlignedMarks*` nice-number calls.
+- **M8 —** Demo font-state House Rule ("set `demo Font size:` exactly once at
+  initialization") flagged the mandatory three-line per-frame reset required by
+  COMMANDS_DemoWindow and BEST_PRACTICES_DEMO_WINDOW as a violation. Reworded to
+  "one fixed value, re-asserted via the three-line reset; never a different value."
+- **M15 —** the library stopped violating its own prohibition list: 37×
+  `+=` in `eml-vibrato-procedures.txt` rewritten to `x = x + n`; 2× `elif` in
+  `eml-inferential.txt` normalized to `elsif` (the other 154 branches already
+  used `elsif`). These files are pasted into model context as exemplars.
+- **M16 —** Appendix D: §9's dangling `HANDOFF_A2_Batch_Analyzer.md §4` pointer
+  repointed to §10 (which exists to replace it); §5B's "differs on three values"
+  corrected to five (time averaging 0.01 vs 0.02 and quefrency averaging 0.001
+  vs 0.0005 were missing); `"Parabolic"` normalized to verified `"parabolic"`.
+- Catalogue §3 footer count corrected 369 → 365 (matches its own header and the
+  actual entry count).
+
+**Publication hygiene:**
+- **M14 — license incoherence resolved.** Eight `eml-*` headers declared
+  "Creative Commons Share-Alike" and one declared "Creative Commons
+  Non-Commercial with Attribution" — CC-NC is incompatible with GPL and with the
+  other files. All normalized to GPL-3.0-or-later, matching the repo and MP.
+- **M17 —** `praatgen_references_complete.md` no longer stamps v13.5; MP routes
+  script header attribution through this file, so generated scripts were
+  self-citing a stale version. Now version-agnostic. Praat source repo cite
+  corrected (`praat/praat`, with the website repo listed separately).
+- **T3 —** `changlog` typo + filename; jammed Table/Strings retrieval rows split;
+  duplicated STEP 2 heading removed; stale "(Turn 2 only)" labels reconciled with
+  the Turn-2/3 split; VERBOSE scope wording aligned (58 vs 123); duplicate 13.6
+  changelog entry disambiguated as 13.6b; command-count claims reconciled across
+  README/MP/catalogue (3,300+ registered; 365 Formula functions); PKB snapshot
+  date synced; `pub/tmp` placeholder deleted; last `[NEEDS PASTE]` placeholder
+  replaced with an explicit not-verified warning; duplicated Formant "Draw tracks
+  vs. Speckle" note collapsed to a pointer; doubled CONFIDENCE_FIGURES footer
+  deduped and its TODO-049/050 residue marked closed; legacy "EML Praat
+  Assistant" branding replaced in HANDOFF_TEMPLATE, DEVELOPER_MODE_ADDON, and
+  eml-batch-process; `BEST_PRACTICES_DEMO_WINDOW.txt` → `.md` references fixed.
+- **Duplicate source file resolved:** `eml-annotation-procedures.praat` and
+  `eml-annotation-procedures.praat.txt` were byte-identical. Consolidated to
+  `eml-annotation-procedures.txt`, matching every sibling.
+
+**Model recommendations updated:** Opus 5 preferred; Opus 4.8 performs well;
+Opus 4.6 with Extended Thinking remains the original validation baseline and the
+token-conscious choice; Opus 4.7 noted as agentic and superseded. **Sonnet and
+Haiku are now explicitly unsupported** rather than "may work for simple scripts."
+The "PraatGen will tell you when you can safely turn thinking off" promise is
+retained only for toggle models, where it is still true.
+
+**Carried forward, not fixed:** C6 (PulseAudio startup was commented out in both
+the SANDBOX install step and the Rule 24C test template — now uncommented) and
+C7 (UTF-16BE `eml-batch-process.txt`) were both resolved; C7 at source before
+this pass. Standing caution on C7: any editor round-trip can silently restore
+UTF-16/BOM — re-check with `file` after manual edits.
+
 ### 13.9.4 — 4 June 2026
 
 **MP edits (this pass):**
@@ -128,6 +291,8 @@
 - NOTE: 13.9.2 (3 Jun 2026) is not logged in this file — the entry jumps from
   13.9.1 to 13.9.3. 13.9.2 introduced the fetch-time install resolver and the
   initial 4.8 STEP-1 wording; backfill its entry if a complete record matters.
+- NOTE: there is likewise no 13.9.0 entry. 13.9.1 is the first 13.9.x entry
+  logged here. Both gaps are known and deliberate-by-omission, not data loss.
 
 ### 13.9.1 — 17 May 2026
 
@@ -428,7 +593,7 @@ be cleaned up. Starting state is a contract.
 - **README.md:** Version 0.9.2-beta.14, Opus 4.6 requirement (not
   4.7 — context tracking failures), PKB snapshot date updated.
 
-### 13.6 — 22 April 2026
+### 13.6b — 22 April 2026 (same-day second pass)
 - **Model language softened:** "Required model" → "Recommended model."
   Opus 4.6 ET remains the validated choice. Sonnet and Opus 4.7 acknowledged
   as potentially viable for simple projects with caveat that advanced
