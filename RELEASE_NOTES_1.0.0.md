@@ -36,7 +36,7 @@ TextGrid (closed glottis)` and `To AmplitudeTier (levels)` — both segfault
 Praat when no cycle falls within the pitch range — and
 `@emlEggSpectralThreshold` for low-SNR EGG rescue.
 
-**The procedure registry is updated to match.** 264 procedures across 15 files,
+**The procedure registry is updated.** 264 procedures across 15 files,
 checked in both directions against the shipped sources. Each library file now
 carries its plugin source's version verbatim, so the two can be compared at a
 glance.
@@ -88,7 +88,7 @@ Bare-TextGrid `Draw:` is a separate 5-parameter command.
 
 **`APPENDIX_C_GUI.txt`.** The form/beginPause default-quoting asymmetry is
 one-directional: bare numeric defaults are a parse error in `form:`, while
-`beginPause:` accepts either. Rule 19 and the SELF-AUDIT line updated to match.
+`beginPause:` accepts either. Rule 19 and the SELF-AUDIT line now say so.
 
 **Vector arguments.** `COMMANDS_Pitch.txt` and `COMMANDS_PitchTier.txt` examples
 now use `{0, 0.5, 1}` for REALVECTOR arguments.
@@ -191,7 +191,7 @@ matching every other library file.
 **Removed:** `eml-demo-procedures.txt`. `COMMANDS_DemoWindow.txt` and
 `BEST_PRACTICES_DEMO_WINDOW.md` are the source of truth for the Demo window.
 
-**`EML_PROCEDURE_REGISTRY.md`** — updated from source; 264 procedures across 15
+**`EML_PROCEDURE_REGISTRY.md`** — updated; 264 procedures across 15
 files.
 
 **License headers** normalised to GPL-3.0-or-later across the `eml-*` sources.
