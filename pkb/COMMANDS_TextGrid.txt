@@ -44,6 +44,9 @@
   # Verified: Get end time of interval: 1, 1
 
   # Query — point tier (session-verified)
+  # NOTE: the examples below assume TIER 1 IS A POINT TIER. On a TextGrid whose
+  #   tier 1 is an interval tier these fail with "Your tier should be a point
+  #   tier (TextTier)" — pass the point tier's actual number.
   Get number of points: tier number
   # Verified: Get number of points: 1
   Get time of point: tier number, point number
