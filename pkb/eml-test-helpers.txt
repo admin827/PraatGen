@@ -2,9 +2,8 @@
 # EML Stats : Test Helpers
 # ============================================================================
 # Module: eml-test-helpers.praat
-# Version: 1.1
+# Version: 1.0
 # Date: 26 February 2026
-# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
@@ -39,6 +38,11 @@
 # ============================================================================
 # Initialize test counters and print suite header.
 # Call once at the start of each test suite.
+# PKB copy: flattened from plugin_EML_Praat_Tools/dev/tests/eml-test-helpers.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #
 # Output (persistent, read by all other emlTest procedures):
 #   .passed       - number of passed assertions

@@ -2,9 +2,8 @@
 # EML Stats : Core Utility Procedures
 # ============================================================================
 # Module: eml-core-utilities.praat
-# Version: 1.1
+# Version: 1.0
 # Date: 20 February 2026
-# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
@@ -38,6 +37,11 @@
 #   .sortedValues# — sorted values (ascending)
 #   .sortedIndices# — indices permuted to match sorted order
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-core-utilities.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
 procedure eml_sortPairsByValue: .inputValues#, .inputIndices#
     .n = size (.inputValues#)

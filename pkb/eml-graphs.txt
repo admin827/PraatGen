@@ -5,9 +5,8 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # License: GPL-3.0-or-later
-# Version: 3.1
+# Version: 3.0
 # Date: 4 April 2026
-# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 #
 # Purpose: Entry point for the standalone EML Graphs tool. All logic lives
 #          in eml-graphs-form.praat (workflow, forms, config, context) and
@@ -22,6 +21,12 @@
 #         See HANDOFF_CONVERGENCE_STEPS5-6_04_APR_2026.md for design.
 # v2.44: Line Chart CI toggle, Pitch Contour rename, dead code cleanup.
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/scripts/eml-graphs.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
+
 
 include ../graphs/eml-graph-procedures.praat
 include ../stats/eml-core-utilities.praat

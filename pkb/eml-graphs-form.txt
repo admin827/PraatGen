@@ -5,9 +5,29 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # License: GPL-3.0-or-later
-# Version: 1.5
-# Date: 6 April 2026
-# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
+# Version: 1.9
+# v1.9: Bar-chart negative-mean support in the annotated (bracket) path —
+#       auto-range now floors on emlBarData_visibleMin so all-/mixed-negative
+#       means are not clipped at 0 (positive data unchanged via the axis
+#       procedure's non-negative guard). Companion to eml-graph-procedures
+#       v3.21 / eml-draw-procedures v1.18.
+# v1.8: Post-draw dialog "Back" renamed to "Done".
+# Date: 11 May 2026
+#
+# v1.7: emlShowExplanations = 1 set in @emlGraphsWorkflow entry point
+#        (explanations on wizard + graphs paths, not wrapper output).
+#        Added emlGraphsPresetRegressionLine and emlGraphsPresetCorrType$
+#        preset globals — consumed after per-call reset, survive workflow.
+# v1.6: Item 22 fix — beginner Draw path no longer resets
+#        annotTestType$/annotStyle$ to defaults. These fields are
+#        only meaningful when annotate=1 (advanced mode). Resetting
+#        them in beginner mode destroyed preset test type on Redraw.
+#        Fixed across all 5 form types (bar, violin, box, grouped
+#        violin, grouped box).
+# v1.5: Scatter group column preset (item 21). Added
+#        scatterPresetHasGroup sentinel. Scatter form now consumes
+#        emlGraphsPresetGroupCol$ alongside X/Y presets, auto-checks
+#        "Use group column" checkbox when a group preset is provided.
 #
 # v1.4: Scatter preset globals (emlGraphsPresetXCol$, emlGraphsPresetYCol$)
 #        added for stats wrapper wiring. Consumed in scatter form section
@@ -18,6 +38,11 @@
 #        before annotation bridge (was after bridge, causing matrix to
 #        lag one draw behind graph ordering). Value column moved to
 #        first position in Grouped Violin, Grouped Box, and Spaghetti
+# PKB copy: flattened from plugin_EML_Praat_Tools/graphs/eml-graphs-form.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #        forms. Spaghetti: parenthetical field descriptions, boolean
 #        "Use group column" (replaces "(none)" option), spaghetti-
 #        specific prev_spGroupSort defaulting to table order. Legend
@@ -77,8 +102,12 @@ emlGraphsPresetDataCol$ = ""
 emlGraphsPresetGroupCol$ = ""
 emlGraphsPresetTestType$ = ""
 emlGraphsPresetAnnotate = 0
+emlGraphsPresetAnalysisType = 0
 emlGraphsPresetXCol$ = ""
 emlGraphsPresetYCol$ = ""
+emlGraphsPresetRegressionLine = 0
+emlGraphsPresetCorrType$ = ""
+scatterPresetHasGroup = 0
 
 # ============================================================================
 # GRAPH TYPE REGISTRY
@@ -298,7 +327,7 @@ procedure emlPickFromMultiple: .type$
     .clicked = endPause: "Quit", "OK", 2, 1
 
     if .clicked = 1
-        exitScript: "User quit."
+        exitScript: ""
     endif
 
     .result = .id[object_choice]
@@ -717,6 +746,9 @@ endproc
 # ============================================================================
 procedure emlGraphsWorkflow: .objectId
 
+    # Enable explanations in the graphs/drawing path
+    emlShowExplanations = 1
+
     # =================================================================
     # 1. IDEMPOTENT SETUP (every call)
     # =================================================================
@@ -888,6 +920,7 @@ scatterXMin = 0
 scatterXMax = 0
 scatterDotSize = 2
 scatterRegressionLine = 0
+scatterAnalysisType = 0
 scatterShowFormula = 0
 scatterShowDots = 1
 
@@ -925,6 +958,27 @@ scatterShowDots = 1
         if emlGraphsPresetTestType$ <> ""
             annotTestType$ = emlGraphsPresetTestType$
         endif
+    endif
+
+    if emlGraphsPresetAnalysisType > 0
+        scatterAnalysisType = emlGraphsPresetAnalysisType
+        annotate = 1
+        if scatterAnalysisType >= 2
+            scatterRegressionLine = 1
+            scatterShowFormula = 1
+        endif
+        emlGraphsPresetAnalysisType = 0
+    endif
+
+    if emlGraphsPresetRegressionLine > 0
+        scatterRegressionLine = 1
+        scatterShowFormula = 1
+        emlGraphsPresetRegressionLine = 0
+    endif
+
+    if emlGraphsPresetCorrType$ <> ""
+        annotCorrType$ = emlGraphsPresetCorrType$
+        emlGraphsPresetCorrType$ = ""
     endif
 
     # Column presets are consumed by the type-specific forms.
@@ -1020,7 +1074,7 @@ repeat
 
         if clicked = 1
             @emlSaveConfig
-            exitScript: "User quit."
+            exitScript: ""
         endif
 
         # Remap menu index to internal type
@@ -1151,7 +1205,7 @@ repeat
 
             if clicked = 1
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 2
                 # Go Back — restart from main form
                 acquireDone = 0
@@ -1276,17 +1330,17 @@ repeat
             endif
 
             beginPause: "Pitch Contour Settings"
-                comment: "--- Time Range (both 0 = auto) ---"
+                comment: "⏱️ Time range (both 0 = auto)"
                 real: "Time minimum", tmpTMin$
                 real: "Time maximum", tmpTMax$
-                comment: "--- Frequency Range (both 0 = auto) ---"
+                comment: "📐 Frequency range (both 0 = auto)"
                 real: "Frequency maximum", tmpFMax$
                 real: "Frequency minimum", tmpFMin$
                 optionmenu: "Y axis unit", tmpYUnit
                     option: "Hertz"
                     option: "Semitones re 440 Hz"
                 if loadedObjectId > 0
-                    comment: "--- Pitch Analysis (auto-converted from Sound) ---"
+                    comment: "🎵 Pitch analysis (auto-converted from Sound)"
                     comment: "Ceiling is doubled internally for the analysis algorithm."
                     real: "Pitch floor (Hz)", tmpPitchFloor$
                     real: "Pitch ceiling (Hz)", tmpPitchCeiling$
@@ -1321,8 +1375,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -1333,7 +1387,7 @@ repeat
                 f0FormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 # Toggle — preserve beginner field values
                 tmpTMin$ = string$ (time_minimum)
@@ -1448,7 +1502,7 @@ repeat
                 endif
                 if y_axis_label$ = ""
                     if f0YUnit = 2
-                        y_axis_label$ = "Pitch re A440 Hz"
+                        y_axis_label$ = "Semitones re: A440 Hz"
                     else
                         y_axis_label$ = defaultYLabel$[1]
                     endif
@@ -1484,10 +1538,10 @@ repeat
             endif
 
             beginPause: "Waveform Settings"
-                comment: "--- Time Range (both 0 = auto) ---"
+                comment: "⏱️ Time range (both 0 = auto)"
                 real: "Time minimum", tmpTMin$
                 real: "Time maximum", tmpTMax$
-                comment: "--- Amplitude Range (both 0 = auto) ---"
+                comment: "📐 Amplitude range (both 0 = auto)"
                 real: "Amplitude maximum", tmpAMax$
                 real: "Amplitude minimum", tmpAMin$
                 if config_showAdvanced
@@ -1520,8 +1574,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -1531,7 +1585,7 @@ repeat
                 wavFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 tmpTMin$ = string$ (time_minimum)
                 tmpTMax$ = string$ (time_maximum)
@@ -1635,10 +1689,10 @@ repeat
             endif
 
             beginPause: "Spectrum Settings"
-                comment: "--- Frequency Range (both 0 = auto) ---"
+                comment: "📐 Frequency range (both 0 = auto)"
                 real: "Frequency minimum", tmpFMin$
                 real: "Frequency maximum", tmpFMax$
-                comment: "--- Power Range (both 0 = auto) ---"
+                comment: "📐 Power range (both 0 = auto)"
                 real: "Power maximum", tmpPMax$
                 real: "Power minimum", tmpPMin$
                 if config_showAdvanced
@@ -1671,8 +1725,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -1682,7 +1736,7 @@ repeat
                 specFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 tmpFMin$ = string$ (frequency_minimum)
                 tmpFMax$ = string$ (frequency_maximum)
@@ -1794,10 +1848,10 @@ repeat
             endif
 
             beginPause: "LTAS Settings"
-                comment: "--- Frequency Range (both 0 = auto) ---"
+                comment: "📐 Frequency range (both 0 = auto)"
                 real: "Frequency minimum", tmpFMin$
                 real: "Frequency maximum", tmpFMax$
-                comment: "--- Power Range (both 0 = auto) ---"
+                comment: "📐 Power range (both 0 = auto)"
                 real: "Power maximum", tmpPMax$
                 real: "Power minimum", tmpPMin$
                 if config_showAdvanced
@@ -1830,13 +1884,13 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Drawing Methods ---"
+                    comment: "🎨 Drawing methods"
                     boolean: "Show curve", tmpShowCurve
                     boolean: "Show bars", tmpShowBars
                     boolean: "Show poles", tmpShowPoles
                     boolean: "Show speckles", tmpShowSpeckles
-                    comment: "--- Axis Labels ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -1846,7 +1900,7 @@ repeat
                 ltasFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 tmpFMin$ = string$ (frequency_minimum)
                 tmpFMax$ = string$ (frequency_maximum)
@@ -2069,7 +2123,7 @@ repeat
                 tsFormatDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             else
                 tsDataFormat = data_format
 
@@ -2083,7 +2137,7 @@ repeat
                     endif
 
                     beginPause: "Line Chart -- Column Mapping"
-                        comment: "Select columns from your Table."
+                        comment: "📋 Select columns from your Table."
                         optionmenu: "Time column", tsTimeIdx
                             for iCol from 1 to nCols
                                 option: colName$[iCol]
@@ -2130,10 +2184,10 @@ repeat
                             boolean: "Show confidence interval", tsShowCI
                         endif
                         if config_showAdvanced
-                            comment: "--- X-Axis Range (both 0 = auto) ---"
+                            comment: "📐 X-axis range (both 0 = auto)"
                             real: "Time minimum", tmpTMin$
                             real: "Time maximum", tmpTMax$
-                            comment: "--- Y-Axis Range (both 0 = auto) ---"
+                            comment: "📐 Y-axis range (both 0 = auto)"
                             real: "Value maximum", tmpVMax$
                             real: "Value minimum", tmpVMin$
                             optionmenu: "Gridline mode", tmpGridMode
@@ -2165,8 +2219,8 @@ repeat
                                 option: "Times"
                                 option: "Palatino"
                                 option: "Courier"
-                            comment: "--- Axis Labels (blank = auto from column) ---"
-                            comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                            comment: "🏷️ Axis labels (blank = auto from column)"
+                            comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                             sentence: "X axis label", tmpXLabel$
                             sentence: "Y axis label", tmpYLabel$
                         endif
@@ -2177,7 +2231,7 @@ repeat
                         tsFormDone = 1
                     elsif clicked = 2
                         @emlSaveConfig
-                        exitScript: "User quit."
+                        exitScript: ""
                     elsif clicked = 3
                         # Toggle — preserve beginner field values
                         tsTimeIdx = time_column
@@ -2488,7 +2542,7 @@ repeat
             endif
 
             beginPause: "Bar Chart -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", barValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -2523,7 +2577,7 @@ repeat
                         option: "Annotate"
                         option: "Matrix"
                     real: "Alpha", string$ (annotAlpha)
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -2553,8 +2607,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -2564,7 +2618,7 @@ repeat
                 barFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 barGroupIdx = group_column
                 prev_groupSort = group_order
@@ -2683,8 +2737,8 @@ repeat
                     annotShowNS = 0
                     annotShowEffect = 0
                     annotLayoutMode = 1
-                    annotTestType$ = "parametric"
-                    annotStyle$ = "p-value"
+                    # annotTestType$ preserved — only meaningful when annotate=1
+                    # annotStyle$ preserved — only meaningful when annotate=1
                 endif
                 gridline_mode = tmpGridMode
                 output_DPI = tmpDPI
@@ -2838,7 +2892,7 @@ repeat
             endif
 
             beginPause: "Violin Plot -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", violinValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -2867,7 +2921,7 @@ repeat
                         option: "Matrix"
                     real: "Alpha", string$ (annotAlpha)
                     boolean: "Show jittered points", prev_violinShowJitter
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -2897,8 +2951,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -2908,7 +2962,7 @@ repeat
                 violinFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 violinGroupIdx = group_column
                 prev_groupSort = group_order
@@ -3031,8 +3085,8 @@ repeat
                     annotShowEffect = 0
                     annotLayoutMode = 1
                     prev_violinShowJitter = 0
-                    annotTestType$ = "parametric"
-                    annotStyle$ = "p-value"
+                    # annotTestType$ preserved — only meaningful when annotate=1
+                    # annotStyle$ preserved — only meaningful when annotate=1
                 endif
                 gridline_mode = tmpGridMode
                 output_DPI = tmpDPI
@@ -3093,9 +3147,16 @@ repeat
                 if colName$[.iPreset] = emlGraphsPresetYCol$
                     scatterYIdx = .iPreset
                 endif
+                if emlGraphsPresetGroupCol$ <> ""
+                    if colName$[.iPreset] = emlGraphsPresetGroupCol$
+                        scatterGroupIdx = .iPreset
+                        scatterPresetHasGroup = 1
+                    endif
+                endif
             endfor
             emlGraphsPresetXCol$ = ""
             emlGraphsPresetYCol$ = ""
+            emlGraphsPresetGroupCol$ = ""
         elsif prev_scatterXIdx > 0
             scatterXIdx = prev_scatterXIdx
             scatterYIdx = prev_scatterYIdx
@@ -3163,12 +3224,12 @@ repeat
         tmpXLabel$ = ""
         tmpYLabel$ = ""
 
-        # Annotation defaults
-        tmpAnnotate = annotate
-        tmpTestType = 1
+        # Correlation method defaults (1=None, 2=Pearson, 3=Spearman, 4=Both)
         if annotCorrType$ = "both"
-            tmpCorrType = 3
+            tmpCorrType = 4
         elsif annotCorrType$ = "spearman"
+            tmpCorrType = 3
+        elsif annotCorrType$ = "pearson"
             tmpCorrType = 2
         else
             tmpCorrType = 1
@@ -3180,19 +3241,25 @@ repeat
             tmpAnnotStyle = 3
         endif
 
+        # Regression defaults (1=None, 2=Line, 3=Formula, 4=Both)
+        if prev_scatterRegressionLine >= 0
+            scatterRegressionLine = prev_scatterRegressionLine
+        endif
+        if scatterRegressionLine = 1 and scatterShowFormula = 1
+            tmpRegression = 4
+        elsif scatterShowFormula = 1
+            tmpRegression = 3
+        elsif scatterRegressionLine = 1
+            tmpRegression = 2
+        else
+            tmpRegression = 1
+        endif
+
         # Scatter-specific controls
         if prev_scatterDotSize > 0
             scatterDotSize = prev_scatterDotSize
         endif
         tmpDotSize = scatterDotSize
-        if prev_scatterRegressionLine >= 0
-            scatterRegressionLine = prev_scatterRegressionLine
-        endif
-        tmpRegressionLine = scatterRegressionLine
-        if prev_scatterShowFormula >= 0
-            scatterShowFormula = prev_scatterShowFormula
-        endif
-        tmpShowFormula = scatterShowFormula
         if prev_scatterShowDots >= 0
             scatterShowDots = prev_scatterShowDots
         endif
@@ -3200,7 +3267,10 @@ repeat
 
         # Use group column persistence
         tmpUseGroup = 0
-        if prev_scatterUseGroup >= 0
+        if scatterPresetHasGroup
+            tmpUseGroup = 1
+            scatterPresetHasGroup = 0
+        elsif prev_scatterUseGroup >= 0
             tmpUseGroup = prev_scatterUseGroup
         endif
 
@@ -3213,7 +3283,7 @@ repeat
             endif
 
             beginPause: "Scatter Plot -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "X column", scatterXIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -3231,27 +3301,34 @@ repeat
                     option: "Table order"
                     option: "Alphabetical"
                 if config_showAdvanced
-                    boolean: "Annotate results on graph", tmpAnnotate
-                    optionmenu: "Correlation type", tmpCorrType
+                    comment: "─────────────────────────────────────"
+                    comment: "📊 Analysis"
+                    optionmenu: "Correlation method", tmpCorrType
+                        option: "None"
                         option: "Pearson"
                         option: "Spearman"
+                        option: "Both"
+                    optionmenu: "Regression", tmpRegression
+                        option: "None"
+                        option: "Regression line"
+                        option: "Formula"
                         option: "Both"
                     optionmenu: "Significance style", tmpAnnotStyle
                         option: "p-value"
                         option: "stars"
                         option: "both"
-                    boolean: "Show regression line", tmpRegressionLine
-                    boolean: "Show formula on graph", tmpShowFormula
                     boolean: "Show data points", tmpShowDots
                     optionmenu: "Dot size", tmpDotSize
                         option: "Small"
                         option: "Medium"
                         option: "Large"
-                    comment: "--- Axis Ranges (both 0 = auto) ---"
+                    comment: "📐 Axis ranges (both 0 = auto)"
                     real: "X maximum", tmpXMax$
                     real: "X minimum", tmpXMin$
                     real: "Y maximum", tmpYMax$
                     real: "Y minimum", tmpYMin$
+                    comment: "─────────────────────────────────────"
+                    comment: "🎨 Layout"
                     optionmenu: "Gridline mode", tmpGridMode
                         option: "Both"
                         option: "Horizontal only"
@@ -3281,8 +3358,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -3292,7 +3369,7 @@ repeat
                 scatterFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 scatterXIdx = x_column
                 scatterYIdx = y_column
@@ -3302,11 +3379,9 @@ repeat
                 tmpUseGroup = use_group_column
                 if config_showAdvanced
                     # Toggling TO beginner: save advanced state
-                    prev_adv_sca_annotate = annotate_results_on_graph
-                    prev_adv_sca_corrType = correlation_type
+                    prev_adv_sca_corrType = correlation_method
                     prev_adv_sca_annotStyle = significance_style
-                    prev_adv_sca_regressionLine = show_regression_line
-                    prev_adv_sca_showFormula = show_formula_on_graph
+                    prev_adv_sca_regressionLine = regression
                     prev_adv_sca_showDots = show_data_points
                     prev_adv_sca_dotSize = dot_size
                     prev_adv_sca_XMin$ = string$ (x_minimum)
@@ -3323,11 +3398,9 @@ repeat
                     prev_adv_sca_XLabel$ = x_axis_label$
                     prev_adv_sca_YLabel$ = y_axis_label$
                     # Reset to beginner defaults
-                    tmpAnnotate = 0
                     tmpCorrType = 1
+                    tmpRegression = 1
                     tmpAnnotStyle = 1
-                    tmpRegressionLine = 0
-                    tmpShowFormula = 0
                     tmpShowDots = 1
                     tmpDotSize = 2
                     tmpXMin$ = "0"
@@ -3345,12 +3418,10 @@ repeat
                     tmpYLabel$ = ""
                 else
                     # Toggling TO advanced: restore saved state
-                    if variableExists ("prev_adv_sca_annotate")
-                        tmpAnnotate = prev_adv_sca_annotate
+                    if variableExists ("prev_adv_sca_corrType")
                         tmpCorrType = prev_adv_sca_corrType
                         tmpAnnotStyle = prev_adv_sca_annotStyle
-                        tmpRegressionLine = prev_adv_sca_regressionLine
-                        tmpShowFormula = prev_adv_sca_showFormula
+                        tmpRegression = prev_adv_sca_regressionLine
                         tmpShowDots = prev_adv_sca_showDots
                         tmpDotSize = prev_adv_sca_dotSize
                         tmpXMin$ = prev_adv_sca_XMin$
@@ -3398,13 +3469,42 @@ repeat
                     config_font$ = font$
                     config_font = font
                     config_outputDPI = output_DPI
-                    annotate = annotate_results_on_graph
-                    if correlation_type = 3
-                        annotCorrType$ = "both"
-                    elsif correlation_type = 2
-                        annotCorrType$ = "spearman"
+                    # Derive analysis type from correlation + regression choices
+                    # correlation_method: 1=None, 2=Pearson, 3=Spearman, 4=Both
+                    # regression: 1=None, 2=Line, 3=Formula, 4=Both
+                    if correlation_method > 1 and regression > 1
+                        scatterAnalysisType = 3
+                        annotate = 1
+                    elsif correlation_method > 1
+                        scatterAnalysisType = 1
+                        annotate = 1
+                    elsif regression > 1
+                        scatterAnalysisType = 2
+                        annotate = 1
                     else
+                        scatterAnalysisType = 0
+                        annotate = 0
+                    endif
+                    # Correlation type
+                    if correlation_method = 4
+                        annotCorrType$ = "both"
+                    elsif correlation_method = 3
+                        annotCorrType$ = "spearman"
+                    elsif correlation_method = 2
                         annotCorrType$ = "pearson"
+                    else
+                        annotCorrType$ = ""
+                    endif
+                    # Regression line and formula
+                    if regression = 2 or regression = 4
+                        scatterRegressionLine = 1
+                    else
+                        scatterRegressionLine = 0
+                    endif
+                    if regression = 3 or regression = 4
+                        scatterShowFormula = 1
+                    else
+                        scatterShowFormula = 0
                     endif
                     if significance_style = 2
                         annotStyle$ = "stars"
@@ -3413,13 +3513,12 @@ repeat
                     else
                         annotStyle$ = "p-value"
                     endif
-                    scatterRegressionLine = show_regression_line
-                    scatterShowFormula = show_formula_on_graph
                     scatterShowDots = show_data_points
                     scatterDotSize = dot_size
                 else
                     # Beginner defaults: no annotation, reset all advanced-only fields
                     annotate = 0
+                    scatterAnalysisType = 0
                     annotCorrType$ = "pearson"
                     annotStyle$ = "p-value"
                     scatterRegressionLine = 0
@@ -3579,7 +3678,7 @@ repeat
             endif
 
             beginPause: "Box Plot -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", boxValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -3608,7 +3707,7 @@ repeat
                         option: "Matrix"
                     real: "Alpha", string$ (annotAlpha)
                     boolean: "Show jittered points", prev_boxShowJitter
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -3638,8 +3737,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -3649,7 +3748,7 @@ repeat
                 boxFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 boxGroupIdx = group_column
                 prev_groupSort = group_order
@@ -3771,8 +3870,8 @@ repeat
                     annotShowEffect = 0
                     annotLayoutMode = 1
                     prev_boxShowJitter = 0
-                    annotTestType$ = "parametric"
-                    annotStyle$ = "p-value"
+                    # annotTestType$ preserved — only meaningful when annotate=1
+                    # annotStyle$ preserved — only meaningful when annotate=1
                 endif
                 gridline_mode = tmpGridMode
                 output_DPI = tmpDPI
@@ -3893,7 +3992,7 @@ repeat
             endif
 
             beginPause: "Histogram -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", histValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -3907,9 +4006,9 @@ repeat
                     option: "Table order"
                     option: "Alphabetical"
                 if config_showAdvanced
-                    comment: "--- Binning ---"
+                    comment: "📊 Binning"
                     integer: "Bin count (0 = auto)", string$ (tmpBinCount)
-                    comment: "--- Grouped Display ---"
+                    comment: "📊 Grouped display"
                     optionmenu: "Display mode", tmpDisplayMode
                         option: "Overlap (transparent)"
                         option: "Faceted (stacked panels)"
@@ -3924,7 +4023,7 @@ repeat
                     boolean: "Show nonsignificant", annotShowNS
                     boolean: "Show effect sizes", annotShowEffect
                     real: "Alpha", string$ (annotAlpha)
-                    comment: "--- Axis Ranges (both 0 = auto) ---"
+                    comment: "📐 Axis ranges (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     real: "Frequency maximum (0 = auto)", tmpFreqMax$
@@ -3955,8 +4054,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -3966,7 +4065,7 @@ repeat
                 histFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 histValueIdx = value_column
                 histGroupIdx = group_column
@@ -4229,7 +4328,7 @@ repeat
             endif
 
             beginPause: "Grouped Violin -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", gvValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -4258,7 +4357,7 @@ repeat
                     boolean: "Show effect sizes", annotShowEffect
                     real: "Alpha", string$ (annotAlpha)
                     boolean: "Show jittered points", prev_gvShowJitter
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -4288,8 +4387,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -4299,7 +4398,7 @@ repeat
                 gvFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 gvCatIdx = category_column
                 gvSubIdx = subgroup_column
@@ -4426,8 +4525,8 @@ repeat
                     annotShowNS = 0
                     annotShowEffect = 0
                     annotLayoutMode = 3
-                    annotTestType$ = "parametric"
-                    annotStyle$ = "p-value"
+                    # annotTestType$ preserved — only meaningful when annotate=1
+                    # annotStyle$ preserved — only meaningful when annotate=1
                 endif
                 gridline_mode = tmpGridMode
                 output_DPI = tmpDPI
@@ -4540,7 +4639,7 @@ repeat
             endif
 
             beginPause: "Grouped Box Plot -- Column Mapping"
-                comment: "Select columns from your Table and choose statistics."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column", gbValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -4569,7 +4668,7 @@ repeat
                     boolean: "Show effect sizes", annotShowEffect
                     real: "Alpha", string$ (annotAlpha)
                     boolean: "Show jittered points", prev_gbShowJitter
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -4599,8 +4698,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -4610,7 +4709,7 @@ repeat
                 gbFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 gbCatIdx = category_column
                 gbSubIdx = subgroup_column
@@ -4735,8 +4834,8 @@ repeat
                     annotShowNS = 0
                     annotShowEffect = 0
                     annotLayoutMode = 3
-                    annotTestType$ = "parametric"
-                    annotStyle$ = "p-value"
+                    # annotTestType$ preserved — only meaningful when annotate=1
+                    # annotStyle$ preserved — only meaningful when annotate=1
                 endif
                 gridline_mode = tmpGridMode
                 output_DPI = tmpDPI
@@ -4854,7 +4953,7 @@ repeat
             endif
 
             beginPause: "Spaghetti Plot -- Column Mapping"
-                comment: "Select columns from your Table."
+                comment: "📋 Select columns from your Table."
                 optionmenu: "Value column (Y-axis)", spValueIdx
                     for iCol from 1 to nCols
                         option: colName$[iCol]
@@ -4877,7 +4976,7 @@ repeat
                     option: "Alphabetical"
                 boolean: "Show mean overlay", tmpShowMean
                 if config_showAdvanced
-                    comment: "--- Y-Axis Range (both 0 = auto) ---"
+                    comment: "📐 Y-axis range (both 0 = auto)"
                     real: "Value maximum", tmpVMax$
                     real: "Value minimum", tmpVMin$
                     optionmenu: "Gridline mode", tmpGridMode
@@ -4907,8 +5006,8 @@ repeat
                         option: "Times"
                         option: "Palatino"
                         option: "Courier"
-                    comment: "--- Axis Labels (blank = auto from column) ---"
-                    comment: "Formatting: %italic · #bold · ^super · _sub (e.g. %F_0)"
+                    comment: "🏷️ Axis labels (blank = auto from column)"
+                    comment: "Formatting: %italic · #bold · ^super · _sub · \_% prints % (e.g. %F_0)"
                     sentence: "X axis label", tmpXLabel$
                     sentence: "Y axis label", tmpYLabel$
                 endif
@@ -4918,7 +5017,7 @@ repeat
                 spFormDone = 1
             elsif clicked = 2
                 @emlSaveConfig
-                exitScript: "User quit."
+                exitScript: ""
             elsif clicked = 3
                 spCondIdx = condition_column
                 spValueIdx = value_column
@@ -5175,9 +5274,18 @@ repeat
             dataYMax_forAnnotation = visibleDataMax
         endif
 
-        # When auto-range (both 0), compute axis range from visible max
+        # When auto-range (both 0), compute axis range from the visible extent.
+        # For bar charts use the tracked data minimum so all-/mixed-negative
+        # means get a negative floor instead of being clipped at 0 in the
+        # annotated (bracket) path; emlComputeAxisRange's own non-negative guard
+        # keeps the floor at 0 for non-negative data, so positive bars are
+        # unchanged.
         if valueMin = 0 and valueMax = 0
-            if visibleDataMax <> undefined and visibleDataMax > 0
+            if graph_type = 6
+                @emlComputeAxisRange: emlBarData_visibleMin, emlBarData_visibleMax, 10, 0
+                valueMin = emlComputeAxisRange.axisMin
+                valueMax = emlComputeAxisRange.axisMax
+            elsif visibleDataMax <> undefined and visibleDataMax > 0
                 @emlComputeAxisRange: 0, visibleDataMax, 10, 0
                 valueMax = emlComputeAxisRange.axisMax
             endif
@@ -5408,7 +5516,7 @@ repeat
     postDrawDone = 0
     repeat
         beginPause: "Graph Complete"
-            comment: "Graph has been drawn in the Picture window."
+            comment: "📊 Graph has been drawn in the Picture window."
             comment: "What would you like to do?"
         # --- Conditional button set ---
         if emlCSV_n > 0
@@ -5450,7 +5558,7 @@ repeat
             beginPause: "Save Figure"
                 folder: "Output folder", saveDefaultFolder$
                 word: "File name", saveAutoName$
-            saveClicked = endPause: "Cancel", "Save", 2, 1
+            saveClicked = endPause: "Go Back", "Save", 2, 1
             if saveClicked = 2
                 # Strip trailing slash from folder path
                 while endsWith (output_folder$, "/")
@@ -5474,8 +5582,12 @@ repeat
 
                 appendInfoLine: ""
                 appendInfoLine: "Saved to: " + outputPath$
+
+                beginPause: "Save Complete"
+                    comment: "Saved to: " + outputPath$
+                endPause: "OK", 1, 0
             endif
-            # Cancel or save complete — loop continues to main dialog
+            # Go Back or save complete — loop continues to main dialog
 
         elsif clicked = 3
             # Exp CSV (only shown when emlCSV_n > 0, i.e. stats
@@ -5487,7 +5599,7 @@ repeat
             beginPause: "Export Results"
                 folder: "Output folder", config_lastCSVFolder$
                 word: "File name", csvDefaultName$
-            csvClicked = endPause: "Cancel", "Save", 2, 1
+            csvClicked = endPause: "Go Back", "Save", 2, 1
             if csvClicked = 2
                 # Strip trailing slash from folder path
                 while endsWith (output_folder$, "/")

@@ -7,6 +7,73 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### 14.1.0 — 29 July 2026 (same day, post-plugin reconciliation)
+
+The v14.0.0 audit was run against the PKB alone. Reconciling it against the
+actual `plugin_EML_Praat_Tools` source reversed several of its conclusions.
+
+**The core finding: the PKB was shipping TRUNCATED copies of the plugin
+sources.** The registry was not indexing ghosts — it was describing the plugin
+correctly while the PKB shipped incomplete files. Measured, per file:
+
+| PKB file | had | plugin has | was missing |
+|---|---|---|---|
+| `eml-output` | 21 | 42 | `emlWrapperCommonFields`, `emlHandleCommonFields`, `emlWrapperInit`, `emlWrapperExportCSV`, 16× `emlWizardExplain*` |
+| `eml-inferential` | 25 | 27 | `emlLinearRegression`, `emlTheilSen` |
+| `eml-extract` | 13 | 16 | `emlGuessColumnRoles`, `eml_getGroupPairedData`, `eml_kwScan` |
+| `eml-annotation-procedures` | 23 | 25 | `emlReportRegressionAnalysis`, `emlReportNormalityAnalysis` |
+| `eml-core-descriptive` | 18 | 20 | `emlShapiroWilk`, `eml_swPoly` |
+| `eml-draw-procedures` | 14 | 15 | `emlDrawLMMForest` |
+| `eml-vibrato-procedures` | 11 | 16 | `emlVibratoDrawFigure` + 4 panel procedures |
+
+**Reversals of v14.0.0 decisions:**
+- **C2 was wrong in principle.** The 37 "ghost" procedures were real. Six were
+  quarantined mid-session on the maintainer's correction; the rest were deleted.
+  All are now restored by refreshing from source, and the quarantine section is
+  gone. The 16 `emlWizardExplain*` deserve specific mention: they live in
+  `stats/eml-output.praat`, a **core** file — deleting them as "wizard ghosts"
+  was a category error. The wizard script itself stays excluded (vestigial).
+- **M10 was wrong.** `@emlVibratoDrawFigure` was removed from the Guide as a
+  dead reference. It is real — it and four companion panel procedures were
+  simply absent from the truncated PKB vibrato copy. Restored.
+- **My own version bumps were wrong.** The v14.0.0 pass bumped five PKB files
+  past the plugin's real versions (PKB `eml-graphs` 3.1 vs plugin 3.0, etc.),
+  destroying the only signal that catches this drift. **New policy: the PKB
+  file carries the PLUGIN's version verbatim. PKB version == plugin version,
+  always; a mismatch means the PKB has drifted.** PKB-only edits (the license
+  header) are recorded in a separate provenance block, not by bumping.
+
+**Refresh performed.** 14 PKB sources replaced with plugin-verbatim content
+(license line normalized to GPL-3.0-or-later, provenance block added), plus a
+newly supplied `eml-vibrato-procedures` v2.0 with the drawing family. Registry
+**rebuilt programmatically from source**, not hand-edited: **295 procedures
+(287 public, 8 internal) across 16 files**, verified equal in both directions
+against the shipped sources — no registry row without source, no source
+procedure unlisted. All 295 carry a purpose string.
+
+**Added:** `eml-analysis.txt` (21 `@emlRun*Analysis` dispatchers) — the layer
+the plugin's menu wrappers call. Brings regression, normality, RM-ANOVA,
+Friedman and reliability into reach.
+
+**Deliberately excluded, and stated as such:** `eml-lmm.praat` (mixed models,
+not ready) and its private numerical dependencies `eml-linalg.praat` /
+`eml-optimizer.praat` (Cholesky, BOBYQA, Nelder-Mead — called by nothing else,
+so they have no consumer without LMM). Consequence handled rather than left to
+rot: `@emlRunLMMAnalysis` is the one dispatcher with unresolvable calls and now
+carries a hard do-not-route warning at its own definition. `eml-wizard.praat`
+also excluded (vestigial).
+
+**Style exception, deliberate.** PKB copies are byte-faithful to plugin source
+so Rule 223 ("copy exactly from source") is satisfiable. That reintroduces 39
+`+=` and 2 `elif` that v14.0.0 had rewritten. Rather than let the PKB diverge
+from source again, the fix goes upstream: `plugin_style_fix.sh` at repo root
+applies it to the plugin. The MP now names this as a known SOT exception so a
+model does not "correct" the library it is copying from.
+
+**Verified:** all 16 refreshed sources parse in Praat 6.6.30 (the sole flag is
+`eml-graphs.txt`'s plugin-tree `include` paths — known, M11). Zero signature
+drift on shared procedures, confirming `emlReportKWComparison` was the only one.
+
 ### 14.0.0 — 29 July 2026
 
 **Major version.** Full-codebase audit remediation ahead of the frozen benchmark

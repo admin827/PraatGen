@@ -4,7 +4,18 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
-# Version: 1.16
+# Version: 1.18
+# v1.18: Graph correctness fixes. (1) Grouped scatter no longer prints a
+#        false "R² = 0.000" for Spearman/Theil-Sen fits — R² is emitted only
+#        for the OLS/Pearson line (guarded on annotCorrType$, mirroring the
+#        ungrouped path). (2) Bar chart y-range routed through
+#        @emlComputeAxisRange with the tracked data min, and bar baseline
+#        decoupled from yMin (bars emanate from 0) so all-negative means
+#        render. (3) Scatter axes use an adaptive @emlComputeNiceStep roundTo
+#        instead of a hardcoded 1, so fractional data is not over-ranged.
+# v1.17: Per-group scatter correlation output replaced with shared
+#        reporter (@emlReportCorrelationAnalysis) for rich Info window output
+#        including R-squared, effect size labels, and Why commentary.
 # Date: 6 April 2026
 #
 # v1.16: Group sort unification — replaced all inline group discovery
@@ -27,6 +38,11 @@
 #         confidence level. Reads global annotAlpha (default 0.05 = 95%
 #         CI). At n=5 and α=0.05, gives t=2.776 vs the old z=1.96.
 # v1.11: Faceted histogram group labels moved from right margin to left
+# PKB copy: flattened from plugin_EML_Praat_Tools/graphs/eml-draw-procedures.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #         margin (Text left:, rotated 90°). Truncation with binary search
 #         when label physical width exceeds 85% of panel height. Right
 #         margin reverted to standard (no longer widened for labels).
@@ -538,7 +554,7 @@ endproc
 #
 # Band columns apply to mode A only (CI around a single series).
 # Mean overlay is optional (boolean) and applies to modes B and C.
-# Group count capped at 10 (palette limit). ID count is uncapped.
+# Palette cycles 8 Okabe-Ito hues for unlimited groups. ID count is uncapped.
 # ----------------------------------------------------------------------------
 # ============================================================================
 # @emlDrawTimeSeries (reverted — modes A + D only)
@@ -1413,6 +1429,68 @@ procedure emlDrawSpaghettiPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
 
     @emlDrawTitle: .title$, .vpW, .vpH, .xMin, .xMax, .yMin, .yMax
 
+    # ----------------------------------------------------------------
+    # Info window report
+    # ----------------------------------------------------------------
+    @emlReportHeader: "Spaghetti Plot Summary"
+    selectObject: .objectId
+    .reportTableName$ = selected$ ("Table")
+    @emlUnderscoreToSpace: .reportTableName$
+    @emlReportLineString: "Table", emlUnderscoreToSpace.result$
+    @emlUnderscoreToSpace: .condCol$
+    @emlReportLineString: "Condition column", emlUnderscoreToSpace.result$
+    @emlUnderscoreToSpace: .valueCol$
+    @emlReportLineString: "Value column", emlUnderscoreToSpace.result$
+    if .idCol$ <> ""
+        @emlUnderscoreToSpace: .idCol$
+        @emlReportLineString: "ID column", emlUnderscoreToSpace.result$
+    endif
+    @emlReportLine: "Conditions", .nCond, 0
+    if .nGroups > 0
+        @emlReportLine: "Groups", .nGroups, 0
+    endif
+
+    for .rc from 1 to .nCond
+        @emlReportBlank
+        @emlSanitizeLabel: .condLabel$[.rc]
+        @emlReportSection: emlSanitizeLabel.result$
+        # Extract values for this condition
+        selectObject: .objectId
+        .rcN = 0
+        .rcSum = 0
+        .rcData# = zero# (.nRows)
+        for .ri from 1 to .nRows
+            selectObject: .objectId
+            .rCond$ = Get value: .ri, .condCol$
+            if .rCond$ = .condLabel$[.rc]
+                .rVal = Get value: .ri, .valueCol$
+                if .rVal <> undefined
+                    .rcN = .rcN + 1
+                    .rcData#[.rcN] = .rVal
+                    .rcSum = .rcSum + .rVal
+                endif
+            endif
+        endfor
+        if .rcN > 0
+            .rcMean = .rcSum / .rcN
+            # Compute SD
+            .rcSS = 0
+            for .ri from 1 to .rcN
+                .rcDev = .rcData#[.ri] - .rcMean
+                .rcSS = .rcSS + .rcDev * .rcDev
+            endfor
+            if .rcN > 1
+                .rcSD = sqrt (.rcSS / (.rcN - 1))
+            else
+                .rcSD = 0
+            endif
+            @emlReportLine: "N", .rcN, 0
+            @emlReportLine: "Mean", .rcMean, 3
+            @emlReportLine: "SD", .rcSD, 3
+        endif
+    endfor
+    @emlReportFooter
+
     # Reset state
     Colour: "Black"
     Line width: 1.0
@@ -1443,9 +1521,13 @@ procedure emlDrawBarChart: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .
     @emlOptimizePaletteContrast: .nGroups
 
     # Step 3: Compute y-axis range (both 0 = auto)
+    # Route through emlComputeAxisRange with the tracked data min so all-negative
+    # means get a negative yMin instead of being clipped at 0. For non-negative
+    # data visibleMin = 0 and emlComputeAxisRange's own non-negative guard keeps
+    # yMin at 0 (bars from 0 up), preserving prior behavior.
     if .vMin = 0 and .vMax = 0
-        @emlComputeAxisRange: 0, emlBarData_visibleMax, 10, 0
-        .yMin = 0
+        @emlComputeAxisRange: emlBarData_visibleMin, emlBarData_visibleMax, 10, 0
+        .yMin = emlComputeAxisRange.axisMin
         .yMax = emlComputeAxisRange.axisMax
     else
         .yMin = .vMin
@@ -1471,6 +1553,17 @@ procedure emlDrawBarChart: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .
     .halfBar = .barWidth / 2
     .capWidth = .barWidth * 0.17
 
+    # Bar baseline: 0 clamped into the axis. Decoupled from .yMin so that when
+    # yMin is negative (all-negative data) bars still emanate from 0 rather than
+    # from the axis floor. For non-negative data .yMin = 0, so .baseline = 0.
+    .baseline = 0
+    if .baseline < .yMin
+        .baseline = .yMin
+    endif
+    if .baseline > .yMax
+        .baseline = .yMax
+    endif
+
     for .g from 1 to .nGroups
         .xCenter = .g
         .colorIdx = .g
@@ -1479,12 +1572,12 @@ procedure emlDrawBarChart: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .
         .barTop = min (emlBarData_mean[.g], .yMax)
 
         # Filled bar
-        Paint rectangle: emlSetColorPalette.fill$[.colorIdx], .xCenter - .halfBar, .xCenter + .halfBar, .yMin, .barTop
+        Paint rectangle: emlSetColorPalette.fill$[.colorIdx], .xCenter - .halfBar, .xCenter + .halfBar, .baseline, .barTop
 
         # Bar outline
         Colour: emlSetColorPalette.line$[.colorIdx]
         Line width: emlSetAdaptiveTheme.axisLineWidth
-        Draw rectangle: .xCenter - .halfBar, .xCenter + .halfBar, .yMin, .barTop
+        Draw rectangle: .xCenter - .halfBar, .xCenter + .halfBar, .baseline, .barTop
 
         # Error bar (if enabled and nonzero)
         if .errorMode > 0 and emlBarData_error[.g] > 0
@@ -1605,6 +1698,31 @@ procedure emlDrawViolinPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH,
             endif
         endfor
     endfor
+
+    # Extend range by largest per-group KDE bandwidth so violin
+    # tails do not hit the axis edge. Silverman: h = 0.9 * SD * n^(-0.2)
+    .maxBW = 0
+    for .g from 1 to .nGroups
+        .n = .groupCount'.g'
+        if .n >= 4
+            .gMean = 0
+            for .k from 1 to .n
+                .gMean = .gMean + .groupData'.g'_'.k'
+            endfor
+            .gMean = .gMean / .n
+            .gVar = 0
+            for .k from 1 to .n
+                .gVar = .gVar + (.groupData'.g'_'.k' - .gMean) ^ 2
+            endfor
+            .gSD = sqrt (.gVar / (.n - 1))
+            .bw = 0.9 * .gSD * .n ^ (-0.2)
+            if .bw > .maxBW
+                .maxBW = .bw
+            endif
+        endif
+    endfor
+    .globalMin = .globalMin - .maxBW
+    .globalMax = .globalMax + .maxBW
     @emlComputeAxisRange: .globalMin, .globalMax, 10, 0
     .autoYMin = emlComputeAxisRange.axisMin
     .autoYMax = emlComputeAxisRange.axisMax
@@ -1785,7 +1903,12 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
     endif
 
     if .xMin = 0 and .xMax = 0
-        @emlComputeAxisRange: .dataXMin, .dataXMax, 1, 0
+        # Adaptive rounding grid: derive roundTo from a nice step over the data
+        # range (the same nice-number logic the gridlines use) so fractional data
+        # (proportions, reaction times, jitter %) is not snapped to the integer grid.
+        @emlComputeNiceStep: .dataXMax - .dataXMin, emlSetAdaptiveTheme.targetTicksX
+        .xRoundTo = emlComputeNiceStep.step
+        @emlComputeAxisRange: .dataXMin, .dataXMax, .xRoundTo, 0
         .axisXMin = emlComputeAxisRange.axisMin
         .axisXMax = emlComputeAxisRange.axisMax
     else
@@ -1794,7 +1917,12 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
     endif
 
     if .yMin = 0 and .yMax = 0
-        @emlComputeAxisRange: .dataYMin, .dataYMax, 1, 0
+        # Adaptive rounding grid: derive roundTo from a nice step over the data
+        # range (the same nice-number logic the gridlines use) so fractional data
+        # (proportions, reaction times, jitter %) is not snapped to the integer grid.
+        @emlComputeNiceStep: .dataYMax - .dataYMin, emlSetAdaptiveTheme.targetTicksY
+        .yRoundTo = emlComputeNiceStep.step
+        @emlComputeAxisRange: .dataYMin, .dataYMax, .yRoundTo, 0
         .axisYMin = emlComputeAxisRange.axisMin
         .axisYMax = emlComputeAxisRange.axisMax
     else
@@ -1852,11 +1980,11 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
 
     # Point color: in B/W mode use lighter fill so regression lines are visible
     if .colorMode$ = "bw"
-        for .c from 1 to 10
+        for .c from 1 to 100
             .pointColor$[.c] = emlSetColorPalette.fill$[.c]
         endfor
     else
-        for .c from 1 to 10
+        for .c from 1 to 100
             .pointColor$[.c] = emlSetColorPalette.line$[.c]
         endfor
     endif
@@ -1896,12 +2024,12 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
                     # Format p-value per annotation style setting
                     @emlFormatAnnotLabel: .pearsonP, 0, annotStyle$, 0, ""
                     .pText$ = emlFormatAnnotLabel.result$
-                    appendInfoLine: "r = " + fixed$ (.pearsonR, 3) + ", " + .pText$
 
                     # Annotation block line (Picture)
+                    .rSq = .pearsonR * .pearsonR
                     annotBlockN = annotBlockN + 1
-                    annotBlockLabel$[annotBlockN] = "r = " + fixed$ (.pearsonR, 3) + ", " + .pText$
-                    annotBlockDraw$[annotBlockN] = "%r = " + fixed$ (.pearsonR, 3) + ", " + .pText$
+                    annotBlockLabel$[annotBlockN] = "r = " + fixed$ (.pearsonR, 3) + ", R² = " + fixed$ (.rSq, 3) + ", " + .pText$
+                    annotBlockDraw$[annotBlockN] = "%r = " + fixed$ (.pearsonR, 3) + ", %R² = " + fixed$ (.rSq, 3) + ", " + .pText$
                 endif
             endif
 
@@ -1918,7 +2046,6 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
 
                     @emlFormatAnnotLabel: .spearmanP, 0, annotStyle$, 0, ""
                     .pText$ = emlFormatAnnotLabel.result$
-                    appendInfoLine: "rs = " + fixed$ (.spearmanR, 3) + ", " + .pText$
 
                     annotBlockN = annotBlockN + 1
                     annotBlockLabel$[annotBlockN] = "rs = " + fixed$ (.spearmanR, 3) + ", " + .pText$
@@ -1927,36 +2054,88 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
             endif
         endif
 
+        # --- Rich Info window output via shared reporters (ungrouped) ---
+        if .annotate = 1 and .nValid >= 3
+            selectObject: .objectId
+            .tableName$ = selected$ ("Table")
+            # Correlation reporter (Analysis = Correlation or Both)
+            if (scatterAnalysisType = 1 or scatterAnalysisType = 3) and annotCorrType$ <> ""
+                @emlReportCorrelationAnalysis: .tableName$,
+                ... .colX$, .colY$, .nValid, annotCorrType$
+            endif
+            # Regression reporter (Analysis = Regression or Both)
+            if scatterAnalysisType >= 2
+                @emlLinearRegression: .xData#, .yData#
+                if emlLinearRegression.error$ = ""
+                    @emlReportRegressionAnalysis: .tableName$,
+                    ... .colY$, .colX$, .nValid, 0
+                endif
+            endif
+        endif
+
         # --- Regression line (independent of annotate) ---
         if scatterRegressionLine = 1 and .nValid >= 3
-            # Ensure Pearson r is available for regression slope
-            if .havePearson = 0
-                @emlPearsonCorrelation: .xData#, .yData#, 2
-                if emlPearsonCorrelation.error$ = ""
-                    .pearsonR = emlPearsonCorrelation.r
+            # Choose estimator based on correlation type
+            if annotCorrType$ = "spearman"
+                # Theil-Sen: robust estimator, coherent with rank-based Spearman
+                @emlTheilSen: .xData#, .yData#
+                if emlTheilSen.error$ = ""
+                    .slope = emlTheilSen.slope
+                    .intercept = emlTheilSen.intercept
+                    .lineMethod$ = "Theil-Sen"
+                else
+                    .slope = undefined
+                    .lineMethod$ = "error"
+                endif
+            else
+                # OLS: standard for Pearson contexts
+                if .havePearson = 0
+                    @emlPearsonCorrelation: .xData#, .yData#, 2
+                    if emlPearsonCorrelation.error$ = ""
+                        .pearsonR = emlPearsonCorrelation.r
+                    endif
+                endif
+
+                .meanX = mean (.xData#)
+                .meanY = mean (.yData#)
+                .sdX = stdev (.xData#)
+                .sdY = stdev (.yData#)
+
+                if .sdX > 0
+                    .slope = .pearsonR * (.sdY / .sdX)
+                    .intercept = .meanY - .slope * .meanX
+                    .lineMethod$ = "OLS"
+                else
+                    .slope = undefined
+                    .lineMethod$ = "error"
                 endif
             endif
 
-            .meanX = mean (.xData#)
-            .meanY = mean (.yData#)
-            .sdX = stdev (.xData#)
-            .sdY = stdev (.yData#)
-
-            if .sdX > 0
-                .slope = .pearsonR * (.sdY / .sdX)
-                .intercept = .meanY - .slope * .meanX
-
+            if .slope <> undefined
                 @emlDrawRegressionLine: .dataXMin, .dataXMax, .slope, .intercept, .axisYMin, .axisYMax, .regColor$
 
-                # Formula to Info window always
-                appendInfoLine: "y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4)
+                # Formula to Info window (only when regression reporter hasn't fired)
+                if scatterAnalysisType < 2
+                    if .lineMethod$ = "Theil-Sen"
+                        appendInfoLine: "Theil-Sen: y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4)
+                    else
+                        appendInfoLine: "y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4)
+                    endif
+                endif
 
                 # Formula on graph if requested (independent of annotate)
                 if scatterShowFormula = 1
                     annotBlockN = annotBlockN + 1
-                    .formulaStr$ = "y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4)
-                    annotBlockLabel$[annotBlockN] = .formulaStr$
-                    annotBlockDraw$[annotBlockN] = "%y = " + fixed$ (.slope, 4) + "%x + " + fixed$ (.intercept, 4)
+                    if .lineMethod$ = "OLS" and .pearsonR <> undefined
+                        .rSqAnnot = .pearsonR * .pearsonR
+                        .formulaStr$ = "y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4) + "  (R² = " + fixed$ (.rSqAnnot, 3) + ")"
+                        annotBlockLabel$[annotBlockN] = .formulaStr$
+                        annotBlockDraw$[annotBlockN] = "%y = " + fixed$ (.slope, 4) + "%x + " + fixed$ (.intercept, 4) + "  (%R² = " + fixed$ (.rSqAnnot, 3) + ")"
+                    else
+                        .formulaStr$ = "y = " + fixed$ (.slope, 4) + "x + " + fixed$ (.intercept, 4)
+                        annotBlockLabel$[annotBlockN] = .formulaStr$
+                        annotBlockDraw$[annotBlockN] = "%y = " + fixed$ (.slope, 4) + "%x + " + fixed$ (.intercept, 4)
+                    endif
                 endif
             endif
         endif
@@ -2034,10 +2213,6 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
         # Per-group correlations and regression lines
         # Per-group statistics and regression lines
         if .annotate = 1 or scatterRegressionLine = 1
-            if annotCorrType$ <> "" or scatterRegressionLine = 1
-                appendInfoLine: ""
-                appendInfoLine: "Per-group results:"
-            endif
 
             for .g from 1 to .nGroups
                 # Extract this group's x/y data
@@ -2085,7 +2260,6 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
 
                                 @emlFormatAnnotLabel: .gPearsonP, 0, annotStyle$, 0, ""
                                 .pText$ = emlFormatAnnotLabel.result$
-                                appendInfoLine: "  " + .groupDispLabel$ + ": r = " + fixed$ (.gPearsonR, 3) + ", " + .pText$ + " (n = " + string$ (.gN) + ")"
 
                                 annotBlockN = annotBlockN + 1
                                 annotBlockLabel$[annotBlockN] = .groupDispLabel$ + ": r = " + fixed$ (.gPearsonR, 3) + ", " + .pText$
@@ -2102,7 +2276,6 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
 
                                 @emlFormatAnnotLabel: .gSpearmanP, 0, annotStyle$, 0, ""
                                 .pText$ = emlFormatAnnotLabel.result$
-                                appendInfoLine: "  " + .groupDispLabel$ + ": rs = " + fixed$ (.gSpearmanR, 3) + ", " + .pText$ + " (n = " + string$ (.gN) + ")"
 
                                 annotBlockN = annotBlockN + 1
                                 annotBlockLabel$[annotBlockN] = .groupDispLabel$ + ": rs = " + fixed$ (.gSpearmanR, 3) + ", " + .pText$
@@ -2111,24 +2284,61 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
                         endif
                     endif
 
+                    # --- Rich Info window output via shared reporters ---
+                    if .annotate = 1
+                        selectObject: .objectId
+                        .gTableName$ = selected$ ("Table")
+                        # Correlation reporter (Analysis = Correlation or Both)
+                        if (scatterAnalysisType = 1 or scatterAnalysisType = 3) and annotCorrType$ <> ""
+                            @emlReportCorrelationAnalysis: .gTableName$
+                            ... + " -- " + .groupDispLabel$,
+                            ... .colX$, .colY$, .gN, annotCorrType$
+                        endif
+                        # Regression reporter (Analysis = Regression or Both)
+                        if scatterAnalysisType >= 2
+                            @emlLinearRegression: .gXTrim#, .gYTrim#
+                            if emlLinearRegression.error$ = ""
+                                @emlReportRegressionAnalysis: .gTableName$
+                                ... + " -- " + .groupDispLabel$,
+                                ... .colY$, .colX$, .gN, 0
+                            endif
+                        endif
+                    endif
+
                     # --- Per-group regression line (independent of annotate) ---
                     if scatterRegressionLine = 1
-                        # Ensure Pearson r for line
-                        if .gHavePearson = 0
-                            @emlPearsonCorrelation: .gXTrim#, .gYTrim#, 2
-                            if emlPearsonCorrelation.error$ = ""
-                                .gPearsonR = emlPearsonCorrelation.r
+                        if annotCorrType$ = "spearman"
+                            # Theil-Sen for Spearman context
+                            @emlTheilSen: .gXTrim#, .gYTrim#
+                            if emlTheilSen.error$ = ""
+                                .gSlope = emlTheilSen.slope
+                                .gIntercept = emlTheilSen.intercept
+                            else
+                                .gSlope = undefined
+                            endif
+                        else
+                            # OLS for Pearson context
+                            if .gHavePearson = 0
+                                @emlPearsonCorrelation: .gXTrim#, .gYTrim#, 2
+                                if emlPearsonCorrelation.error$ = ""
+                                    .gPearsonR = emlPearsonCorrelation.r
+                                endif
+                            endif
+
+                            .gMeanX = mean (.gXTrim#)
+                            .gMeanY = mean (.gYTrim#)
+                            .gSdX = stdev (.gXTrim#)
+                            .gSdY = stdev (.gYTrim#)
+
+                            if .gSdX > 0
+                                .gSlope = .gPearsonR * (.gSdY / .gSdX)
+                                .gIntercept = .gMeanY - .gSlope * .gMeanX
+                            else
+                                .gSlope = undefined
                             endif
                         endif
 
-                        .gMeanX = mean (.gXTrim#)
-                        .gMeanY = mean (.gYTrim#)
-                        .gSdX = stdev (.gXTrim#)
-                        .gSdY = stdev (.gYTrim#)
-
-                        if .gSdX > 0
-                            .gSlope = .gPearsonR * (.gSdY / .gSdX)
-                            .gIntercept = .gMeanY - .gSlope * .gMeanX
+                        if .gSlope <> undefined
 
                             # Data extent for this group
                             .gXMin = .gXTrim#[1]
@@ -2146,14 +2356,35 @@ procedure emlDrawScatterPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH
                             .colorIdx = .g
                             @emlDrawRegressionLine: .gXMin, .gXMax, .gSlope, .gIntercept, .axisYMin, .axisYMax, emlSetColorPalette.line$[.colorIdx]
 
-                            # Formula to Info window always
-                            appendInfoLine: "  " + .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4)
+                            # Formula and R² to Info window (only when reporter hasn't fired)
+                            # R² is meaningful only for the OLS/Pearson line; the
+                            # Theil-Sen (Spearman) line has no OLS R². Guard on the
+                            # group-level branch selector annotCorrType$ (set at the
+                            # regression branch above), mirroring the ungrouped
+                            # OLS guard.
+                            if scatterAnalysisType < 2
+                                if annotCorrType$ <> "spearman"
+                                    .gR2 = .gPearsonR * .gPearsonR
+                                    appendInfoLine: "  " + .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4) + "  (R" + "² = " + fixed$ (.gR2, 3) + ")"
+                                else
+                                    appendInfoLine: "  " + .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4)
+                                endif
+                            endif
 
                             # Formula on graph if requested (independent of annotate)
+                            # Emit R² only for the OLS/Pearson line; the Theil-Sen
+                            # (Spearman) line has no OLS R². Guard on annotCorrType$,
+                            # mirroring the ungrouped OLS guard.
                             if scatterShowFormula = 1
                                 annotBlockN = annotBlockN + 1
-                                annotBlockLabel$[annotBlockN] = .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4)
-                                annotBlockDraw$[annotBlockN] = .groupDispLabel$ + ": %y = " + fixed$ (.gSlope, 4) + "%x + " + fixed$ (.gIntercept, 4)
+                                if annotCorrType$ <> "spearman"
+                                    .gR2Annot = .gPearsonR * .gPearsonR
+                                    annotBlockLabel$[annotBlockN] = .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4) + "  (R² = " + fixed$ (.gR2Annot, 3) + ")"
+                                    annotBlockDraw$[annotBlockN] = .groupDispLabel$ + ": %y = " + fixed$ (.gSlope, 4) + "%x + " + fixed$ (.gIntercept, 4) + "  (%R² = " + fixed$ (.gR2Annot, 3) + ")"
+                                else
+                                    annotBlockLabel$[annotBlockN] = .groupDispLabel$ + ": y = " + fixed$ (.gSlope, 4) + "x + " + fixed$ (.gIntercept, 4)
+                                    annotBlockDraw$[annotBlockN] = .groupDispLabel$ + ": %y = " + fixed$ (.gSlope, 4) + "%x + " + fixed$ (.gIntercept, 4)
+                                endif
                             endif
                         endif
                     endif
@@ -2484,7 +2715,7 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
                 .b = 1
             endif
 
-            if .hasGroups
+            if .nGroups > 0
                 .grp$ = Get value: .i, .groupCol$
                 .gIdx = 1
                 for .g from 1 to .nGroups
@@ -2768,7 +2999,7 @@ procedure emlDrawHistogram: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, 
 
     # Step 13: Info
     appendInfoLine: "Histogram: " + string$ (.nBins) + " bins, bin width = " + fixed$ (.binWidth, 4)
-    if .hasGroups
+    if .nGroups > 0
         appendInfoLine: "Groups: " + string$ (.nGroups)
     endif
 
@@ -2882,6 +3113,31 @@ procedure emlDrawGroupedViolin: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .v
         .globalMax = 1
     endif
 
+    # Extend range by largest per-cell KDE bandwidth (violin tails)
+    .maxBW = 0
+    for .c from 1 to .nCats
+        for .s from 1 to .nSubs
+            .n = .cellCount'.c'_'.s'
+            if .n >= 4
+                .gMean = 0
+                for .k from 1 to .n
+                    .gMean = .gMean + .cellData'.c'_'.s'_'.k'
+                endfor
+                .gMean = .gMean / .n
+                .gVar = 0
+                for .k from 1 to .n
+                    .gVar = .gVar + (.cellData'.c'_'.s'_'.k' - .gMean) ^ 2
+                endfor
+                .gSD = sqrt (.gVar / (.n - 1))
+                .bw = 0.9 * .gSD * .n ^ (-0.2)
+                if .bw > .maxBW
+                    .maxBW = .bw
+                endif
+            endif
+        endfor
+    endfor
+    .globalMin = .globalMin - .maxBW
+    .globalMax = .globalMax + .maxBW
     @emlComputeAxisRange: .globalMin, .globalMax, 10, 0
     .autoYMin = emlComputeAxisRange.axisMin
     .autoYMax = emlComputeAxisRange.axisMax
@@ -3221,4 +3477,83 @@ procedure emlDrawGroupedBoxPlot: .objectId, .title$, .xLabel$, .yLabel$, .vpW, .
     Colour: "Black"
     Line width: 1.0
     Font size: emlSetAdaptiveTheme.bodySize
+endproc
+
+
+# ============================================================================
+# @emlDrawLMMForest — fixed-effect coefficient forest plot for a fitted LMM.
+# ============================================================================
+# Reads emlLMM.* (beta#, nFixedCols, formula$), emlWaldCI.* (lower#, upper#)
+# and the coefficient labels emlModelMatrix.colName'.j'$. Call after @emlLMM
+# and @emlWaldCI. Draws each fixed effect as a point estimate with its 95%
+# confidence interval and a zero reference line (a "forest"/coefficient plot —
+# the standard LMM graphic). Rule 28: title, garnish suppressed + manual marks,
+# viewport asserted, sanitized labels, buffered axis always including zero.
+# ============================================================================
+procedure emlDrawLMMForest
+    .p = emlLMM.nFixedCols
+
+    # X range from CI bounds, always spanning 0, buffered 12%.
+    .xmin = 0
+    .xmax = 0
+    for .j from 1 to .p
+        if emlWaldCI.lower# [.j] < .xmin
+            .xmin = emlWaldCI.lower# [.j]
+        endif
+        if emlWaldCI.upper# [.j] > .xmax
+            .xmax = emlWaldCI.upper# [.j]
+        endif
+    endfor
+    .rng = .xmax - .xmin
+    if .rng <= 0
+        .rng = 1
+    endif
+    .buf = .rng * 0.12
+    .xlo = .xmin - .buf
+    .xhi = .xmax + .buf
+
+    .figW = 6.5
+    .figH = 1.6 + 0.5 * .p
+
+    Erase all
+    Select outer viewport: 0, .figW, 0, .figH
+    Axes: .xlo, .xhi, 0.5, .p + 0.7
+    Black
+    Line width: 1
+
+    # Zero reference line
+    Grey
+    Draw line: 0, 0.5, 0, .p + 0.5
+    Black
+
+    # One row per coefficient (first coefficient at the top)
+    for .j from 1 to .p
+        .y = .p - .j + 1
+        .lo = emlWaldCI.lower# [.j]
+        .hi = emlWaldCI.upper# [.j]
+        .est = emlLMM.beta# [.j]
+        Line width: 2
+        Draw line: .lo, .y, .hi, .y
+        Draw line: .lo, .y - 0.13, .lo, .y + 0.13
+        Draw line: .hi, .y - 0.13, .hi, .y + 0.13
+        Line width: 1
+        Paint circle (mm): "Black", .est, .y, 2.6
+        .raw$ = emlModelMatrix.colName'.j'$
+        .lab$ = replace$ (.raw$, "_", " ", 0)
+        .lab$ = replace$ (.lab$, "%", "\% ", 0)
+        .lab$ = replace$ (.lab$, "#", "\# ", 0)
+        .lab$ = replace$ (.lab$, "^", "\^ ", 0)
+        Text: .xlo, "left", .y + 0.30, "half", .lab$
+    endfor
+    Line width: 1
+
+    Draw inner box
+    Marks bottom: 5, "yes", "yes", "no"
+    .xlab$ = "Coefficient estimate (95\%  CI)"
+    Text bottom: "yes", .xlab$
+    .titl$ = "LMM fixed effects: " + replace$ (emlLMM.formula$, "_", " ", 0)
+    Text top: "yes", .titl$
+
+    # Rule 28I: assert the full outer viewport before any downstream save.
+    Select outer viewport: 0, .figW, 0, .figH
 endproc

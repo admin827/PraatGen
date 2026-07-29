@@ -14,7 +14,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)
-**Version:** 0.9.4-beta.01
+**Version:** 0.9.5-beta.01
 **Release:** 29 July 2026
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -79,7 +79,7 @@ In Claude (claude.ai or the Claude app):
 ### 2. Set the System Prompt
 
 1. In your new project, click **instructions**
-2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_0_0.md` into the instructions field
+2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_1_0.md` into the instructions field
 3. Scroll to the bottom and edit the "Canary" text if you wish. PraatGen reports this value back to you in pre-flight as a confidence measure that it read the entire Master Prompt.
 4. Save
 
@@ -147,7 +147,7 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 
 | File | Purpose |
 |------|---------|
-| `MASTER_PROMPT_CORE_v14_0_0.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.0.0. |
+| `MASTER_PROMPT_CORE_v14_1_0.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.1.0. |
 | `README.md` | This file. |
 
 ### Project Knowledge Base (PKB)
@@ -221,15 +221,16 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 |------|----------|
 | `eml-graph-procedures.txt` | Drawing core: adaptive theming, color palette, axes, gridlines, violin/box primitives, stereo handling |
 | `eml-draw-procedures.txt` | Draw orchestrators: F0 contour, waveform, spectrum, LTAS, time series, bar, violin, box, scatter, histogram |
-| `eml-annotation-procedures.txt` | Stats-to-graph bridge, brackets, comparison matrix, shared reporters |
+| `eml-annotation-procedures.txt` | Stats-to-graph bridge, brackets, comparison matrix, shared reporters (incl. regression and normality reports) |
 | `eml-core-utilities.txt` | Vector operations: ranking, sorting, subsetting, z-scores, binning |
-| `eml-core-descriptive.txt` | Descriptive statistics: mean, median, SD, quartiles, skewness, kurtosis, CI |
-| `eml-extract.txt` | Table and acoustic-object data extraction |
-| `eml-output.txt` | Formatted reporting: APA style, p-value formatting, CSV export |
-| `eml-inferential.txt` | Inferential tests and guided test selection: t-tests, correlations, MWU, Wilcoxon, ANOVA, KW, post-hoc, p-value adjustment |
+| `eml-core-descriptive.txt` | Descriptive statistics: mean, median, SD, quartiles, skewness, kurtosis, CI, Shapiro-Wilk |
+| `eml-extract.txt` | Table and acoustic-object data extraction; column-role inference |
+| `eml-output.txt` | Formatted reporting: APA style, p-value formatting, CSV export, dialog wrappers, plain-language explanations |
+| `eml-inferential.txt` | Inferential tests: t-tests, correlations, MWU, Wilcoxon, ANOVA, KW, post-hoc, p-adjustment, OLS and Theil-Sen regression |
+| `eml-analysis.txt` | High-level `@emlRun*Analysis` dispatchers — the layer the menu wrappers call |
 | `eml-graphs.txt` | Graphs entry point (loads the form system and draw layers) |
 | `eml-graphs-form.txt` | Form system, guided statistical workflow, config persistence |
-| `eml-vibrato-procedures.txt` | Vibrato detection, cycle analysis, summary statistics |
+| `eml-vibrato-procedures.txt` | Vibrato detection, cycle analysis, summary statistics, 8-panel publication figure |
 | `eml-demo-procedures.txt` | Demo window layout engine for interactive tutorials |
 | `eml-batch-process.txt` | Batch infrastructure: file stamps, stop sentinel, unique-path generation |
 | `eml-egg-procedures.txt` | EGG support: mandatory cycle guard (segfault protection), spectral-threshold de-noiser |
@@ -237,8 +238,11 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 These are flattened `.txt` copies of the plugin tree's `.praat` sources; the
 `include ../graphs/….praat` lines and the registry's `**File:**` paths refer to
-the plugin layout, not to the flat PKB. For the full procedure catalogue and
-signatures, see `EML_PROCEDURE_REGISTRY.md`.
+the plugin layout, not to the flat PKB. For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md` (295 procedures across 16 files).
+
+Each PKB source carries the **plugin's** version number verbatim. If a PKB file's version differs from the plugin file it was copied from, the PKB has drifted and should be re-synced.
+
+Not shipped in the PKB by design: the linear-mixed-model layer (`eml-lmm`, with its `eml-linalg` / `eml-optimizer` dependencies) and the vestigial `eml-wizard`.
 
 **Workflow support:**
 

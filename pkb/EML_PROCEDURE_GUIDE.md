@@ -18,24 +18,30 @@
 # VERSIONING
 # This guide reflects the following source file versions:
 #   eml-graph-procedures.praat      v3.21
-#   eml-draw-procedures.praat       v1.16
-#   eml-annotation-procedures.praat v3.15
-#   eml-core-utilities.praat        v1.1
+#   eml-draw-procedures.praat       v1.18
+#   eml-annotation-procedures.praat v3.17
+#   eml-core-utilities.praat        v1.0
 #   eml-core-descriptive.praat      v1.1
-#   eml-extract.praat               v1.2
-#   eml-output.praat                v1.4
-#   eml-inferential.praat           v1.3
-#   eml-vibrato-procedures.praat    v2.1
+#   eml-extract.praat               v1.4
+#   eml-output.praat                v1.7
+#   eml-inferential.praat           v1.2
+#   eml-analysis.praat              (new to PKB, 29 Jul 2026)
+#   eml-vibrato-procedures.praat    v2.0  (16 procs incl. drawing)
 #   eml-demo-procedures.praat       v1.2
-#   eml-batch-process.praat         v1.2
-#   eml-test-helpers.praat          v1.1
-#   eml-egg-procedures.praat        v1.0   (new, 29 Jul 2026)
-#   eml-graphs.praat                v3.1
-#   eml-graphs-form.praat           v1.5
+#   eml-batch-process.praat         v1.1
+#   eml-test-helpers.praat          v1.0
+#   eml-egg-procedures.praat        v1.0
+#   eml-graphs.praat                v3.0
+#   eml-graphs-form.praat           v1.9
 #
-#   eml-wizard.praat — vestigial. Present in the plugin tree, not wired
-#   into the workflow, and not shipped in the PKB. Removed from the
-#   registry in PraatGen v14.0.0; do not route to it.
+#   These are the PLUGIN's version numbers, carried verbatim in each PKB
+#   file header. A mismatch between the two means the PKB has drifted.
+#
+#   NOT shipped in the PKB: eml-lmm.praat (mixed models, not ready) with
+#   its private numerical dependencies eml-linalg.praat and
+#   eml-optimizer.praat; and eml-wizard.praat (vestigial). Note that the
+#   @emlWizardExplain* helpers ARE shipped — they live in eml-output.praat,
+#   a core file, not in the wizard script.
 #
 # When a source file is updated, bump its version here. A mismatch
 # between this table and the source file header signals the guide
@@ -220,12 +226,11 @@
 #       ├── Both continuous
 #       │   ├── Linear, normal → @emlPearsonCorrelation
 #       │   └── Monotonic or non-normal → @emlSpearmanCorrelation
-#       └── (Regression: @emlLinearRegression / @emlTheilSen exist in the
-#           plugin tree but are NOT wired into the stats-and-graphs
-#           workflow, and their source is not shipped in the PKB — see
-#           "Plugin-tree-only procedures" in EML_PROCEDURE_REGISTRY.md.
-#           Do not reconstruct them. For a regression line on a scatter
-#           plot, @emlBridgeCorrelation + @emlDrawRegressionLine cover it.)
+#       ├── Linear, OLS      → @emlLinearRegression
+#       │                        (report via @emlReportRegressionAnalysis)
+#       └── Robust / outliers → @emlTheilSen
+#           For a regression line drawn on a scatter plot,
+#           @emlBridgeCorrelation + @emlDrawRegressionLine still apply.
 #
 # 2.2 PARAMETRIC VS. NONPARAMETRIC
 #
@@ -621,10 +626,10 @@
 # "Analyze vibrato"
 #   → Vibrato family — full pipeline from @emlVibratoPitchSetup
 #     through @emlVibratoSummary
-#   → Drawing: the vibrato library is analysis-only (no drawing
-#     procedures). Build figures from the general drawing/plotting
-#     procedures in eml-draw-procedures.txt (e.g. @emlDrawTimeSeries,
-#     @emlDrawScatterPlot) driven by the vibrato Table output.
+#   → Drawing: @emlVibratoDrawFigure for complete 8-panel output.
+#     Component panels: @emlVibratoDrawPitchIntensity,
+#     @emlVibratoDrawCoV, @emlVibratoDrawDualScatter,
+#     @emlVibratoDrawSummaryTable.
 #
 # 5.7 TESTING TASKS
 #

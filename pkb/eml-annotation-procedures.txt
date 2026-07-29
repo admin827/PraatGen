@@ -4,8 +4,19 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
-# Version: 3.15
-# Date: 7 April 2026
+# Version: 3.17
+# Date: 11 May 2026
+#
+# v3.17: Renamed emlWizardMode → emlShowExplanations throughout.
+# v3.16: Wizard mode third-column explanations. All 8 @emlReport*
+#         procedures now conditionally append value-anchored
+#         interpretations when emlShowExplanations = 1. "Why:" explanation
+#         lines are now conditional on wizard mode (suppressed in
+#         wrapper output). Report procedures affected:
+#         @emlReportTwoGroupComparison, @emlReportAnovaComparison,
+#         @emlReportKWComparison, @emlReportCorrelationAnalysis,
+#         @emlReportRegressionAnalysis, @emlReportNormalityAnalysis,
+#         @emlReportPairedComparison, @emlReportTwoWayAnova.
 #
 # v3.15: Bug #11 fix — @emlReportAnovaComparison Cohen's d matrix now
 #         always reported, not gated behind Tukey toggle. Reads from
@@ -27,6 +38,11 @@
 #
 # v3.12: Matrix legend bottom padding increased from fontInch*0.5 to
 #        fontInch*2.0 — legend was clipping below viewport on tall
+# PKB copy: flattened from plugin_EML_Praat_Tools/graphs/eml-annotation-procedures.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #        figures with many groups. Tukey CSV rows now include q-statistic
 #        and dfWithin (were hardcoded 0). Effect labels (large/medium/
 #        small) now populated on ANOVA omnibus, Tukey pairwise, and
@@ -1832,20 +1848,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                     if emlDunnTest.error$ = ""
                         annotMatrixPosthoc$ = "Dunn's test ("
                         ... + annotCorrectionMethod$ + ")"
-                        # Order controlled by @emlCountGroups
-                        .sortLabels$# = empty$# (.nGroups)
-                        for .i from 1 to .nGroups
-                            .sortLabels$#[.i] = emlCountGroups.groupLabel$[.i]
-                        endfor
-                        for .i from 1 to .nGroups
-                            .sortMap[.i] = 0
-                            for .g from 1 to .nGroups
-                                if .sortLabels$#[.i]
-                                ... = emlDunnTest.groupName$[.g]
-                                    .sortMap[.i] = .g
-                                endif
-                            endfor
-                        endfor
+                        # Group order from @emlCountGroups (no remapping needed)
                         if .useMatrix
                             # --- MATRIX OUTPUT (split triangle) ---
                             # Upper triangle: p-values only (text)
@@ -1858,11 +1861,11 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                                 annotMatrixEffectLabel$ = ""
                             endif
                             for .i from 1 to .nGroups
-                                annotMatrixLabel$[.i] = .sortLabels$#[.i]
+                                annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
                             endfor
                             for .i from 1 to .nGroups - 1
                                 for .j from .i + 1 to .nGroups
-                                    .pairP = emlDunnTest.pMatrix##[.sortMap[.i], .sortMap[.j]]
+                                    .pairP = emlDunnTest.pMatrix##[.i, .j]
 
                                     # p-value text only (no effect in cell)
                                     @emlFormatAnnotLabel: .pairP, undefined, .style$, 0, ""
@@ -1894,7 +1897,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotBracketN = 0
                             for .i from 1 to .nGroups - 1
                                 for .j from .i + 1 to .nGroups
-                                    .pairP = emlDunnTest.pMatrix##[.sortMap[.i], .sortMap[.j]]
+                                    .pairP = emlDunnTest.pMatrix##[.i, .j]
 
                                     # Rank-biserial r per pair if effect display requested
                                     .pairD = undefined
@@ -1941,7 +1944,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
+                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
@@ -1998,14 +2001,11 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                 # Order controlled by @emlCountGroups.
                 # Build map from display position to stats-procedure
                 # position for matrix access.
-                .sortLabels$# = empty$# (.nGroups)
-                for .i from 1 to .nGroups
-                    .sortLabels$#[.i] = emlCountGroups.groupLabel$[.i]
-                endfor
+                # Build map from display order to stats order
                 for .i from 1 to .nGroups
                     .sortMap[.i] = 0
                     for .g from 1 to .nGroups
-                        if .sortLabels$#[.i]
+                        if emlCountGroups.groupLabel$[.i]
                         ... = emlOneWayAnova.groupName$[.g]
                             .sortMap[.i] = .g
                         endif
@@ -2026,7 +2026,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
+                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
@@ -2108,7 +2108,7 @@ procedure emlBridgeGroupComparison: .tableId, .dataCol$, .factorCol$, .alpha, .s
                             annotMatrixEffectLabel$ = ""
                         endif
                         for .i from 1 to .nGroups
-                            annotMatrixLabel$[.i] = .sortLabels$#[.i]
+                            annotMatrixLabel$[.i] = emlCountGroups.groupLabel$[.i]
                         endfor
                         for .i from 1 to .nGroups - 1
                             for .j from .i + 1 to .nGroups
@@ -2374,20 +2374,45 @@ procedure emlReportTwoGroupComparison: .tableName$, .dataCol$, .groupCol$, .grou
         @emlFormatEffectLabel: emlCohenD.d, "d"
         @emlReportBlank
         @emlReportSection: emlTTest.method$
-        if emlTTest.method$ = "Welch"
-            appendInfoLine: "  Why: Compares means of two independent "
-            ... + "groups (robust to unequal variances)."
-        else
-            appendInfoLine: "  Why: Compares means of two independent "
-            ... + "groups (assumes equal variances)."
+        if emlShowExplanations
+            if emlTTest.method$ = "Welch"
+                appendInfoLine: "  Why: Compares means of two independent "
+                ... + "groups (robust to unequal variances)."
+            else
+                appendInfoLine: "  Why: Compares means of two independent "
+                ... + "groups (assumes equal variances)."
+            endif
+        endif
+        if emlShowExplanations
+            @emlWizardExplainT: emlTTest.t
         endif
         @emlReportLine: "t", emlTTest.t, 3
+        if emlShowExplanations
+            @emlWizardExplainDfTTest: emlTTest.df, emlTTest.method$
+        endif
         @emlReportLine: "df", emlTTest.df, 1
+        if emlShowExplanations
+            @emlWizardExplainP: emlTTest.p
+        endif
         @emlReportLineString: "p", emlFormatP.formatted$
+        if emlShowExplanations
+            .diff = .mean1 - .mean2
+            if .diff > 0
+                emlWizardExplain$ = .displayG1$ + " mean is " + fixed$ (abs (.diff), 2) + " units higher"
+            else
+                emlWizardExplain$ = .displayG2$ + " mean is " + fixed$ (abs (.diff), 2) + " units higher"
+            endif
+        endif
         @emlReportLine: "Mean difference", emlTTest.meanDiff, 4
         @emlReportBlank
         @emlReportSection: "Effect Size"
+        if emlShowExplanations
+            @emlWizardExplainEffectD: emlCohenD.d
+        endif
         @emlReportLine: "Cohen's d", emlCohenD.d, 3
+        if emlShowExplanations
+            @emlWizardExplainEffectG: emlCohenD.g
+        endif
         @emlReportLine: "Hedges' g", emlCohenD.g, 3
         @emlReportLineString: "Magnitude", emlFormatEffectLabel.label$
         @emlCSVAddRow: .tableName$, .dataCol$, .groupCol$,
@@ -2403,17 +2428,35 @@ procedure emlReportTwoGroupComparison: .tableName$, .dataCol$, .groupCol$, .grou
         @emlFormatEffectLabel: abs (emlRankBiserialR.r), "r"
         @emlReportBlank
         @emlReportSection: "Mann-Whitney U Test"
-        appendInfoLine: "  Why: Compares distributions of two "
-        ... + "independent groups without assuming normality."
+        if emlShowExplanations
+            appendInfoLine: "  Why: Compares distributions of two "
+            ... + "independent groups without assuming normality."
+        endif
+        if emlShowExplanations
+            emlWizardExplain$ = "Sum of ranks: measures how much one group's values tend to exceed the other's"
+        endif
         @emlReportLine: "U1", emlMannWhitneyU.u1, 1
         @emlReportLine: "U2", emlMannWhitneyU.u2, 1
         if emlMannWhitneyU.z <> undefined
             @emlReportLine: "z", emlMannWhitneyU.z, 3
         endif
+        if emlShowExplanations
+            @emlWizardExplainP: emlMannWhitneyU.p
+        endif
         @emlReportLineString: "p", emlFormatP.formatted$
+        if emlShowExplanations
+            if emlMannWhitneyU.method$ = "exact"
+                emlWizardExplain$ = "P-value computed by exact enumeration (n < 50)"
+            else
+                emlWizardExplain$ = "P-value computed by normal approximation (n >= 50)"
+            endif
+        endif
         @emlReportLineString: "Method", emlMannWhitneyU.method$
         @emlReportBlank
         @emlReportSection: "Nonparametric Effect Size"
+        if emlShowExplanations
+            @emlWizardExplainEffectR: emlRankBiserialR.r
+        endif
         @emlReportLine: "Rank-biserial r", emlRankBiserialR.r, 3
         @emlReportLineString: "Magnitude", emlFormatEffectLabel.label$
         if emlMannWhitneyU.z <> undefined
@@ -2454,34 +2497,45 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
     # ANOVA table
     @emlReportBlank
     @emlReportSection: "ANOVA Table"
-    appendInfoLine: "  Why: Tests whether group means differ "
-    ... + "when normality and equal variances hold."
+    if emlShowExplanations
+        appendInfoLine: "  Why: Tests whether group means differ "
+        ... + "when normality and equal variances hold."
+    endif
     appendInfoLine: ""
-    appendInfoLine: left$ ("Source" + "                ", 14),
-    ... left$ ("SS" + "            ", 12),
+    appendInfoLine: left$ ("Source" + "                    ", 20),
+    ... left$ ("SS" + "                ", 16),
     ... left$ ("df" + "      ", 6),
-    ... left$ ("MS" + "            ", 12),
-    ... left$ ("F" + "          ", 10),
+    ... left$ ("MS" + "                ", 16),
+    ... left$ ("F" + "            ", 12),
     ... "p"
-    appendInfoLine: left$ ("Between" + "                ", 14),
-    ... left$ (fixed$ (emlOneWayAnova.ssBetween, 4) + "            ", 12),
+    appendInfoLine: left$ ("Between" + "                    ", 20),
+    ... left$ (fixed$ (emlOneWayAnova.ssBetween, 2) + "                ", 16),
     ... left$ (string$ (emlOneWayAnova.dfBetween) + "      ", 6),
-    ... left$ (fixed$ (emlOneWayAnova.msBetween, 4) + "            ", 12),
-    ... left$ (fixed$ (emlOneWayAnova.fValue, 4) + "          ", 10),
+    ... left$ (fixed$ (emlOneWayAnova.msBetween, 2) + "                ", 16),
+    ... left$ (fixed$ (emlOneWayAnova.fValue, 4) + "            ", 12),
     ... fixed$ (emlOneWayAnova.p, 6)
-    appendInfoLine: left$ ("Within" + "                ", 14),
-    ... left$ (fixed$ (emlOneWayAnova.ssWithin, 4) + "            ", 12),
+    appendInfoLine: left$ ("Within" + "                    ", 20),
+    ... left$ (fixed$ (emlOneWayAnova.ssWithin, 2) + "                ", 16),
     ... left$ (string$ (emlOneWayAnova.dfWithin) + "      ", 6),
-    ... left$ (fixed$ (emlOneWayAnova.msWithin, 4) + "            ", 12)
-    appendInfoLine: left$ ("Total" + "                ", 14),
-    ... left$ (fixed$ (emlOneWayAnova.ssTotal, 4) + "            ", 12),
+    ... left$ (fixed$ (emlOneWayAnova.msWithin, 2) + "                ", 16)
+    appendInfoLine: left$ ("Total" + "                    ", 20),
+    ... left$ (fixed$ (emlOneWayAnova.ssTotal, 2) + "                ", 16),
     ... left$ (string$ (emlOneWayAnova.dfTotal) + "      ", 6)
 
     @emlReportBlank
     @emlFormatP: emlOneWayAnova.p
+    if emlShowExplanations
+        @emlWizardExplainF: emlOneWayAnova.fValue
+    endif
     @emlReportLineString: "F", fixed$ (emlOneWayAnova.fValue, 4)
+    if emlShowExplanations
+        @emlWizardExplainP: emlOneWayAnova.p
+    endif
     @emlReportLineString: "p", emlFormatP.formatted$
     .etaSq = emlOneWayAnova.etaSquared
+    if emlShowExplanations
+        @emlWizardExplainEffectEta2: .etaSq
+    endif
     @emlReportLineString: "Effect size", "eta-squared = " + fixed$ (.etaSq, 4)
 
     @emlFormatEffectLabel: .etaSq, "eta_squared"
@@ -2497,25 +2551,22 @@ procedure emlReportAnovaComparison: .tableName$, .dataCol$, .groupCol$, .tableId
     @emlReportSection: "Group Descriptives"
     @emlReportDescriptiveHeader
 
-    # Group order controlled by @emlCountGroups
-    .sortLabels$# = empty$# (.nGroups)
-    for .i from 1 to .nGroups
-        .sortLabels$#[.i] = emlOneWayAnova.groupLabel$[.i]
-    endfor
-
-    for .iGroup from 1 to .nGroups
-        .gName$ = replace$ (.sortLabels$#[.iGroup], "_", " ", 0)
+    for .gIdx from 1 to .nGroups
         @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
-        ... .sortLabels$#[.iGroup]
+        ... emlOneWayAnova.groupLabel$[.gIdx]
         .gN = eml_getGroupData.n
         .gData# = eml_getGroupData.data#
-        @emlMean: .gData#
-        .gMean = emlMean.result
-        @emlSD: .gData#
-        .gSD = emlSD.result
-        @emlMedian: .gData#
-        .gMedian = emlMedian.result
-        @emlReportDescriptiveRow: .gName$, .gN, .gMean, .gSD, .gMedian
+        .gMean = mean (.gData#)
+        .gSD = stdev (.gData#)
+        .gSorted# = sort# (.gData#)
+        .gMidIdx = ceiling (.gN / 2)
+        if .gN mod 2 = 1
+            .gMedian = .gSorted# [.gMidIdx]
+        else
+            .gMedian = (.gSorted# [.gMidIdx] + .gSorted# [.gMidIdx + 1]) / 2
+        endif
+        .gDisplayLabel$ = replace$ (emlOneWayAnova.groupLabel$[.gIdx], "_", " ", 0)
+        @emlReportDescriptiveRow: .gDisplayLabel$, .gN, .gMean, .gSD, .gMedian
     endfor
 
     # Tukey pairwise p-values (only when Tukey ran)
@@ -2703,12 +2754,27 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
 
     @emlReportBlank
     @emlReportSection: "Omnibus Test"
-    appendInfoLine: "  Why: Nonparametric comparison of three or "
-    ... + "more groups — no normality assumption needed."
+    if emlShowExplanations
+        appendInfoLine: "  Why: Nonparametric comparison of three or "
+        ... + "more groups — no normality assumption needed."
+    endif
+    if emlShowExplanations
+        emlWizardExplain$ = "Test statistic: measures rank dispersion across groups (chi-squared distributed)"
+    endif
     @emlReportLine: "H", emlKruskalWallis.h, 4
+    if emlShowExplanations
+        emlWizardExplain$ = "Number of groups (" + string$ (.nGroups)
+        ... + ") minus 1. Controls the chi-squared reference distribution."
+    endif
     @emlReportLine: "df", emlKruskalWallis.df, 0
     @emlFormatP: emlKruskalWallis.p
+    if emlShowExplanations
+        @emlWizardExplainP: emlKruskalWallis.p
+    endif
     @emlReportLineString: "p", emlFormatP.formatted$
+    if emlShowExplanations
+        @emlWizardExplainEffectEta2: emlKruskalWallis.epsilonSq
+    endif
     @emlReportLine: "Epsilon-squared", emlKruskalWallis.epsilonSq, 4
     @emlFormatEffectLabel: emlKruskalWallis.epsilonSq, "eta_squared"
     @emlReportLineString: "Effect magnitude", emlFormatEffectLabel.label$
@@ -2721,18 +2787,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
     ... 0, 0, 0, 0, 0, 0, 0, 0
 
     # Group order controlled by @emlCountGroups
-    .sortLabels$# = empty$# (.nGroups)
-    for .i from 1 to .nGroups
-        .sortLabels$#[.i] = emlKruskalWallis.groupName$[.i]
-    endfor
-    for .i from 1 to .nGroups
-        .sortMap[.i] = 0
-        for .g from 1 to .nGroups
-            if .sortLabels$#[.i] = emlKruskalWallis.groupName$[.g]
-                .sortMap[.i] = .g
-            endif
-        endfor
-    endfor
+    # Group order from @emlCountGroups (no remapping needed)
 
     # Group mean ranks
     @emlReportBlank
@@ -2742,13 +2797,13 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
     ... + left$ ("N" + "      ", 6) + "Mean Rank"
     appendInfoLine: .grpHeader$
     for .iGroup from 1 to .nGroups
-        .gName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
+        .gName$ = replace$ (emlKruskalWallis.groupName$ [.iGroup], "_", " ", 0)
         if length (.gName$) > 12
             .gName$ = left$ (.gName$, 12)
         endif
         appendInfoLine: left$ (.gName$ + "                ", 14),
-        ... left$ (string$ (emlKruskalWallis.groupN [.sortMap[.iGroup]]) + "      ", 6),
-        ... fixed$ (emlKruskalWallis.meanRank [.sortMap[.iGroup]], 2)
+        ... left$ (string$ (emlKruskalWallis.groupN [.iGroup]) + "      ", 6),
+        ... fixed$ (emlKruskalWallis.meanRank [.iGroup], 2)
     endfor
 
     if .doDunn
@@ -2759,7 +2814,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
             appendInfoLine: ""
             .headerLine$ = left$ ("" + "                ", 14)
             for .jGroup from 1 to .nGroups
-                .colName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.jGroup]], "_", " ", 0)
+                .colName$ = replace$ (emlDunnTest.groupName$ [.jGroup], "_", " ", 0)
                 if length (.colName$) > 10
                     .colName$ = left$ (.colName$, 10)
                 endif
@@ -2767,7 +2822,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
             endfor
             appendInfoLine: .headerLine$
             for .iGroup from 1 to .nGroups
-                .rowName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
+                .rowName$ = replace$ (emlDunnTest.groupName$ [.iGroup], "_", " ", 0)
                 if length (.rowName$) > 12
                     .rowName$ = left$ (.rowName$, 12)
                 endif
@@ -2776,7 +2831,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
                     if .iGroup = .jGroup
                         .cellText$ = "---"
                     else
-                        .pVal = emlDunnTest.pMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                        .pVal = emlDunnTest.pMatrix## [.iGroup, .jGroup]
                         if .pVal < 0.001
                             .cellText$ = "< .001"
                         else
@@ -2793,7 +2848,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
             appendInfoLine: ""
             appendInfoLine: .headerLine$
             for .iGroup from 1 to .nGroups
-                .rowName$ = replace$ (emlDunnTest.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
+                .rowName$ = replace$ (emlDunnTest.groupName$ [.iGroup], "_", " ", 0)
                 if length (.rowName$) > 12
                     .rowName$ = left$ (.rowName$, 12)
                 endif
@@ -2802,7 +2857,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
                     if .iGroup = .jGroup
                         .cellText$ = "---"
                     else
-                        .zVal = emlDunnTest.zMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                        .zVal = emlDunnTest.zMatrix## [.iGroup, .jGroup]
                         .cellText$ = fixed$ (.zVal, 3)
                     endif
                     .rowLine$ = .rowLine$ + left$ (.cellText$ + "            ", 12)
@@ -2813,11 +2868,11 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
             # CSV rows — per-pair descriptives + rank-biserial r
             for .iGroup from 1 to .nGroups - 1
                 for .jGroup from .iGroup + 1 to .nGroups
-                    .pVal = emlDunnTest.pMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
-                    .zVal = emlDunnTest.zMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
-                    .rVal = emlDunnTest.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
-                    .g1Label$ = emlDunnTest.groupName$ [.sortMap[.iGroup]]
-                    .g2Label$ = emlDunnTest.groupName$ [.sortMap[.jGroup]]
+                    .pVal = emlDunnTest.pMatrix## [.iGroup, .jGroup]
+                    .zVal = emlDunnTest.zMatrix## [.iGroup, .jGroup]
+                    .rVal = emlDunnTest.rMatrix## [.iGroup, .jGroup]
+                    .g1Label$ = emlDunnTest.groupName$ [.iGroup]
+                    .g2Label$ = emlDunnTest.groupName$ [.jGroup]
                     @eml_getGroupData: .tableId, .dataCol$, .groupCol$,
                     ... .g1Label$
                     .n1 = eml_getGroupData.n
@@ -2879,7 +2934,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
     appendInfoLine: ""
     .rHeaderLine$ = left$ ("" + "                ", 14)
     for .jGroup from 1 to .nGroups
-        .colName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.jGroup]], "_", " ", 0)
+        .colName$ = replace$ (emlKruskalWallis.groupName$ [.jGroup], "_", " ", 0)
         if length (.colName$) > 10
             .colName$ = left$ (.colName$, 10)
         endif
@@ -2887,7 +2942,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
     endfor
     appendInfoLine: .rHeaderLine$
     for .iGroup from 1 to .nGroups
-        .rowName$ = replace$ (emlKruskalWallis.groupName$ [.sortMap[.iGroup]], "_", " ", 0)
+        .rowName$ = replace$ (emlKruskalWallis.groupName$ [.iGroup], "_", " ", 0)
         if length (.rowName$) > 12
             .rowName$ = left$ (.rowName$, 12)
         endif
@@ -2896,7 +2951,7 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
             if .iGroup = .jGroup
                 .cellText$ = "---"
             else
-                .rVal = emlKruskalWallis.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                .rVal = emlKruskalWallis.rMatrix## [.iGroup, .jGroup]
                 .cellText$ = fixed$ (.rVal, 3)
             endif
             .rRowLine$ = .rRowLine$ + left$ (.cellText$ + "            ", 12)
@@ -2908,9 +2963,9 @@ procedure emlReportKWComparison: .tableName$, .dataCol$, .groupCol$, .tableId, .
     if .doDunn = 0
         for .iGroup from 1 to .nGroups - 1
             for .jGroup from .iGroup + 1 to .nGroups
-                .g1Label$ = emlKruskalWallis.groupName$ [.sortMap[.iGroup]]
-                .g2Label$ = emlKruskalWallis.groupName$ [.sortMap[.jGroup]]
-                .rVal = emlKruskalWallis.rMatrix## [.sortMap[.iGroup], .sortMap[.jGroup]]
+                .g1Label$ = emlKruskalWallis.groupName$ [.iGroup]
+                .g2Label$ = emlKruskalWallis.groupName$ [.jGroup]
+                .rVal = emlKruskalWallis.rMatrix## [.iGroup, .jGroup]
                 @eml_getGroupData: .tableId, .dataCol$, .groupCol$, .g1Label$
                 .n1 = eml_getGroupData.n
                 .v1# = eml_getGroupData.data#
@@ -2967,11 +3022,30 @@ procedure emlReportCorrelationAnalysis: .tableName$, .colX$, .colY$, .n, .testTy
             @emlFormatP: emlPearsonCorrelation.p
             @emlReportBlank
             @emlReportSection: "Pearson Correlation"
-            appendInfoLine: "  Why: Measures linear association between "
-            ... + "two continuous variables."
+            if emlShowExplanations
+                appendInfoLine: "  Why: Measures linear association between "
+                ... + "two continuous variables."
+            endif
+            if emlShowExplanations
+                @emlWizardExplainCorrelation: emlPearsonCorrelation.r
+            endif
             @emlReportLine: "r", emlPearsonCorrelation.r, 4
+            if emlShowExplanations
+                .r2 = emlPearsonCorrelation.r * emlPearsonCorrelation.r
+                @emlWizardExplainR2: .r2
+                @emlReportLine: "R-squared", .r2, 4
+            endif
+            if emlShowExplanations
+                @emlWizardExplainT: emlPearsonCorrelation.t
+            endif
             @emlReportLine: "t", emlPearsonCorrelation.t, 3
+            if emlShowExplanations
+                @emlWizardExplainDfCorrelation: emlPearsonCorrelation.df, .n
+            endif
             @emlReportLine: "df", emlPearsonCorrelation.df, 0
+            if emlShowExplanations
+                @emlWizardExplainP: emlPearsonCorrelation.p
+            endif
             @emlReportLineString: "p", emlFormatP.formatted$
             @emlCSVAddRow: .tableName$, .colX$, .colY$,
             ... "", "", "Pearson",
@@ -2989,11 +3063,25 @@ procedure emlReportCorrelationAnalysis: .tableName$, .colX$, .colY$, .n, .testTy
             @emlFormatP: emlSpearmanCorrelation.p
             @emlReportBlank
             @emlReportSection: "Spearman Correlation"
-            appendInfoLine: "  Why: Measures monotonic association — "
-            ... + "no normality assumption needed."
+            if emlShowExplanations
+                appendInfoLine: "  Why: Measures monotonic association — "
+                ... + "no normality assumption needed."
+            endif
+            if emlShowExplanations
+                @emlWizardExplainCorrelation: emlSpearmanCorrelation.rho
+            endif
             @emlReportLine: "rho", emlSpearmanCorrelation.rho, 4
+            if emlShowExplanations
+                @emlWizardExplainT: emlSpearmanCorrelation.t
+            endif
             @emlReportLine: "t", emlSpearmanCorrelation.t, 3
+            if emlShowExplanations
+                @emlWizardExplainDfCorrelation: emlSpearmanCorrelation.df, .n
+            endif
             @emlReportLine: "df", emlSpearmanCorrelation.df, 0
+            if emlShowExplanations
+                @emlWizardExplainP: emlSpearmanCorrelation.p
+            endif
             @emlReportLineString: "p", emlFormatP.formatted$
             @emlCSVAddRow: .tableName$, .colX$, .colY$,
             ... "", "", "Spearman",
@@ -3003,6 +3091,256 @@ procedure emlReportCorrelationAnalysis: .tableName$, .colX$, .colY$, .n, .testTy
             ... .n, .n, 0, 0, 0, 0, 0, 0
         endif
     endif
+
+    @emlReportFooter
+endproc
+
+
+# ============================================================================
+# @emlReportRegressionAnalysis
+# ============================================================================
+# Formatted Info window report for simple linear regression.
+# Reads globals from @emlLinearRegression.
+# ============================================================================
+
+procedure emlReportRegressionAnalysis: .tableName$, .depCol$, .predCol$,
+... .nValid, .nUndefined
+    @emlUnderscoreToSpace: .tableName$
+    .displayTable$ = emlUnderscoreToSpace.result$
+    @emlUnderscoreToSpace: .depCol$
+    .displayDep$ = emlUnderscoreToSpace.result$
+    @emlUnderscoreToSpace: .predCol$
+    .displayPred$ = emlUnderscoreToSpace.result$
+
+    @emlReportHeader: "Simple Linear Regression"
+    @emlReportLineString: "Table", .displayTable$
+    @emlReportLineString: "Response (Y)", .displayDep$
+    @emlReportLineString: "Predictor (X)", .displayPred$
+    @emlReportLine: "N", .nValid, 0
+    if .nUndefined > 0
+        @emlReportLine: "Excluded (missing)", .nUndefined, 0
+    endif
+
+    @emlReportBlank
+    @emlReportSection: "Model"
+    if emlShowExplanations
+        appendInfoLine: "  Why: Tests whether the predictor linearly"
+        ... + " predicts the response."
+    endif
+    .eqn$ = "y = "
+    ... + fixed$ (emlLinearRegression.slope, 4) + "x"
+    ... + " + " + fixed$ (emlLinearRegression.intercept, 4)
+    @emlReportLineString: "Equation", .eqn$
+    if emlShowExplanations
+        .proseEqn$ = .displayDep$ + " = "
+        ... + fixed$ (emlLinearRegression.slope, 4) + " x " + .displayPred$
+        ... + " + " + fixed$ (emlLinearRegression.intercept, 4)
+        emlWizardExplain$ = .proseEqn$
+        appendInfoLine: "  " + emlWizardExplain$
+    endif
+    if emlShowExplanations
+        @emlWizardExplainCorrelation: emlLinearRegression.r
+    endif
+    @emlReportLine: "R", abs (emlLinearRegression.r), 4
+    if emlShowExplanations
+        @emlWizardExplainR2: emlLinearRegression.rSquared
+    endif
+    @emlReportLine: "R-squared", emlLinearRegression.rSquared, 4
+    .adjR2 = 1 - (1 - emlLinearRegression.rSquared) * (.nValid - 1) / (.nValid - 2)
+    if emlShowExplanations
+        emlWizardExplain$ = "R-squared adjusted for number of predictors — penalizes model complexity"
+    endif
+    @emlReportLine: "Adj. R-squared", .adjR2, 4
+    if emlShowExplanations
+        emlWizardExplain$ = "Typical prediction error — points deviate from the line by +/-"
+        ... + fixed$ (emlLinearRegression.seResidual, 2) + " units on average"
+    endif
+    @emlReportLine: "Residual SE", emlLinearRegression.seResidual, 4
+
+    @emlReportBlank
+    @emlReportSection: "Overall Model Test (F)"
+    .dfLabel$ = "F(" + string$ (emlLinearRegression.dfReg)
+    ... + "," + string$ (emlLinearRegression.dfRes) + ")"
+    if emlShowExplanations
+        emlWizardExplain$ = "Overall model significance — ratio of explained to unexplained variance"
+    endif
+    @emlReportLine: .dfLabel$, emlLinearRegression.fStat, 4
+    @emlFormatP: emlLinearRegression.pF
+    if emlShowExplanations
+        @emlWizardExplainP: emlLinearRegression.pF
+    endif
+    @emlReportLineString: "p", emlFormatP.formatted$
+
+    @emlReportBlank
+    @emlReportSection: "Coefficients"
+    appendInfoLine: ""
+    .hdr$ = left$ ("" + "                    ", 20)
+    ... + left$ ("Estimate" + "              ", 14)
+    ... + left$ ("SE" + "              ", 14)
+    ... + left$ ("t" + "              ", 14)
+    ... + "p"
+    appendInfoLine: .hdr$
+    # Intercept row
+    @emlFormatP: emlLinearRegression.pIntercept
+    .intRow$ = left$ ("Intercept" + "                    ", 20)
+    ... + left$ (fixed$ (emlLinearRegression.intercept, 4) + "              ", 14)
+    ... + left$ (fixed$ (emlLinearRegression.seIntercept, 4) + "              ", 14)
+    ... + left$ (fixed$ (emlLinearRegression.tIntercept, 3) + "              ", 14)
+    ... + emlFormatP.formatted$
+    appendInfoLine: .intRow$
+    # Slope row
+    @emlFormatP: emlLinearRegression.pSlope
+    .slopeRow$ = left$ (.displayPred$ + "                    ", 20)
+    ... + left$ (fixed$ (emlLinearRegression.slope, 4) + "              ", 14)
+    ... + left$ (fixed$ (emlLinearRegression.seSlope, 4) + "              ", 14)
+    ... + left$ (fixed$ (emlLinearRegression.tSlope, 3) + "              ", 14)
+    ... + emlFormatP.formatted$
+    appendInfoLine: .slopeRow$
+
+    # Direction and magnitude
+    @emlReportBlank
+    if emlLinearRegression.slope > 0
+        .dir$ = "positive"
+        .verb$ = "increases"
+    else
+        .dir$ = "negative"
+        .verb$ = "decreases"
+    endif
+    @emlFormatEffectLabel: emlLinearRegression.rSquared, "r_squared"
+    appendInfoLine: "  Direction: " + .dir$
+    ... + " (" + .displayDep$ + " " + .verb$
+    ... + " as " + .displayPred$ + " increases)"
+    @emlReportLineString: "Variance explained", emlFormatEffectLabel.label$
+
+    @emlCSVAddRow: .tableName$, .depCol$, .predCol$,
+    ... "regression", "regression", "OLS linear",
+    ... emlLinearRegression.fStat, emlLinearRegression.dfRes,
+    ... emlLinearRegression.pF,
+    ... emlLinearRegression.rSquared, "R-squared",
+    ... emlFormatEffectLabel.label$,
+    ... .nValid, 0,
+    ... emlLinearRegression.slope, emlLinearRegression.seSlope,
+    ... emlLinearRegression.intercept,
+    ... emlLinearRegression.seIntercept,
+    ... emlLinearRegression.r, 0
+
+    @emlReportFooter
+endproc
+
+
+# ============================================================================
+# @emlReportNormalityAnalysis
+# ============================================================================
+# Formatted Info window report for normality assessment.
+# Reads globals from @emlRunNormalityAnalysis.
+# ============================================================================
+
+procedure emlReportNormalityAnalysis: .tableName$, .dataCol$,
+... .nValid, .nUndefined
+    @emlUnderscoreToSpace: .tableName$
+    .displayTable$ = emlUnderscoreToSpace.result$
+    @emlUnderscoreToSpace: .dataCol$
+    .displayCol$ = emlUnderscoreToSpace.result$
+
+    @emlReportHeader: "Normality Assessment"
+    @emlReportLineString: "Table", .displayTable$
+    @emlReportLineString: "Column", .displayCol$
+    @emlReportLine: "N", .nValid, 0
+    if .nUndefined > 0
+        @emlReportLine: "Excluded (missing)", .nUndefined, 0
+    endif
+
+    @emlReportBlank
+    @emlReportSection: "Descriptive Statistics"
+    @emlReportLine: "Mean", emlRunNormalityAnalysis.mean, 4
+    @emlReportLine: "SD", emlRunNormalityAnalysis.sd, 4
+    @emlReportLine: "Median", emlRunNormalityAnalysis.median, 4
+
+    @emlReportBlank
+    @emlReportSection: "Distribution Shape"
+    if emlShowExplanations
+        appendInfoLine: "  Why: Skewness and kurtosis indicate departures"
+        ... + " from a normal (bell-shaped) distribution."
+    endif
+    if emlShowExplanations
+        @emlWizardExplainSkewness: emlRunNormalityAnalysis.skewness
+    endif
+    @emlReportLine: "Skewness", emlRunNormalityAnalysis.skewness, 4
+    if emlShowExplanations
+        @emlWizardExplainKurtosis: emlRunNormalityAnalysis.kurtosis
+    endif
+    @emlReportLine: "Kurtosis", emlRunNormalityAnalysis.kurtosis, 4
+
+    if abs (emlRunNormalityAnalysis.skewness) >= 1
+        appendInfoLine: "  → Skewness outside typical limits (|skew| < 1)"
+    else
+        appendInfoLine: "  → Skewness within typical limits"
+    endif
+    if abs (emlRunNormalityAnalysis.kurtosis) >= 3
+        appendInfoLine: "  → Kurtosis outside typical limits (|kurt| < 3)"
+    else
+        appendInfoLine: "  → Kurtosis within typical limits"
+    endif
+
+    @emlReportBlank
+    @emlReportSection: "Shapiro-Wilk Test"
+    if emlShowExplanations
+        appendInfoLine: "  Why: Formal test of whether the data are"
+        ... + " drawn from a normal distribution."
+    endif
+    if emlRunNormalityAnalysis.swError$ = ""
+        if emlShowExplanations
+            @emlWizardExplainNormW: emlRunNormalityAnalysis.swW
+        endif
+        @emlReportLine: "W", emlRunNormalityAnalysis.swW, 4
+        @emlFormatP: emlRunNormalityAnalysis.swP
+        if emlShowExplanations
+            @emlWizardExplainP: emlRunNormalityAnalysis.swP
+        endif
+        @emlReportLineString: "p", emlFormatP.formatted$
+        if emlRunNormalityAnalysis.swFail
+            appendInfoLine: "  → Rejects normality (p < 0.05)"
+        else
+            appendInfoLine: "  → Does not reject normality (p >= 0.05)"
+        endif
+    else
+        @emlReportLineString: "Error", emlRunNormalityAnalysis.swError$
+    endif
+
+    @emlReportBlank
+    @emlReportSection: "Recommendation"
+    if emlRunNormalityAnalysis.recommendation$ = "parametric"
+        if emlRunNormalityAnalysis.largeNOverride = 1
+            appendInfoLine: "  Shapiro-Wilk rejects normality, but with n = "
+            ... + string$ (emlRunNormalityAnalysis.nValid)
+            ... + " the departure"
+            appendInfoLine: "  is statistically detectable but practically"
+            ... + " negligible"
+            appendInfoLine: "  (skewness and kurtosis within acceptable"
+            ... + " limits)."
+            appendInfoLine: "  → Parametric tests are robust at this sample"
+            ... + " size."
+        else
+            appendInfoLine: "  Normality appears reasonable."
+            appendInfoLine: "  → Parametric tests (t-test, ANOVA, Pearson r)"
+            ... + " are appropriate."
+        endif
+    else
+        appendInfoLine: "  Evidence against normality."
+        appendInfoLine: "  → Consider nonparametric tests (Mann-Whitney,"
+        ... + " Kruskal-Wallis, Spearman rho)."
+    endif
+
+    @emlCSVAddRow: .tableName$, .dataCol$, "",
+    ... "normality", "normality", "Shapiro-Wilk",
+    ... emlRunNormalityAnalysis.swW, 0,
+    ... emlRunNormalityAnalysis.swP,
+    ... 0, "", emlRunNormalityAnalysis.recommendation$,
+    ... .nValid, 0,
+    ... emlRunNormalityAnalysis.mean, emlRunNormalityAnalysis.sd,
+    ... emlRunNormalityAnalysis.median,
+    ... emlRunNormalityAnalysis.skewness,
+    ... emlRunNormalityAnalysis.kurtosis, 0
 
     @emlReportFooter
 endproc
@@ -3039,10 +3377,21 @@ procedure emlReportPairedComparison: .tableName$, .col1$, .col2$, .n,
             @emlFormatP: emlTTestPaired.p
             @emlReportBlank
             @emlReportSection: "Paired t-test"
-            appendInfoLine: "  Why: Tests whether the mean difference "
-            ... + "between paired observations differs from zero."
+            if emlShowExplanations
+                appendInfoLine: "  Why: Tests whether the mean difference "
+                ... + "between paired observations differs from zero."
+            endif
+            if emlShowExplanations
+                @emlWizardExplainT: emlTTestPaired.t
+            endif
             @emlReportLine: "t", emlTTestPaired.t, 3
+            if emlShowExplanations
+                @emlWizardExplainDfPaired: emlTTestPaired.df, .n
+            endif
             @emlReportLine: "df", emlTTestPaired.df, 0
+            if emlShowExplanations
+                @emlWizardExplainP: emlTTestPaired.p
+            endif
             @emlReportLineString: "p", emlFormatP.formatted$
             @emlReportLine: "Mean difference", emlTTestPaired.meanDiff, 4
             @emlReportLine: "SD of differences", emlTTestPaired.sdDiff, 4
@@ -3072,12 +3421,23 @@ procedure emlReportPairedComparison: .tableName$, .col1$, .col2$, .n,
             @emlFormatP: emlWilcoxonSignedRank.p
             @emlReportBlank
             @emlReportSection: "Wilcoxon Signed-Rank Test"
-            appendInfoLine: "  Why: Nonparametric test for paired "
-            ... + "observations — no normality assumption needed."
+            if emlShowExplanations
+                appendInfoLine: "  Why: Nonparametric test for paired "
+                ... + "observations — no normality assumption needed."
+            endif
+            if emlShowExplanations
+                emlWizardExplain$ = "Sum of ranks for positive differences (subjects who increased)"
+            endif
             @emlReportLine: "T+", emlWilcoxonSignedRank.tPlus, 1
+            if emlShowExplanations
+                emlWizardExplain$ = "Sum of ranks for negative differences (subjects who decreased)"
+            endif
             @emlReportLine: "T-", emlWilcoxonSignedRank.tMinus, 1
             if emlWilcoxonSignedRank.z <> undefined
                 @emlReportLine: "z", emlWilcoxonSignedRank.z, 3
+            endif
+            if emlShowExplanations
+                @emlWizardExplainP: emlWilcoxonSignedRank.p
             endif
             @emlReportLineString: "p", emlFormatP.formatted$
 
@@ -3085,6 +3445,9 @@ procedure emlReportPairedComparison: .tableName$, .col1$, .col2$, .n,
                 @emlFormatEffectLabel: abs (emlMatchedPairsR.r), "r"
                 @emlReportBlank
                 @emlReportSection: "Nonparametric Effect Size"
+                if emlShowExplanations
+                    @emlWizardExplainEffectR: emlMatchedPairsR.r
+                endif
                 @emlReportLine: "Matched-pairs r", emlMatchedPairsR.r, 3
                 @emlReportLineString: "Magnitude", emlFormatEffectLabel.label$
             endif
@@ -3132,56 +3495,67 @@ procedure emlReportTwoWayAnova: .tableName$, .dataCol$, .factor1$, .factor2$
 
     @emlReportBlank
     @emlReportSection: "ANOVA Table"
-    appendInfoLine: "  Why: Tests main effects of two factors "
-    ... + "and their interaction."
+    if emlShowExplanations
+        appendInfoLine: "  Why: Tests main effects of two factors "
+        ... + "and their interaction."
+    endif
     appendInfoLine: ""
     appendInfoLine: left$ ("Source" + "                    ", 20),
-    ... left$ ("SS" + "            ", 12),
+    ... left$ ("SS" + "                ", 16),
     ... left$ ("df" + "      ", 6),
-    ... left$ ("MS" + "            ", 12),
-    ... left$ ("F" + "          ", 10),
+    ... left$ ("MS" + "                ", 16),
+    ... left$ ("F" + "            ", 12),
     ... "p"
 
     @emlFormatP: emlTwoWayAnova.pA
     appendInfoLine: left$ (.displayF1$ + "                    ", 20),
-    ... left$ (fixed$ (emlTwoWayAnova.ssA, 4) + "            ", 12),
+    ... left$ (fixed$ (emlTwoWayAnova.ssA, 2) + "                ", 16),
     ... left$ (string$ (emlTwoWayAnova.dfA) + "      ", 6),
-    ... left$ (fixed$ (emlTwoWayAnova.msA, 4) + "            ", 12),
-    ... left$ (fixed$ (emlTwoWayAnova.fA, 4) + "          ", 10),
+    ... left$ (fixed$ (emlTwoWayAnova.msA, 2) + "                ", 16),
+    ... left$ (fixed$ (emlTwoWayAnova.fA, 4) + "            ", 12),
     ... emlFormatP.formatted$
 
     @emlFormatP: emlTwoWayAnova.pB
     appendInfoLine: left$ (.displayF2$ + "                    ", 20),
-    ... left$ (fixed$ (emlTwoWayAnova.ssB, 4) + "            ", 12),
+    ... left$ (fixed$ (emlTwoWayAnova.ssB, 2) + "                ", 16),
     ... left$ (string$ (emlTwoWayAnova.dfB) + "      ", 6),
-    ... left$ (fixed$ (emlTwoWayAnova.msB, 4) + "            ", 12),
-    ... left$ (fixed$ (emlTwoWayAnova.fB, 4) + "          ", 10),
+    ... left$ (fixed$ (emlTwoWayAnova.msB, 2) + "                ", 16),
+    ... left$ (fixed$ (emlTwoWayAnova.fB, 4) + "            ", 12),
     ... emlFormatP.formatted$
 
     @emlFormatP: emlTwoWayAnova.pAB
     .interLabel$ = .displayF1$ + " x " + .displayF2$
     .rawInterLabel$ = .factor1$ + "_x_" + .factor2$
     appendInfoLine: left$ (.interLabel$ + "                    ", 20),
-    ... left$ (fixed$ (emlTwoWayAnova.ssAB, 4) + "            ", 12),
+    ... left$ (fixed$ (emlTwoWayAnova.ssAB, 2) + "                ", 16),
     ... left$ (string$ (emlTwoWayAnova.dfAB) + "      ", 6),
-    ... left$ (fixed$ (emlTwoWayAnova.msAB, 4) + "            ", 12),
-    ... left$ (fixed$ (emlTwoWayAnova.fAB, 4) + "          ", 10),
+    ... left$ (fixed$ (emlTwoWayAnova.msAB, 2) + "                ", 16),
+    ... left$ (fixed$ (emlTwoWayAnova.fAB, 4) + "            ", 12),
     ... emlFormatP.formatted$
 
     appendInfoLine: left$ ("Error" + "                    ", 20),
-    ... left$ (fixed$ (emlTwoWayAnova.ssError, 4) + "            ", 12),
+    ... left$ (fixed$ (emlTwoWayAnova.ssError, 2) + "                ", 16),
     ... left$ (string$ (emlTwoWayAnova.dfError) + "      ", 6),
-    ... left$ (fixed$ (emlTwoWayAnova.msError, 4) + "            ", 12)
+    ... left$ (fixed$ (emlTwoWayAnova.msError, 2) + "                ", 16)
 
     appendInfoLine: left$ ("Total" + "                    ", 20),
-    ... left$ (fixed$ (emlTwoWayAnova.ssTotal, 4) + "            ", 12),
+    ... left$ (fixed$ (emlTwoWayAnova.ssTotal, 2) + "                ", 16),
     ... left$ (string$ (emlTwoWayAnova.dfTotal) + "      ", 6)
 
     # Effect sizes
     @emlReportBlank
     @emlReportSection: "Effect Sizes (partial eta-squared)"
+    if emlShowExplanations
+        @emlWizardExplainEffectEta2: emlTwoWayAnova.partialEtaSqA
+    endif
     @emlReportLine: .displayF1$, emlTwoWayAnova.partialEtaSqA, 4
+    if emlShowExplanations
+        @emlWizardExplainEffectEta2: emlTwoWayAnova.partialEtaSqB
+    endif
     @emlReportLine: .displayF2$, emlTwoWayAnova.partialEtaSqB, 4
+    if emlShowExplanations
+        @emlWizardExplainEffectEta2: emlTwoWayAnova.partialEtaSqAB
+    endif
     @emlReportLine: .interLabel$, emlTwoWayAnova.partialEtaSqAB, 4
 
     # CSV rows — one per effect

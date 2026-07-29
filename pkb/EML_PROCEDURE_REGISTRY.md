@@ -1,21 +1,26 @@
 # EML Praat Tools — Procedure Registry
 
-Generated: 8 April 2026 | Revised: 29 July 2026 (PraatGen v14.0.0) | Source: plugin_EMLTools v1.0 pre-release | 238 PKB-resident procedures (233 public, 5 internal) across 15 files, plus 6 plugin-tree-only (see end of file)
+Generated: 8 April 2026 | **Rebuilt 29 July 2026 (PraatGen v14.0.0) directly from plugin source** | Source: plugin_EML_Praat_Tools + vibrato/tutorial/egg libraries
 
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-> **Path convention.** Every `**File:**` entry below uses the *plugin tree* path
-> (`stats/…`, `graphs/…`, `egg/…`, `*.praat`). In Project Knowledge these files
-> are shipped **flattened**: the plugin path `graphs/eml-graph-procedures.praat`
-> is the file `eml-graph-procedures.txt`. To retrieve an implementation, search
-> PK for the procedure name or the flattened stem (drop the subdir, swap
-> `.praat`→`.txt`); the `include ../graphs/….praat` lines inside source files are
-> plugin-tree references and are not expected to resolve in the flat PK layout.
+> **Path convention.** Every `**File:**` entry uses the *plugin tree* path
+> (`stats/…`, `graphs/…`, `*.praat`). In Project Knowledge these ship
+> **flattened**: `graphs/eml-graph-procedures.praat` is the file
+> `eml-graph-procedures.txt`. Retrieve an implementation by searching PK for
+> the procedure name or the flattened stem (drop the subdir, `.praat`→`.txt`).
+> `include ../graphs/….praat` lines inside sources are plugin-tree references
+> and are not expected to resolve in the flat PK layout.
+
+> **Version discipline.** Each `**File:**` version below is the PLUGIN's version,
+> copied verbatim into the PKB file header. PKB version == plugin version, always.
+> A mismatch means the PKB has drifted and must be re-synced from source — that
+> check is the whole point of carrying the number.
 
 ---
 
 ## Stats: Descriptive
-**File:** `stats/eml-core-descriptive.praat` (v1.1) — 18 procedures
+**File:** `stats/eml-core-descriptive.praat` (v1.1) — 20 procedures (19 public, 1 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -37,9 +42,11 @@ Generated: 8 April 2026 | Revised: 29 July 2026 (PraatGen v14.0.0) | Source: plu
 | `@emlRange` | Minimum, maximum, and range of a vector | .data# | public |
 | `@emlCI` | Confidence interval for the mean | .data#, .confidenceLevel | public |
 | `@emlDescribe` | Full descriptive summary (all stats in one call) | .data# | public |
+| `@eml_swPoly` | Evaluate polynomial by Horner's method (internal helper for Shapiro-Wilk). | .c#, .x | internal |
+| `@emlShapiroWilk` | - Second pair (n>=7): m[n-1]/ssumm2 + poly(c2, 1/sqrt(n)) | .data# | public |
 
 ## Stats: Utilities
-**File:** `stats/eml-core-utilities.praat` (v1.1) — 15 procedures (14 public, 1 internal)
+**File:** `stats/eml-core-utilities.praat` (v1.0) — 15 procedures (14 public, 1 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -60,7 +67,7 @@ Generated: 8 April 2026 | Revised: 29 July 2026 (PraatGen v14.0.0) | Source: plu
 | `@emlRepeatVector` | Repeat a vector nReps times | .v#, .nReps | public |
 
 ## Stats: Extraction
-**File:** `stats/eml-extract.praat` (v1.2) — 13 procedures (12 public, 1 internal)
+**File:** `stats/eml-extract.praat` (v1.4) — 16 procedures (13 public, 3 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -77,43 +84,62 @@ Generated: 8 April 2026 | Revised: 29 July 2026 (PraatGen v14.0.0) | Source: plu
 | `@emlTableColumnNames` | List all column names in a Table | .tableId | public |
 | `@emlCountGroups` | Count distinct group labels in a column | .tableId, .groupCol$ | public |
 | `@eml_getGroupData` | Extract one group's data from Table by label (internal helper) | .tableId, .dataCol$, .groupCol$, .groupLabel$ | internal |
+| `@eml_getGroupPairedData` | Extract two numeric columns for one group, keeping only rows where BOTH | .tableId, .colX$, .colY$, .groupCol$, .groupLabel$ | internal |
+| `@eml_kwScan` | (internal helper) | .colName$, .kwList$ | internal |
+| `@emlGuessColumnRoles` | string columns get baseline group score 5. | .tableId | public |
 
 ## Stats: Output
-**File:** `stats/eml-output.praat` (v1.4) — 21 procedures
+**File:** `stats/eml-output.praat` (v1.7) — 42 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlPadRight` | Pad string with trailing spaces to target length | .text$, .targetLength | public |
 | `@emlUnderscoreToSpace` | Replace all underscores with spaces | .text$ | public |
-| `@emlClearInfo` | Explicit Info window clear for dialog handlers | — | public |
+| `@emlClearInfo` | Explicit Info window clear for dialog handlers | # Explicit Info window clear. Call from dialog handlers when user | public |
 | `@emlReportHeader` | Print report header with borders (clears Info window) | .title$ | public |
-| `@emlReportFooter` | Print report footer with borders | — | public |
+| `@emlReportFooter` | Print report footer with borders | # Print closing double-line border | public |
 | `@emlReportSection` | Print section divider with title | .title$ | public |
 | `@emlReportLine` | Print label + numeric value row | .label$, .value, .decimals | public |
 | `@emlReportLineString` | Print label + string value row | .label$, .value$ | public |
-| `@emlReportBlank` | Print blank line in report | — | public |
+| `@emlReportBlank` | Print blank line in report | # Print empty line | public |
 | `@emlFormatP` | Format p-value (< .001, = .023, etc.) | .pValue | public |
 | `@emlFormatCI` | Format confidence interval as [lower, upper] | .lower, .upper, .level | public |
 | `@emlFormatTestResult` | Format complete test result line (stat, df, p, effect) | .testName$, .statSymbol$, .statValue, .df1, .df2, .pValue, .effectName$, .effectValue, .ciLower, .ciUpper | public |
 | `@emlFormatEffectLabel` | Format effect size with interpretive label (small/medium/large) | .effectValue, .effectType$ | public |
-| `@emlReportDescriptiveHeader` | Print column headers for descriptive stats table | — | public |
+| `@emlReportDescriptiveHeader` | Print column headers for descriptive stats table | # Print column header row for descriptive statistics table | public |
 | `@emlReportDescriptiveRow` | Print one row of descriptive stats | .label$, .n, .mean, .sd, .median | public |
 | `@emlReportAPA` | Format result in APA style (e.g., t(28) = 2.31, p = .028) | .testType$, .statValue, .df1, .df2, .pValue, .effectName$, .effectValue, .ciLower, .ciUpper | public |
 | `@emlReportToFile` | Write current Info window contents to a file | .filePath$, .content$ | public |
 | `@emlSaveInfoToFile` | Save Info window to file with overwrite protection | .filePath$ | public |
-| `@emlCSVInit` | Initialize CSV export accumulator arrays | — | public |
+| `@emlCSVInit` | Initialize CSV export accumulator arrays | emlCSV_n = 0 | public |
 | `@emlCSVAddRow` | Add one row to CSV accumulator | .table$, .dataCol$, .groupCol$, .g1$, .g2$, .test$, .stat, .df, .p, .es, .esType$, .esLabel$, .n1, .n2, .mean1, .sd1, .median1, .mean2, .sd2, .median2 | public |
 | `@emlExportStatsCSV` | Export accumulated CSV data to file | .filePath$ | public |
-| `@emlWrapperCommonFields` | Injects shared fields ("Clear Info window") into the active beginPause dialog | (none) | public ⚠️ |
-| `@emlHandleCommonFields` | Post-endPause handler for those shared fields (clears Info if toggled) | (none) | public ⚠️ |
+| `@emlWrapperCommonFields` | `stats/eml-output.praat` | comment: "--- Options ---" | public |
+| `@emlHandleCommonFields` | Post-endPause handler for those shared fields (clears Info if toggled) | if clear_Info_window | public |
+| `@emlWrapperInit` | WRAPPER INFRASTRUCTURE — shared init and post-analysis procedures | .minCols | public |
+| `@emlWrapperExportCSV` | ──────────────────────────────────────────────────────────────────────────── | .tableName$ | public |
+| `@emlWizardExplainP` | WIZARD EXPLANATION HELPERS | .p | public |
+| `@emlWizardExplainEffectD` | Cohen's d magnitude label | .d | public |
+| `@emlWizardExplainEffectG` | Hedges' g magnitude label | .g | public |
+| `@emlWizardExplainEffectR` | Rank-biserial r magnitude label | .r | public |
+| `@emlWizardExplainEffectEta2` | Eta-squared magnitude with % variance | .eta2 | public |
+| `@emlWizardExplainCorrelation` | Correlation strength + direction label | .r | public |
+| `@emlWizardExplainR2` | R-squared as % variance explained | .r2 | public |
+| `@emlWizardExplainT` | t-statistic as signal-to-noise ratio | .t | public |
+| `@emlWizardExplainF` | F-statistic as variance ratio | .f | public |
+| `@emlWizardExplainDfBetween` | ANOVA between-groups df explanation | .df, .nGroups | public |
+| `@emlWizardExplainDfWithin` | ANOVA within-groups df explanation | .df, .nTotal, .nGroups | public |
+| `@emlWizardExplainDfTTest` | t-test df explanation (Welch vs standard) | .df, .method$ | public |
+| `@emlWizardExplainDfPaired` | Paired t-test df explanation | .df, .nPairs | public |
+| `@emlWizardExplainDfCorrelation` | Correlation df explanation | .df, .n | public |
+| `@emlWizardExplainNormW` | Shapiro-Wilk W interpretation | .w | public |
+| `@emlWizardExplainSkewness` | Skewness direction and magnitude label | .skew | public |
+| `@emlWizardExplainKurtosis` | Kurtosis tail weight label | .kurt | public |
 
-⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
-tree but are not in `eml-output.txt` (v1.4). `APPENDIX_C_GUI.txt` §C.2 documents
-the shared-wrapper-fields pattern they implement. See "Plugin-tree-only
-procedures" at the end of this file before calling them.
+All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `@emlReportLine` / `@emlReportLineString` call. They are no-ops when `emlWizardMode = 0` (callers gate on the flag). They live in `eml-output.praat`, a **core** file — they are not part of the excluded wizard script.
 
 ## Stats: Inferential
-**File:** `stats/eml-inferential.praat` (v1.3) — 25 procedures (22 public, 3 internal)
+**File:** `stats/eml-inferential.praat` (v1.2) — 27 procedures (24 public, 3 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -142,23 +168,46 @@ procedures" at the end of this file before calling them.
 | `@emlPairwiseT` | All pairwise t-tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$, .type$ | public |
 | `@emlPairwiseWilcoxon` | All pairwise Wilcoxon tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$ | public |
 | `@emlScheffe` | Scheffe post-hoc test after ANOVA | .tableId, .dataCol$, .factorCol$ | public |
-| `@emlLinearRegression` | OLS simple linear regression (slope, intercept, R², SE, F, p) | .x#, .y# | public ⚠️ |
-| `@emlTheilSen` | Theil-Sen robust median-based regression (Conover intercept, scipy-verified) | .x#, .y# | public ⚠️ |
+| `@emlLinearRegression` | `stats/eml-inferential.praat` | .x#, .y# | public |
+| `@emlTheilSen` | Theil-Sen robust median-based regression (Conover intercept, scipy-verified) | .x#, .y# | public |
 
-⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
-tree but their implementation is not in `eml-inferential.txt` (v1.2). See
-"Plugin-tree-only procedures" at the end of this file before calling them.
+## Stats: Analysis Dispatchers
+**File:** `stats/eml-analysis.praat` (v1.1) — 21 procedures
+
+| Procedure | Purpose | Parameters | Scope |
+|-----------|---------|------------|-------|
+| `@emlRunTwoGroupAnalysis` | @emlReportPairwiseComparison — extracted from eml-pairwise.praat | .tableId, .dataCol$, .groupCol$, .testType$, .equalVar | public |
+| `@emlRunAnovaAnalysis` | 2. ONE-WAY ANOVA | .tableId, .dataCol$, .groupCol$, .doTukey | public |
+| `@emlRunKWAnalysis` | 3. KRUSKAL-WALLIS | .tableId, .dataCol$, .groupCol$, .doDunn, .adjMethod$ | public |
+| `@emlRunPairwiseAnalysis` | 4. PAIRWISE COMPARISONS | .tableId, .dataCol$, .groupCol$, .test$, .adjMethod$ | public |
+| `@emlReportPairwiseComparison` | Extracted from inline code in eml-pairwise.praat. | .tableName$, .dataCol$, .groupCol$, .test$, .adjMethod$ | public |
+| `@emlRunTwoWayAnalysis` | 5. TWO-WAY ANOVA | .tableId, .dataCol$, .factor1$, .factor2$ | public |
+| `@emlRunPairedAnalysis` | 6. PAIRED COMPARISON | .tableId, .col1$, .col2$, .testType$ | public |
+| `@emlRunCorrelationAnalysis` | 7. CORRELATION | .tableId, .colX$, .colY$, .testType$ | public |
+| `@emlRunDescriptiveAnalysis` | 8. DESCRIPTIVE STATISTICS | .tableId, .dataCol$ | public |
+| `@emlReportDescriptiveAnalysis` | Extracted from inline code in eml-describe-table.praat. | .tableName$, .dataCol$, .nValid, .nUndefined | public |
+| `@emlRunRegressionAnalysis` | PHASE 4 STUBS | .tableId, .depCol$, .predCol$ | public |
+| `@emlRunNormalityAnalysis` | Orchestrator: normality assessment (Shapiro-Wilk, skewness, kurtosis) with recommendation | .tableId, .dataCol$, .testType$ | public |
+| `@emlRunReliabilityAnalysis` | Orchestrator: reliability analysis (internal consistency) | .tableId, .subjectCol$, .raterCols$, .measure$, .scale$ | public |
+| `@emlExtractConditionMatrix` | Row-wise COMPLETE-CASE extraction of k condition columns into a matrix. | .tableId, .conditionCols$ | public |
+| `@emlFriedmanTest` | Friedman rank test for k related samples (tie-corrected). | .data##, .n, .k | public |
+| `@emlGGEpsilon` | Greenhouse-Geisser sphericity epsilon for RM-ANOVA. | .data##, .n, .k | public |
+| `@emlRMAnovaTest` | one-way repeated-measures ANOVA with GG correction. | .data##, .n, .k | public |
+| `@emlRunRepeatedMeasuresAnalysis` | parametric RM-ANOVA orchestrator. | .tableId, .subjectCol$, .conditionCols$, .doPostHoc, .adjMethod$ | public |
+| `@emlRunFriedmanAnalysis` | nonparametric repeated-measures orchestrator. | .tableId, .subjectCol$, .conditionCols$, .doPostHoc, .adjMethod$ | public |
+| `@emlRMPostHoc` | pairwise post-hoc for repeated-measures designs. | .data##, .n, .k, .testType$, .adjMethod$ | public |
+| `@emlRunLMMAnalysis` | request, 95% Wald CIs. DRY: every path calls THIS, so a change here | .tableId, .formula$, .contrastCoding$, .useREML, .doR2, .doCI | public |
 
 ## Graphs: Core
 **File:** `graphs/eml-graph-procedures.praat` (v3.21) — 45 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
-| `@emlInitDrawingDefaults` | Initialize panel origin globals and drawing defaults | — | public |
-| `@emlResetDrawnExtent` | Reset drawn extent tracker to zero | — | public |
-| `@emlExpandDrawnExtent` | Expand drawn extent bounding box (single SOT for extent tracking) | .left, .right, .top, .bottom | public |
 | `@emlSetPanelOrigin` | Set panel origin for multi-panel figures | .x, .y | public |
-| `@emlSetPanelViewport` | Select outer viewport from theme-computed bounds | — | public |
+| `@emlResetDrawnExtent` | Reset drawn extent tracker to zero | emlDrawnMinX = 0 | public |
+| `@emlExpandDrawnExtent` | Expand drawn extent bounding box (single SOT for extent tracking) | .left, .right, .top, .bottom | public |
+| `@emlSetPanelViewport` | Select outer viewport from theme-computed bounds | Select outer viewport: emlSetAdaptiveTheme.outerLeft, | public |
+| `@emlInitDrawingDefaults` | Initialize panel origin globals and drawing defaults | # Panel origin (single panel at Picture window origin) | public |
 | `@emlSetAdaptiveTheme` | Set font sizes, margins, and spacing from viewport dimensions | .vpWidth, .vpHeight | public |
 | `@emlSetColorPalette` | Populate Okabe-Ito or B/W color arrays for up to 10 groups | .mode$ | public |
 | `@emlOptimizePaletteContrast` | Reorder palette entries for maximum perceptual contrast | .nGroups | public |
@@ -167,8 +216,8 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 | `@emlDrawGridlines` | Draw both horizontal and vertical gridlines | .xMin, .xMax, .yMin, .yMax, .targetTicksX, .targetTicksY, .useMinor | public |
 | `@emlDrawHorizontalGridlines` | Draw horizontal gridlines at tick positions | .xMin, .xMax, .yMin, .yMax, .targetTicksY, .useMinor | public |
 | `@emlDrawVerticalGridlines` | Draw vertical gridlines at tick positions | .xMin, .xMax, .yMin, .yMax, .targetTicksX, .useMinor | public |
-| `@emlDrawInnerBoxIf` | Draw inner box if config flag is set | — | public |
-| `@emlExpandAxisControls` | Parse per-axis tick/value/label visibility flags | — | public |
+| `@emlDrawInnerBoxIf` | Draw inner box if config flag is set | Font size: emlSetAdaptiveTheme.bodySize | public |
+| `@emlExpandAxisControls` | Parse per-axis tick/value/label visibility flags | emlShowAxisNameX = (config_showAxisNames = 2) or (config_showAxisNames = 3) | public |
 | `@emlDrawAlignedMarksLeft` | Draw left axis ticks and labels with font-size-aware alignment | .yMin, .yMax, .targetTicks, .useMinor | public |
 | `@emlDrawAlignedMarksRight` | Draw right axis ticks and labels (dual-axis panels) | .yMin, .yMax, .targetTicks, .useMinor | public |
 | `@emlDrawAlignedMarksBottom` | Draw bottom axis ticks and labels | .xMin, .xMax, .targetTicks, .useMinor | public |
@@ -181,14 +230,14 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 | `@emlDrawBox` | Draw one box plot element (box, whiskers, median line) | .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, .axisYMax, .width | public |
 | `@emlSanitizeLabel` | Escape Praat special characters (%, #, ^, _) in display text | .raw$ | public |
 | `@emlDrawJitteredPoints` | Draw data points with horizontal jitter at categorical positions | .xCenter, .lineColor$, .markerSize, .jitterWidth | public |
-| `@emlAssertFullViewport` | Select full outer viewport from drawn extent globals | — | public |
-| `@emlCheckChannels` | Check Sound channel count; present dialog if stereo (wraps @emlHandleStereo) | .soundId | public |
-| `@emlHandleStereo` | Single-file stereo handler with beginPause dialog for channel choice | .soundId, .fileName$ | public |
+| `@emlAssertFullViewport` | Select full outer viewport from drawn extent globals | Select outer viewport: emlDrawnMinX, emlDrawnMaxX, | public |
 | `@emlApplyChannelChoice` | Batch-mode stereo handler — applies pre-selected channel handling without dialog | .soundId, .channelHandling | public |
+| `@emlHandleStereo` | Single-file stereo handler with beginPause dialog for channel choice | .soundId, .fileName$ | public |
+| `@emlCheckChannels` | Check Sound channel count; present dialog if stereo (wraps @emlHandleStereo) | .soundId | public |
 | `@emlCheckPlausibility` | Warn if acoustic measure falls outside expected range | .value, .lowerBound, .upperBound, .measureName$, .unit$ | public |
 | `@emlDrawLegend` | Draw legend box with colored swatches and labels | .xMin, .xMax, .yMin, .yMax, .position$, .fontSize | public |
 | `@emlCheckNumericColumn` | Validate Table column contains numeric data by sampling | .tableId, .colName$ | public |
-| `@emlInitAlphaSprites` | Locate sprites/ directory; set .available and .dir$ | — | public |
+| `@emlInitAlphaSprites` | Locate sprites/ directory; set .available and .dir$ | if variableExists ("emlAlphaSpritesInitialized") | public |
 | `@emlSetAlphaDotGeometry` | Compute aspect-corrected stamp dimensions for alpha dots | .axisXMin, .axisXMax, .axisYMin, .axisYMax, .innerLeft, .innerRight, .innerTop, .innerBottom, .dotHalf | public |
 | `@emlDrawAlphaDot` | Stamp alpha-composited PNG dot or fall back to Paint circle | .x, .y, .groupIndex, .colorMode$, .alphaLevel$, .fallbackColor$ | public |
 | `@emlDrawAlphaRect` | Stamp alpha-composited PNG rectangle (bar fills) | .x1, .x2, .y1, .y2, .groupIndex, .colorMode$, .alphaLevel$, .fallbackColor$ | public |
@@ -201,7 +250,7 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 | `@emlMeasureBarData` | Extract means, errors, and ranges for bar chart groups | .tableId, .groupCol$, .valueCol$, .errorMode, .errorCol$ | public |
 
 ## Graphs: Draw
-**File:** `graphs/eml-draw-procedures.praat` (v1.16) — 14 procedures
+**File:** `graphs/eml-draw-procedures.praat` (v1.18) — 15 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -219,16 +268,17 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 | `@emlDrawHistogram` | Draw frequency histogram with optional faceting | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .valueCol$, .groupCol$, .binCount, .displayMode, .vMin, .vMax, .freqMax | public |
 | `@emlDrawGroupedViolin` | Draw side-by-side violin plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .catCol$, .subCol$, .valueCol$, .vMin, .vMax | public |
 | `@emlDrawGroupedBoxPlot` | Draw side-by-side box plots for grouped data | .objectId, .title$, .xLabel$, .yLabel$, .vpW, .vpH, .colorMode$, .gridMode, .catCol$, .subCol$, .valueCol$, .vMin, .vMax | public |
+| `@emlDrawLMMForest` | fixed-effect coefficient forest plot for a fitted LMM. | .p = emlLMM.nFixedCols | public |
 
 ## Graphs: Annotation & Shared Reporters
-**File:** `graphs/eml-annotation-procedures.praat` → PKB `eml-annotation-procedures.txt` (v3.15) — 23 procedures
+**File:** `graphs/eml-annotation-procedures.praat` (v3.17) — 25 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
-| `@emlClearAnnotations` | Reset all annotation arrays to empty | — | public |
+| `@emlClearAnnotations` | Reset all annotation arrays to empty | annotBracketN = 0 | public |
 | `@emlFormatStars` | Convert p-value to significance stars (*, **, ***, ns) | .p | public |
 | `@emlFormatAnnotLabel` | Format annotation label (p-value, stars, or both) | .p, .d, .style$, .showEffect, .effectLabel$ | public |
-| `@emlStackBrackets` | Compute non-overlapping vertical positions for brackets | — | public |
+| `@emlStackBrackets` | Compute non-overlapping vertical positions for brackets | if annotBracketN = 0 | public |
 | `@emlDrawBracket` | Draw one comparison bracket between two groups | .xI, .xJ, .yBase, .tierHeight, .tier, .label$, .fontSize, .lineColor$ | public |
 | `@emlDrawAnnotation` | Draw one text annotation at specified position | .x, .y, .anchor$, .label$, .fontSize, .hasBg, .xRange, .yRange | public |
 | `@emlDrawAnnotations` | Draw all queued annotations | .xMin, .xMax, .yDataMax, .yRange, .bracketColor$, .fontSize | public |
@@ -245,69 +295,70 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 | `@emlReportTwoGroupComparison` | Shared reporter for 2-group tests (Info window + CSV) | .tableName$, .dataCol$, .groupCol$, .group1$, .group2$, .n1, .mean1, .sd1, .median1, .n2, .mean2, .sd2, .median2, .testType$ | public |
 | `@emlReportAnovaComparison` | Shared reporter for ANOVA with optional Tukey HSD (Info + CSV) | .tableName$, .dataCol$, .groupCol$, .tableId, .nGroups, .doTukey | public |
 | `@emlReportKWComparison` | Shared reporter for Kruskal-Wallis with optional Dunn's (Info + CSV) | .tableName$, .dataCol$, .groupCol$, .tableId, .nGroups, .doDunn | public |
-| `@emlReportPairedComparison` | Shared reporter for paired t-test / Wilcoxon SR (Info + CSV) | .tableName$, .col1$, .col2$, .n, .mean1, .sd1, .median1, .mean2, .sd2, .median2, .testType$ | public |
 | `@emlReportCorrelationAnalysis` | Shared reporter for Pearson / Spearman correlation (Info + CSV) | .tableName$, .colX$, .colY$, .n, .testType$ | public |
+| `@emlReportRegressionAnalysis` | `graphs/eml-annotation-procedures.praat` | .tableName$, .depCol$, .predCol$, | public |
+| `@emlReportNormalityAnalysis` | Formatted Info window report for normality assessment (Shapiro-Wilk, skewness, kurtosis, recommendation) | .tableName$, .dataCol$, | public |
+| `@emlReportPairedComparison` | Shared reporter for paired t-test / Wilcoxon SR (Info + CSV) | .tableName$, .col1$, .col2$, .n, | public |
 | `@emlReportTwoWayAnova` | Shared reporter for two-way ANOVA (Info + CSV) | .tableName$, .dataCol$, .factor1$, .factor2$ | public |
-| `@emlReportRegressionAnalysis` | Formatted Info window report for simple linear regression | .tableName$, .depCol$, .predCol$, .nValid, .nUndefined | public ⚠️ |
-| `@emlReportNormalityAnalysis` | Formatted Info window report for normality assessment (Shapiro-Wilk, skewness, kurtosis, recommendation) | .tableName$, .dataCol$, .nValid, .nUndefined | public ⚠️ |
-
-⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
-tree but their implementation is not in `eml-annotation-procedures.txt` (v3.15).
-See "Plugin-tree-only procedures" at the end of this file before calling them.
 
 ## Scripts: Graphs Main
-**File:** `scripts/eml-graphs.praat` (v3.1) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
+**File:** `scripts/eml-graphs.praat` (v3.0) — 0 procedures
 
 ## Scripts: Graphs Form & Workflow
-**File:** `graphs/eml-graphs-form.praat` (v1.5) — 8 procedures
+**File:** `graphs/eml-graphs-form.praat` (v1.9) — 8 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlGenerateUniquePath` | Generate non-colliding output filename with ascending integer | .path$ | public |
 | `@emlPickFromMultiple` | Let user pick one object when multiple are selected | .type$ | public |
 | `@emlCleanConvertedTable` | Clean auto-converted Table (from TableOfReal/Matrix) | .tableId | public |
-| `@emlLoadConfig` | Load saved graph settings from preferences file | — | public |
-| `@emlSaveConfig` | Save current graph settings to preferences file | — | public |
-| `@emlDetectContext` | Detect selected object type and configure graph options | — | public |
-| `@emlBuildFilteredMenu` | Build graph type menu filtered by selected object type | — | public |
+| `@emlLoadConfig` | Load saved graph settings from preferences file | # Set defaults first — these persist if file missing or key absent | public |
+| `@emlSaveConfig` | Save current graph settings to preferences file | .configPath$ = preferencesDirectory$ + "/eml-graphs-config.txt" | public |
+| `@emlDetectContext` | Detect selected object type and configure graph options | contextGraphType = 0 | public |
+| `@emlBuildFilteredMenu` | Build graph type menu filtered by selected object type | # Step 1: Determine which internal types (1–14) are valid | public |
 | `@emlGraphsWorkflow` | Unified graph creation workflow (standalone and stats-wrapper entry) | .objectId | public |
 
 ## Scripts: Batch Processing
-**File:** `scripts/eml-batch-process.praat` (v1.2) — 3 procedures
+**File:** `scripts/eml-batch-process.praat` (v1.1) — 3 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
-| `@emlBuildDateStamp` | Generate YYYY-MM-DD date string from Praat date info | — | public |
-| `@emlInitSentinel` | Create stop-sentinel file for graceful batch interrupt | .sentinelPath$ | public |
+| `@emlBuildDateStamp` | Generate YYYY-MM-DD date string from Praat date info | .vec# = date# () | public |
 | `@emlCheckStopSentinel` | Check if user requested batch stop via sentinel file | .sentinelPath$ | public |
+| `@emlInitSentinel` | Create stop-sentinel file for graceful batch interrupt | .sentinelPath$ | public |
 
 ## Vibrato
-**File:** `vibrato/eml-vibrato-procedures.praat` (v2.1) — 11 procedures
+**File:** `vibrato/eml-vibrato-procedures.praat` (v2.0) — 16 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlVibratoScanTextGrid` | Find labeled intervals in TextGrid for vibrato analysis | .textGridId, .tierNum | public |
-| `@emlVibratoSelectIntervals` | Let user select which intervals to analyze | — | public |
-| `@emlVibratoAxisRange` | Compute axis ranges for vibrato scatter/summary plots | .min, .max, .median, .nDivisions, .allowNegative, .expand | public |
+| `@emlVibratoSelectIntervals` | Let user select which intervals to analyze | .nFound = emlVibratoScanTextGrid.nIntervals | public |
+| `@emlVibratoAxisRange` | Compute axis ranges for vibrato scatter/summary plots | .min, .max, .median, .nDivisions, | public |
 | `@emlVibratoAutoFilename` | Generate output filename from source Sound name | .baseName$, .suffix$, .extension$ | public |
 | `@emlVibratoPitchSetup` | Create and configure Pitch object for vibrato detection | .soundId, .lowPitch, .highPitch, .interpolate | public |
-| `@emlVibratoDetectCycles` | Detect vibrato cycles via peak/valley detection in PitchTier | .ppSmoothId, .ppAudioId, .intensityId, .avgIntensity, .silThreshold | public |
+| `@emlVibratoDetectCycles` | Detect vibrato cycles via peak/valley detection in PitchTier | .pitchSmoothId, .ppAudioId, .intensityId, | public |
 | `@emlVibratoInsertHalfCycles` | Insert half-cycle boundaries into TextGrid | .tableId | public |
 | `@emlVibratoSmooth` | Apply smoothing to PitchTier for cycle detection | .tableId, .avgCycles, .lowRate, .highRate | public |
-| `@emlVibratoFilter` | Filter vibrato cycles by rate and extent thresholds | .tableId, .lowRate, .highRate, .lowExtent, .highExtent | public |
-| `@emlVibratoJitter` | Compute cycle-to-cycle jitter for vibrato regularity | .tableId, .lowRate, .highRate, .startTime, .endTime | public |
-| `@emlVibratoSummary` | Compute summary statistics for detected vibrato | .includeId, .smoothIncludeId, .pitchId, .intensityId | public |
+| `@emlVibratoFilter` | Filter vibrato cycles by rate and extent thresholds | .tableId, .lowRate, .highRate, | public |
+| `@emlVibratoJitter` | Compute cycle-to-cycle jitter for vibrato regularity | .tableId, .lowRate, .highRate, | public |
+| `@emlVibratoSummary` | Compute summary statistics for detected vibrato | .includeId, .smoothIncludeId, | public |
+| `@emlVibratoDrawDualScatter` | Procedure index (drawing): | .includeId, .excludeId, | public |
+| `@emlVibratoDrawCoV` | Draws the Coefficient of Variation time-series panel. Two line series: | .tableId, .startTime, .endTime | public |
+| `@emlVibratoDrawPitchIntensity` | Draws dual-axis pitch contour + intensity curve with cycle overlay markers. | .pitchSmoothId, .intensityId, | public |
+| `@emlVibratoDrawSummaryTable` | Renders the averaged measures summary table in the Picture window. | .vpLeft, .vpRight, .vpTop, .vpBottom | public |
+| `@emlVibratoDrawFigure` | Master procedure: draws the full 8-panel vibrato figure. | .smoothedTableId, .includeId, .excludeId, | public |
 
 ## Demo Window
 **File:** `tutorial/eml-demo-procedures.praat` (v1.2) — 31 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
-| `@emlResetSans` | Reset Demo window to Helvetica, ambient size, 0-100 axes | — | public |
-| `@emlClearPage` | Clear Demo window with background color | — | public |
+| `@emlResetSans` | Reset Demo window to Helvetica, ambient size, 0-100 axes | demo Helvetica | public |
+| `@emlClearPage` | Clear Demo window with background color | @emlResetSans | public |
 | `@emlAccentLine` | Draw decorative accent line at position | .x, .y | public |
 | `@emlGuideTick` | Draw development guide tick mark (only if showGrid = 1) | .y | public |
-| `@emlDrawGuides` | Draw full development grid overlay (only if showGrid = 1) | — | public |
+| `@emlDrawGuides` | Draw full development grid overlay (only if showGrid = 1) | if showGrid = 0 | public |
 | `@emlWrapText` | Word-wrap text within a rectangular region in Demo window | .x1, .x2, .yTop, .yBottom, .align$, .font$, .text$ | public |
 | `@emlDrawNav` | Draw navigation bar (arrows, page counter, progress bar) | .pageNum, .totalPages, .showBack | public |
 | `@emlDrawImage` | Draw image placeholder rectangle with centered label | .x1, .x2, .y1, .y2, .label$ | public |
@@ -335,21 +386,6 @@ See "Plugin-tree-only procedures" at the end of this file before calling them.
 | `@emlDemoDrawHRule` | Draw horizontal rule (mean line, median line, etc.) | .y, .x1, .x2, .color$, .width | public |
 | `@emlDemoShowFigure` | Display pre-rendered PNG in Demo window region with fallback | .left, .right, .bottom, .top, .path$ | public |
 
-## Dev: Test Harness
-**File:** `dev/tests/eml-test-helpers.praat` (v1.1) — 9 procedures
-
-| Procedure | Purpose | Parameters | Scope |
-|-----------|---------|------------|-------|
-| `@emlTestInit` | Initialize test runner (clear Info window, reset counters) | — | public |
-| `@emlTestSection` | Print section header in test output | .title$ | public |
-| `@emlTestAssertTrue` | Assert boolean condition | .name$, .condition | public |
-| `@emlTestAssertEqualNum` | Assert numeric equality within tolerance | .name$, .expected, .actual, .tolerance | public |
-| `@emlTestAssertEqualStr` | Assert string equality | .name$, .expected$, .actual$ | public |
-| `@emlTestAssertUndefined` | Assert value is undefined | .name$, .value | public |
-| `@emlTestAssertContains` | Assert string contains substring | .name$, .haystack$, .needle$ | public |
-| `@emlTestAssertVectorsEqual` | Assert vector equality within tolerance | .name$, .v1#, .v2#, .tolerance | public |
-| `@emlTestSummary` | Print pass/fail summary and exit with status | — | public |
-
 ## EGG: Electroglottogram
 **File:** `egg/eml-egg-procedures.praat` (v1.0) — 2 procedures
 
@@ -358,52 +394,35 @@ See "Plugin-tree-only procedures" at the end of this file before calling them.
 | `@emlEggCycleGuard` | Segfault guard for To TextGrid (closed glottis) / To AmplitudeTier (levels); sets `.safe` (1 = analyzable) | .eggId, .floor, .ceiling | public |
 | `@emlEggSpectralThreshold` | Spectral-threshold de-noiser (4:1 downward expansion) to rescue low-SNR EGG for CQ; returns `.resultId` | .soundId, .thresholdBelowPeak, .lowPassHz | public |
 
-Canonical source for both is `eml-egg-procedures.txt` (flattened `.txt` copy of `egg/eml-egg-procedures.praat`). The guard is also printed, commented, in `COMMANDS_Electroglottogram.txt` and the de-noiser in `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` for documentation — those copies are illustrative; copy exactly from the source file per MP Rule 223.
+## Dev: Test Harness
+**File:** `dev/tests/eml-test-helpers.praat` (v1.0) — 9 procedures
+
+| Procedure | Purpose | Parameters | Scope |
+|-----------|---------|------------|-------|
+| `@emlTestInit` | Initialize test runner (clear Info window, reset counters) | .passed = 0 | public |
+| `@emlTestSection` | Print section header in test output | .title$ | public |
+| `@emlTestAssertTrue` | Assert boolean condition | .name$, .condition | public |
+| `@emlTestAssertEqualNum` | Assert numeric equality within tolerance | .name$, .expected, .actual, .tolerance | public |
+| `@emlTestAssertEqualStr` | Assert string equality | .name$, .expected$, .actual$ | public |
+| `@emlTestAssertUndefined` | Assert value is undefined | .name$, .value | public |
+| `@emlTestAssertVectorsEqual` | Assert vector equality within tolerance | .name$, .v1#, .v2#, .tolerance | public |
+| `@emlTestAssertContains` | Assert string contains substring | .name$, .haystack$, .needle$ | public |
+| `@emlTestSummary` | Print pass/fail summary and exit with status | .empty$ = "" | public |
 
 ---
+**Total: 295 procedures** (287 public, 8 internal) across 16 files.
 
-## Plugin-tree-only procedures (source not in the PKB) ⚠️
+All entries above are backed by source shipped in the PKB. There is no
+quarantine section any more: the six procedures previously listed as
+"plugin-tree-only" (`emlLinearRegression`, `emlTheilSen`,
+`emlReportRegressionAnalysis`, `emlReportNormalityAnalysis`,
+`emlWrapperCommonFields`, `emlHandleCommonFields`) were never missing from the
+plugin — the PKB was shipping truncated copies of the files that contain them.
+The refresh restored all six.
 
-These six are real, implemented procedures in the EML Praat Tools plugin tree.
-They are **not** wired into the plugin's stats-and-graphs workflow (the Guide's
-"Regression: not yet implemented" refers to that wiring, not to the procedures'
-existence), and — the part that matters here — **their source is not currently
-shipped in the PKB**, so there is nothing in Project Knowledge to copy from.
-
-| Procedure | Plugin-tree home | PKB status |
-|-----------|------------------|------------|
-| `@emlLinearRegression` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.3 |
-| `@emlTheilSen` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.3 |
-| `@emlReportRegressionAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
-| `@emlReportNormalityAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
-| `@emlWrapperCommonFields` | `stats/eml-output.praat` | absent from `eml-output.txt` v1.4 |
-| `@emlHandleCommonFields` | `stats/eml-output.praat` | absent from `eml-output.txt` v1.4 |
-
-**Not** in this category, and deliberately removed rather than quarantined: the
-15 `@wizard*` procedures and the 16 `@emlWizardExplain*` helpers. The wizard is
-vestigial — it exists in the plugin tree but is not wired into the workflow and
-is not wanted in PraatGen. Do not route to it or reinstate it.
-
-**Handling (hard).** MP Rule 223 says never rewrite procedure code — copy
-exactly from source. For these four there is no PKB source to copy, so:
-
-1. Do **not** invent an implementation under these names. A registry entry is
-   not a licence to reconstruct the body.
-2. If a task would use one, say so explicitly and ask the user to paste the
-   procedure from their plugin tree, or route to an implemented alternative
-   (`@emlPearsonCorrelation` / `@emlSpearmanCorrelation` +
-   `@emlDrawRegressionLine` cover most regression-line needs;
-   `@emlSkewness` / `@emlKurtosis` cover normality description).
-3. The signatures above are accurate and safe to *call* against a pasted
-   source — they are listed so a caller binds arguments correctly.
-
-**To close this properly:** copy the six procedure bodies from the plugin tree
-into `eml-inferential.txt`, `eml-annotation-procedures.txt`, and
-`eml-output.txt`, then move their rows out of this section and update the counts
-to 244.
-
----
-**Total: 238 procedures resident in the PKB** (233 public, 5 internal) across 15
-files, plus **6 plugin-tree-only procedures** listed above whose source is not
-shipped. Counts in this file describe what is in Project Knowledge, because that
-is what the loading protocol can actually retrieve.
+**Deliberately NOT in the PKB:** `stats/eml-lmm.praat` (linear mixed models —
+not ready for general use) and its private numerical dependencies
+`stats/eml-linalg.praat` and `stats/eml-optimizer.praat` (Cholesky / BOBYQA,
+called by nothing else). `@emlRunLMMAnalysis` in `eml-analysis.txt` therefore
+has unresolvable calls and carries a hard do-not-route warning at its
+definition. Also excluded: `scripts/eml-wizard.praat` (vestigial).

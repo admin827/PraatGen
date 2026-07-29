@@ -2,9 +2,21 @@
 # EML Stats : Output Formatting
 # ============================================================================
 # Module: eml-output.praat
-# Version: 1.4
-# Date: 7 April 2026
-# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
+# Version: 1.7
+# v1.7: @emlWrapperInit accepts Table, TableOfReal, and Matrix objects.
+#       Auto-converts TableOfReal/Matrix to Table with Info window notification.
+#       Outputs .converted flag for caller awareness.
+# Date: 11 May 2026
+# v1.6: Renamed emlWizardMode → emlShowExplanations (clearer semantics).
+#        Double-tab spacing between value and explanation columns.
+# v1.5: Wrapper infrastructure. @emlWrapperInit (Table check + column
+#        loading + guess), @emlWrapperExportCSV (shared CSV export dialog).
+#        6 wrappers refactored to use shared procedures + repeat/until.
+# v1.4: Wizard mode third-column explanations. Global emlShowExplanations flag
+#        controls whether @emlReportLine/@emlReportLineString append a
+#        tab-separated explanation column. 15 helper procedures for
+#        value-anchored interpretations (effect sizes, p-values,
+#        correlation strength, df, skewness, kurtosis, etc.).
 # v1.3: Info window is now append-only. Removed emlReportFirstRun sentinel.
 #        @emlReportHeader never clears — always appends. New @emlClearInfo
 #        procedure for explicit clearing via dialog toggle. Timestamp kept.
@@ -26,6 +38,24 @@
 #
 # All procedures use the "eml" prefix (EML Stats).
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-output.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
+
+
+# ============================================================================
+# WIZARD MODE — Third-column explanations
+# ============================================================================
+# When emlShowExplanations = 1, report procedures append value-anchored
+# interpretations as a third column (tab-separated).
+# Set by the wizard; wrappers leave at 0.
+# emlWizardExplain$ is set before each @emlReportLine/@emlReportLineString
+# call and consumed (cleared) by the procedure.
+# ============================================================================
+emlShowExplanations = 0
+emlWizardExplain$ = ""
 
 
 # ============================================================================
@@ -128,11 +158,18 @@ endproc
 procedure emlReportLine: .label$, .value, .decimals
     # Print labeled numeric value with 2-space indent
     # Label padded to 20 characters
+    # When emlShowExplanations = 1 and emlWizardExplain$ is set, appends
+    # a third tab-separated column with the explanation.
     .indent$ = "  "
     @emlPadRight: .label$, 20
     .paddedLabel$ = emlPadRight.result$
     .formattedValue$ = fixed$(.value, .decimals)
-    .line$ = .indent$ + .paddedLabel$ + .formattedValue$
+    if emlShowExplanations and emlWizardExplain$ <> ""
+        .line$ = .indent$ + .paddedLabel$ + .formattedValue$ + tab$ + tab$ + emlWizardExplain$
+        emlWizardExplain$ = ""
+    else
+        .line$ = .indent$ + .paddedLabel$ + .formattedValue$
+    endif
     appendInfoLine: .line$
 endproc
 
@@ -143,7 +180,12 @@ procedure emlReportLineString: .label$, .value$
     .indent$ = "  "
     @emlPadRight: .label$, 20
     .paddedLabel$ = emlPadRight.result$
-    .line$ = .indent$ + .paddedLabel$ + .value$
+    if emlShowExplanations and emlWizardExplain$ <> ""
+        .line$ = .indent$ + .paddedLabel$ + .value$ + tab$ + tab$ + emlWizardExplain$
+        emlWizardExplain$ = ""
+    else
+        .line$ = .indent$ + .paddedLabel$ + .value$
+    endif
     appendInfoLine: .line$
 endproc
 
@@ -549,6 +591,364 @@ procedure emlExportStatsCSV: .filePath$
         .success = emlReportToFile.success
         .actualPath$ = emlReportToFile.actualPath$
     endif
+endproc
+
+# ────────────────────────────────────────────────────────────────────────────
+# @emlWrapperCommonFields
+# Injects shared fields into an open beginPause dialog. Called between
+# beginPause: and endPause: in wrapper scripts.
+# Verified: Procedure calls inside beginPause inject fields into the
+# active dialog (Praat 6.4.62, macOS, 13 April 2026).
+#
+# Fields:
+#   boolean: "Clear Info window", 0
+#
+# Variable derivation (available after endPause):
+#   clear_Info_window (numeric, 0 or 1)
+#
+# Usage:
+#   beginPause: "My Analysis"
+#       # ... wrapper-specific fields ...
+#       @emlWrapperCommonFields
+#   clicked = endPause: "Quit", "Run", 2, 0
+#
+#   @emlHandleCommonFields
+#
+# Group order is NOT included — not all wrappers have group columns.
+# Wrappers needing group order add it to their own dialog.
+# ────────────────────────────────────────────────────────────────────────────
+procedure emlWrapperCommonFields
+    comment: "--- Options ---"
+    boolean: "Clear Info window", 0
+endproc
+
+# ────────────────────────────────────────────────────────────────────────────
+# @emlHandleCommonFields
+# Post-endPause handler for shared fields. Call immediately after endPause
+# return value and variable derivation, before the orchestrator call.
+# ────────────────────────────────────────────────────────────────────────────
+procedure emlHandleCommonFields
+    if clear_Info_window
+        @emlClearInfo
+    endif
+endproc
+
+
+# ============================================================================
+# WRAPPER INFRASTRUCTURE — shared init and post-analysis procedures
+# ============================================================================
+
+# ────────────────────────────────────────────────────────────────────────────
+# @emlWrapperInit
+# Validates Table selection, loads column names, guesses column roles.
+# Call at the top of every wrapper script.
+#
+# Parameters:
+#   .minCols — minimum number of columns required (1, 2, or 3)
+#
+# Outputs:
+#   .tableId, .tableName$ — the selected Table
+#   .nCols — number of columns
+#   .guessDataIdx, .guessGroupIdx, .guessDataIdx2 — from @emlGuessColumnRoles
+#
+# Usage:
+#   @emlWrapperInit: 2
+#   tableId = emlWrapperInit.tableId
+#   tableName$ = emlWrapperInit.tableName$
+# ────────────────────────────────────────────────────────────────────────────
+procedure emlWrapperInit: .minCols
+    .nTables = numberOfSelected ("Table")
+    .nToR = numberOfSelected ("TableOfReal")
+    .nMatrix = numberOfSelected ("Matrix")
+    .converted = 0
+
+    if .nTables = 1
+        # Table selected — use directly
+        .tableId = selected ("Table")
+        .tableName$ = selected$ ("Table")
+
+    elsif .nTables = 0 and .nToR = 1
+        # TableOfReal selected — auto-convert to Table
+        .torId = selected ("TableOfReal")
+        .torName$ = selected$ ("TableOfReal")
+        selectObject: .torId
+        .tableId = To Table: "row"
+        .tableName$ = selected$ ("Table")
+        .converted = 1
+        appendInfoLine: "Converted TableOfReal """, .torName$,
+        ... """ to Table. Row labels are in column ""row""."
+        appendInfoLine: ""
+
+    elsif .nTables = 0 and .nToR = 0 and .nMatrix = 1
+        # Matrix selected — convert via TableOfReal → Table
+        .matId = selected ("Matrix")
+        .matName$ = selected$ ("Matrix")
+        selectObject: .matId
+        .tempTorId = To TableOfReal
+        .tableId = To Table: "row"
+        removeObject: .tempTorId
+        .tableName$ = selected$ ("Table")
+        .converted = 1
+        # Check for column name collision with "row"
+        selectObject: .tableId
+        .checkNCols = Get number of columns
+        for .iCheck from 2 to .checkNCols
+            .checkLabel$ = Get column label: .iCheck
+            if .checkLabel$ = "row"
+                Rename column (by number): 1, "OriginalRowLabel"
+                .iCheck = .checkNCols
+            endif
+        endfor
+        appendInfoLine: "Converted Matrix """, .matName$,
+        ... """ to Table."
+        appendInfoLine: ""
+
+    else
+        exitScript: "Please select exactly one Table, TableOfReal, "
+        ... + "or Matrix object, then run this script again."
+    endif
+
+    @emlTableColumnNames: .tableId
+    .nCols = emlTableColumnNames.nCols
+    if .nCols < .minCols
+        exitScript: "Table needs at least " + string$ (.minCols) + " columns."
+    endif
+
+    @emlGuessColumnRoles: .tableId
+    .guessDataIdx = emlGuessColumnRoles.dataIdx
+    .guessGroupIdx = emlGuessColumnRoles.groupIdx
+    .guessDataIdx2 = emlGuessColumnRoles.dataIdx2
+endproc
+
+
+# ────────────────────────────────────────────────────────────────────────────
+# @emlWrapperExportCSV
+# Presents CSV export dialog and saves via @emlExportStatsCSV.
+# Call from the post-analysis loop when the user clicks "CSV".
+#
+# Parameters:
+#   .tableName$ — used for default filename
+# ────────────────────────────────────────────────────────────────────────────
+procedure emlWrapperExportCSV: .tableName$
+    beginPause: "Export Results"
+        folder: "Output folder", defaultDirectory$
+        word: "File name", .tableName$ + "_results"
+    .clicked = endPause: "Go Back", "Save", 2, 0
+    if .clicked = 2
+        .csvPath$ = output_folder$ + "/" + file_name$ + ".csv"
+        @emlExportStatsCSV: .csvPath$
+        if emlExportStatsCSV.success
+            beginPause: "Export Complete"
+                comment: "Saved to: " + emlExportStatsCSV.actualPath$
+            endPause: "OK", 1, 0
+        else
+            beginPause: "Export Failed"
+                comment: "Could not write CSV file."
+            endPause: "OK", 1, 0
+        endif
+    endif
+endproc
+
+
+# ============================================================================
+# WIZARD EXPLANATION HELPERS
+# ============================================================================
+# Value-anchored interpretation generators for wizard mode third column.
+# Each procedure sets emlWizardExplain$ which is consumed by the next
+# @emlReportLine or @emlReportLineString call.
+# ============================================================================
+
+procedure emlWizardExplainP: .p
+    # Generate p-value interpretation anchored to actual value
+    if .p < 0.001
+        emlWizardExplain$ = "Statistically significant: <0.1% probability due to chance"
+    elsif .p < 0.01
+        emlWizardExplain$ = "Statistically significant: <1% probability due to chance"
+    elsif .p < 0.05
+        emlWizardExplain$ = "Statistically significant at the 5% level"
+    elsif .p < 0.10
+        emlWizardExplain$ = "Approaching significance (p < .10) — interpret with caution"
+    else
+        emlWizardExplain$ = "Not statistically significant at the 5% level"
+    endif
+endproc
+
+procedure emlWizardExplainEffectD: .d
+    # Cohen's d interpretation
+    .absD = abs (.d)
+    if .absD < 0.2
+        .mag$ = "negligible"
+    elsif .absD < 0.5
+        .mag$ = "small"
+    elsif .absD < 0.8
+        .mag$ = "medium"
+    else
+        .mag$ = "large"
+    endif
+    emlWizardExplain$ = "Effect size: " + .mag$ + " (>0.8 = large). Groups differ by "
+    ... + fixed$ (.absD, 1) + " pooled standard deviations"
+endproc
+
+procedure emlWizardExplainEffectG: .g
+    # Hedges' g interpretation (bias-corrected Cohen's d)
+    .absG = abs (.g)
+    if .absG < 0.2
+        .mag$ = "negligible"
+    elsif .absG < 0.5
+        .mag$ = "small"
+    elsif .absG < 0.8
+        .mag$ = "medium"
+    else
+        .mag$ = "large"
+    endif
+    emlWizardExplain$ = "Bias-corrected d (better for small samples). "
+    ... + .mag$ + " effect"
+endproc
+
+procedure emlWizardExplainEffectR: .r
+    # Rank-biserial r or matched-pairs r interpretation
+    .absR = abs (.r)
+    if .absR < 0.1
+        .mag$ = "negligible"
+    elsif .absR < 0.3
+        .mag$ = "small"
+    elsif .absR < 0.5
+        .mag$ = "medium"
+    else
+        .mag$ = "large"
+    endif
+    emlWizardExplain$ = "Effect size: " + .mag$ + " (>0.5 = large). Rank-biserial correlation"
+endproc
+
+procedure emlWizardExplainEffectEta2: .eta2
+    # Eta-squared interpretation
+    if .eta2 < 0.01
+        .mag$ = "negligible"
+    elsif .eta2 < 0.06
+        .mag$ = "small"
+    elsif .eta2 < 0.14
+        .mag$ = "medium"
+    else
+        .mag$ = "large"
+    endif
+    .pct = .eta2 * 100
+    emlWizardExplain$ = "Effect size: " + .mag$ + " (>0.14 = large). "
+    ... + fixed$ (.pct, 0) + "% of variance explained by group membership"
+endproc
+
+procedure emlWizardExplainCorrelation: .r
+    # Pearson/Spearman correlation strength
+    .absR = abs (.r)
+    if .absR < 0.1
+        .str$ = "Negligible"
+    elsif .absR < 0.3
+        .str$ = "Weak"
+    elsif .absR < 0.5
+        .str$ = "Moderate"
+    elsif .absR < 0.7
+        .str$ = "Strong"
+    else
+        .str$ = "Very strong"
+    endif
+    if .r >= 0
+        .dir$ = "positive"
+    else
+        .dir$ = "negative"
+    endif
+    emlWizardExplain$ = .str$ + " " + .dir$ + " relationship (range: -1 to 1)"
+endproc
+
+procedure emlWizardExplainR2: .r2
+    # R-squared interpretation
+    .pct = .r2 * 100
+    emlWizardExplain$ = fixed$ (.pct, 0) + "% of variance in Y is explained by X"
+endproc
+
+procedure emlWizardExplainT: .t
+    # t-statistic interpretation (signal-to-noise)
+    .absT = abs (.t)
+    emlWizardExplain$ = "Signal-to-noise: " + fixed$ (.absT, 1)
+    ... + "x larger than expected from sampling noise"
+endproc
+
+procedure emlWizardExplainF: .f
+    # F-statistic interpretation
+    emlWizardExplain$ = "Ratio of between-group to within-group variance: groups differ "
+    ... + fixed$ (.f, 1) + "x more than expected by chance"
+endproc
+
+procedure emlWizardExplainDfBetween: .df, .nGroups
+    # df (between) for ANOVA
+    emlWizardExplain$ = "Number of groups (" + string$ (.nGroups)
+    ... + ") minus 1. Counts independent group comparisons."
+endproc
+
+procedure emlWizardExplainDfWithin: .df, .nTotal, .nGroups
+    # df (within) for ANOVA
+    emlWizardExplain$ = "Total observations (" + string$ (.nTotal)
+    ... + ") minus groups (" + string$ (.nGroups)
+    ... + "). Within-group evidence for estimating noise."
+endproc
+
+procedure emlWizardExplainDfTTest: .df, .method$
+    # df for t-test
+    if .method$ = "Welch"
+        emlWizardExplain$ = "Welch-adjusted for unequal variances. More df = more reliable."
+    else
+        emlWizardExplain$ = "N minus 2. Controls how much evidence the test has."
+    endif
+endproc
+
+procedure emlWizardExplainDfPaired: .df, .nPairs
+    # df for paired t-test
+    emlWizardExplain$ = "Number of pairs (" + string$ (.nPairs)
+    ... + ") minus 1. Independent difference scores."
+endproc
+
+procedure emlWizardExplainDfCorrelation: .df, .n
+    # df for correlation
+    emlWizardExplain$ = "Observations (" + string$ (.n)
+    ... + ") minus 2. Two parameters (slope, intercept) estimated."
+endproc
+
+procedure emlWizardExplainNormW: .w
+    # Shapiro-Wilk W interpretation
+    emlWizardExplain$ = "Closer to 1 = more normal (range: 0 to 1)"
+endproc
+
+procedure emlWizardExplainSkewness: .skew
+    .absSkew = abs (.skew)
+    if .absSkew < 0.5
+        .desc$ = "Approximately symmetric"
+    elsif .absSkew < 1
+        if .skew > 0
+            .desc$ = "Slight right skew"
+        else
+            .desc$ = "Slight left skew"
+        endif
+    else
+        if .skew > 0
+            .desc$ = "Substantial right skew"
+        else
+            .desc$ = "Substantial left skew"
+        endif
+    endif
+    emlWizardExplain$ = .desc$ + " (|skew| < 1 is typically acceptable)"
+endproc
+
+procedure emlWizardExplainKurtosis: .kurt
+    # @emlKurtosis already returns EXCESS kurtosis (normal = 0, verified vs
+    # scipy bias=False). Do NOT subtract 3 again — that double-correction
+    # labelled normal data (excess ~ 0) as excess ~ -3 => "platykurtic". (M1)
+    .excess = .kurt
+    if abs (.excess) < 1
+        .desc$ = "Near-normal peakedness"
+    elsif .excess > 0
+        .desc$ = "Heavy-tailed (leptokurtic)"
+    else
+        .desc$ = "Light-tailed (platykurtic)"
+    endif
+    emlWizardExplain$ = .desc$ + " (0 = normal; |excess| < 3 is typical threshold)"
 endproc
 
 
