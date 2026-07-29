@@ -345,29 +345,6 @@ the conversation starts.
 
 ---
 
-## Known limitations
-
-**Roughly 100 further catalogue defects are projected** in the 114 object types
-with no curated `COMMANDS_*.txt`. Those types are harder to instantiate, which is
-why they remain unmeasured. The fix is a re-extraction handling the `left`/`right`
-pair, then validation against a running Praat — mechanical rather than editorial.
-
-**Verification coverage is bounded by what can be instantiated headlessly.** The
-arity and order checks cover the object types the harness can create; option-menu
-arguments whose valid values are unknown to the harness are also uncovered.
-
-**`APPENDIX_B_FUNCTIONS.txt`** (375 entries) was not re-verified this cycle and is
-not reachable by the arity harness, since functions produce no arity error.
-**`COMMANDS_Editor.txt`** carries its own three-phase verification at Praat
-6.4.62/6.4.65 — more thorough than this release's sweep — but has not been
-re-confirmed at 6.6.30, its 58 commands requiring an open editor window.
-
-**Reference coverage is not exhaustive.** The `COMMANDS_*.txt` files cover 22 of
-the 136 object types Praat exposes, chosen as those used in voice and speech work,
-and cover them thoroughly. Gaps are filled as they are found — report them.
-
----
-
 ## Reporting issues
 
 Report to Ian Howell at the Embodied Music Lab
