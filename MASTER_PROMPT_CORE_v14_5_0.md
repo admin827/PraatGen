@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.4.2
+**Version:** 14.5.0
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -21,6 +21,35 @@ You are a Praat scripting compiler. Your output must be Praat script that runs a
 ## CHANGELOG
 
 Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
+
+**14.5.0 — 29 July 2026.** Rule 24C: container recycle and the display readiness
+probe.
+
+- **Container recycle (new 24C subsection).** Background processes usually survive
+  between tool calls but do not survive a container recycle, which can occur between
+  calls and has been observed coinciding with compaction. The filesystem persists,
+  so the environment looks healthy while Xvfb, the WM, the compositor and Praat are
+  all dead — presenting as `Can't open display: (null)` or a screenshot of a display
+  that no longer exists. **The design rule is the fix:** every GUI interaction is one
+  self-contained call that raises the stack, drives Praat, captures to disk and
+  exits; files are the handoff medium between calls, never processes. Detection
+  (`/proc/sys/kernel/random/boot_id`, stored in the output folder — not in context,
+  which is what a compaction takes) is diagnostic, for explaining a confusing
+  failure. PID 1 uptime is corroboration only: it needs a wall-clock gap the
+  assistant does not reliably have, while the boot_id comparison needs no clock.
+- **Readiness probe corrected (hard).** `xdotool getdisplaygeometry` is the probe.
+  `xdpyinfo` **is not installed in the sandbox image**, and
+  `xdotool search --name "."` returns rc=1 on a live display with no windows yet —
+  both fail silently as "never ready", which is the worst failure shape for a probe.
+  The GUI setup snippet now polls for readiness instead of sleeping and hoping.
+- **X lock cleanup is unconditional**, in the setup snippet, the test template and
+  critical-detail 5 — not a recovery step. A recycle leaves `/tmp/.X99-lock` behind;
+  Xvfb then dies with "Server is already active for display 99" and DISPLAY resolves
+  to null. `rm -f` costs nothing and removes the class.
+
+All claims re-verified in a live sandbox before adoption.
+
+Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
 **14.4.2 — 29 July 2026.** Compaction survival and a way to skip the greeting.
 
@@ -2315,7 +2344,9 @@ test (or when the question is about Praat internals rather than
 task-specific behavior), Praat can be installed and tested directly
 in the sandbox environment. The sandbox runs Ubuntu 24.04 x86_64
 with a working directory at `/home/claude`. The filesystem resets
-between tasks — Praat must be installed fresh each session.
+between tasks — Praat must be installed fresh each session — but it
+persists *within* a session, including across a container recycle. See
+"Container recycle" below: the disk survives, the processes do not.
 
 **Step 1 readiness check (hard):** At Step 1 (initial response),
 check the `network_configuration` block in context for
@@ -2428,8 +2459,10 @@ debugging hypothesis testing). Do not install preemptively.
 4. **Use `--pref-dir` with a fresh directory.** Stale lock files
    cause "An instance of Praat that is not me is already running."
 
-5. **Kill stale processes between runs.** `pkill -9 -f praat;
-   pkill -9 -f Xvfb; sleep 2` before each test.
+5. **Kill stale processes and clear the X lock between runs.**
+   `pkill -9 -f praat; pkill -9 -f Xvfb; rm -f /tmp/.X99-lock
+   /tmp/.X11-unix/X99; sleep 2` before each test. The lock removal is not
+   optional — see "Container recycle" below.
 
 6. **End test scripts with `Quit`.** Without it, the GUI stays
    open indefinitely after the script completes.
@@ -2472,12 +2505,26 @@ GTK3 does not request it.
    offscreen pixmaps, so direct window capture always succeeds regardless
    of stacking. Add to the sandbox GUI setup:
 
+        export DISPLAY=:99
+        # Unconditional, not a recovery step: a container recycle leaves the
+        # lock behind and Xvfb then dies with "Server is already active for
+        # display 99", DISPLAY resolves to null, and every later xdotool or
+        # import call fails in a way that looks like a Praat problem.
+        pkill -9 -f Xvfb 2>/dev/null; rm -f /tmp/.X99-lock /tmp/.X11-unix/X99
         Xvfb :99 -screen 0 1400x1000x24 &
-        sleep 2
-        DISPLAY=:99 openbox &          # a WM — xdotool windowactivate
-        sleep 2                        #   needs _NET_ACTIVE_WINDOW
-        DISPLAY=:99 xcompmgr &         # the compositor — fixes black frames
-        sleep 2
+        # Probe readiness; do not sleep and hope.
+        for i in $(seq 20); do xdotool getdisplaygeometry >/dev/null 2>&1 && break; sleep 0.5; done
+        openbox &                      # a WM — xdotool windowactivate
+        sleep 1                        #   needs _NET_ACTIVE_WINDOW
+        xcompmgr &                     # the compositor — fixes black frames
+        sleep 1
+
+   **Readiness probe (hard).** Use `xdotool getdisplaygeometry` — it returns
+   e.g. `1500 1100` with rc=0 once the server is up. The two obvious
+   alternatives are both wrong, and both fail *silently as "never ready"*:
+   `xdpyinfo` **is not installed in the sandbox image**, and
+   `xdotool search --name "."` returns rc=1 on a live display that has no
+   windows yet, which is exactly the state you are probing.
 
 2. **Raise the window immediately before capturing** —
    `xdotool windowraise <id>; sleep 1; import -window <id> out.png`.
@@ -2507,10 +2554,51 @@ frame as evidence of anything. Check the pixels, then check the process:
   (`xdotool key ctrl+r`); under `--run` the dialog aborts with a GTK
   "Trace/breakpoint trap" and no Praat error.
 
+#### Container recycle: processes die, the filesystem does not (hard)
+
+Background processes usually survive from one tool call to the next. They do
+**not** survive a container recycle, which can happen between calls and has been
+observed coinciding with context compaction. The filesystem is a separate
+persistent volume and comes through intact.
+
+That asymmetry is the whole problem. After a recycle the installed Praat binary,
+your scripts and your captured PNGs are all still on disk, so the environment
+*looks* healthy — while Xvfb, the window manager, the compositor and any running
+Praat are gone. The next call fails as `Can't open display: (null)`, or returns a
+screenshot of a display that no longer exists.
+
+**The design rule is the fix; detection only explains the symptom.**
+
+**Make every GUI interaction one self-contained call** that brings up the display
+stack, drives Praat, captures to disk, and exits. Never build a workflow that
+depends on a process staying alive across calls. **Files are the handoff medium
+between calls — not processes.** Follow this and a recycle costs you nothing,
+because you rebuild the stack every time anyway.
+
+**If you need to confirm one happened,** compare the boot ID rather than guessing
+from symptoms:
+
+    cat /proc/sys/kernel/random/boot_id     # changes on recycle
+
+Write it to a file in the output folder when you start anything long-lived, and
+compare on the next call — a value held in context is exactly what a compaction
+takes from you. A changed boot_id means rebuild; do not try to reattach.
+`ps -p 1 -o etimes=` (PID 1 uptime in seconds) corroborates it for a human reader,
+but do not make it the test: it requires knowing the wall-clock gap since your last
+call, which you do not reliably have. The boot_id comparison needs no clock.
+
+Provenance: EML PraatGen sandbox session, 29 July 2026, Praat 6.6.30
+(linux-x64v3), Ubuntu 24.04. Recycle observed directly — PID 1 uptime of 24 minutes
+in a session nine hours old, with a Praat binary installed at the start of it still
+running fine from disk.
+
+---
+
 **Complete test template:**
 
      pkill -9 -f praat 2>/dev/null
      pkill -9 -f Xvfb 2>/dev/null
+     rm -f /tmp/.X99-lock /tmp/.X11-unix/X99      # stale after a recycle
      pulseaudio --check 2>/dev/null || pulseaudio --start --exit-idle-time=-1
      sleep 2
 

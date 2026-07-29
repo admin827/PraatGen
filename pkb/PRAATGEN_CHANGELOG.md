@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.4.2)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.5.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,33 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.5.0 — 29 July 2026 (same day, post-release)
+
+**Rule 24C: container recycle.** Background processes usually survive between tool
+calls but do not survive a container recycle, which can occur between calls and has
+been observed coinciding with compaction. The filesystem persists, so the
+environment looks healthy while Xvfb, the WM, the compositor and Praat are all dead
+— presenting as `Can't open display: (null)` or a screenshot of a display that no
+longer exists. The fix is a design rule: every GUI interaction is one self-contained
+call that raises the stack, drives Praat, captures to disk and exits; files are the
+handoff medium between calls, never processes. Detection via
+`/proc/sys/kernel/random/boot_id`, stored in the output folder rather than context,
+is diagnostic. PID 1 uptime corroborates but is not the test — it needs a wall-clock
+gap the assistant does not reliably have.
+
+**Readiness probe corrected (hard).** `xdotool getdisplaygeometry` is the probe.
+`xdpyinfo` is not installed in the sandbox image, and `xdotool search --name "."`
+returns rc=1 on a live display with no windows yet — both fail silently as "never
+ready". The GUI setup snippet polls instead of sleeping.
+
+**X lock cleanup is unconditional** in the setup snippet, the test template and
+critical-detail 5. A recycle leaves `/tmp/.X99-lock`; Xvfb then dies with "Server is
+already active for display 99" and DISPLAY resolves to null.
+
+All claims re-verified in a live sandbox before adoption.
+
+---
 
 ### 14.4.2 — 29 July 2026 (same day, post-release)
 
