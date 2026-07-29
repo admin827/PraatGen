@@ -2,6 +2,18 @@
 # Source: Praat C API (praatlib.h), June 2025
 # Additional commands: Session-verified via Paste Commands (Feb 2026)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+# Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — `Scale times` arity corrected (0 -> 2); Pitch/Sound co-selection requirement documented for the Draw/Speckle/Extract blocks
+# Sandbox arity check: Praat 6.6.30 (Linux x64v3), 29 July 2026.
+#   71 documented commands probed against a live Praat install by invoking each
+#   with excess arguments; Praat's "requires only N arguments" error reports the
+#   true arity, compared against what this file documents.
+#   Result: 8 exact arity match, 41 present and accepting the documented
+#   argument count, 22 requiring a co-selection or class-specific selection
+#   this harness could not supply (spot-checked, not exhaustively resolved).
+#   SCOPE — this establishes that each command EXISTS on this object type and
+#   that its documented PARAMETER COUNT is right. It does NOT verify parameter
+#   ORDER, parameter TYPES, default values, or semantic correctness. Those
+#   remain as previously sourced.
 
 ---
 
@@ -71,6 +83,16 @@
   Concatenate
 
   # Draw
+  # ⚠️ CO-SELECTION REQUIRED (sandbox-verified, Praat 6.6.30, 29 Jul 2026).
+  #   Every command in this Draw/Speckle block operates on a Pitch object
+  #   TOGETHER WITH a TextGrid, and both must be selected:
+  #       selectObject: pitchId, textGridId
+  #   With a TextGrid alone these fail. `Draw:` on a bare TextGrid is a
+  #   DIFFERENT command taking only 5 arguments (from time, to time, show
+  #   boundaries?, use text styles?, garnish?) — passing the 9 below to a
+  #   lone TextGrid gives "Command requires only 5 arguments, not the 9 given".
+  #   The same applies to `Extract all intervals`, `Extract non-empty
+  #   intervals` and `Extract intervals where`, which need a Sound co-selected.
   Draw: tier number, from time, to time, from frequency, to frequency, font size, use text styles?, text alignment$, garnish?
   Draw logarithmic: tier number, from time, to time, from frequency, to frequency, font size, use text styles?, text alignment$, garnish?
   Draw semitones: tier number, from time, to time, from frequency, to frequency, font size, use text styles?, text alignment$, garnish?
@@ -92,7 +114,10 @@
 
   # Other
   View & Edit
-  Scale times
+  Scale times: new start time, new end time
+  # Verified: Scale times: 0, 2   (sandbox, Praat 6.6.30, 29 Jul 2026)
+  # CORRECTION (29 Jul 2026): previously documented with no arguments. The bare
+  # form fails with "Command Scale times not available for current selection".
   Align interval: tier number, interval number, language$, include words?, include phonemes?
   Clone time domain
   Save as chronological text file: file name$

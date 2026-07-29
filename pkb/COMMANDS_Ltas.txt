@@ -7,6 +7,17 @@
 # Parameter notation: $ = string, ? = boolean, others = numeric
 #
 # Cross-type dependencies: None
+# Sandbox arity check: Praat 6.6.30 (Linux x64v3), 29 July 2026.
+#   10 documented commands probed against a live Praat install by invoking each
+#   with excess arguments; Praat's "requires only N arguments" error reports the
+#   true arity, compared against what this file documents.
+#   Result: 3 exact arity match, 7 present and accepting the documented
+#   argument count, 0 requiring a co-selection or class-specific selection
+#   this harness could not supply (spot-checked, not exhaustively resolved).
+#   SCOPE — this establishes that each command EXISTS on this object type and
+#   that its documented PARAMETER COUNT is right. It does NOT verify parameter
+#   ORDER, parameter TYPES, default values, or semantic correctness. Those
+#   remain as previously sourced.
 
 ---
 

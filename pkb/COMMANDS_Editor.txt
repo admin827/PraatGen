@@ -20,6 +20,13 @@
 # IMPORTANT: All commands in this file are executed INSIDE an
 # editor:/endeditor block. They are NOT available in the Objects window.
 #
+# Sandbox arity check (29 Jul 2026 sweep): NOT RE-RUN at 6.6.30.
+#   This file's 58 commands need an open editor window, which the headless
+#   arity harness could not drive. NOTE that this file is NOT unverified — it
+#   carries its own three-phase empirical verification at Praat 6.4.62 desktop
+#   + 6.4.65 xvfb (see Verification method below), which is more thorough than
+#   the arity sweep. The only gap is that it has not been re-confirmed against
+#   6.6.30. Its per-command [V] markers remain the authority.
 # Verification key:
 #   [V]   = verified empirically (xvfb or desktop, command ran and
 #           produced expected output/side effect)

@@ -17,7 +17,50 @@
 #   Where they disagree, the object-specific COMMANDS_*.txt file governs —
 #   it carries the newer sandbox verification stamp.
 #
-#   This catalogue is NOT exhaustive. Known gaps:
+#   ⚠️ SYSTEMATIC ARITY DEFECT — MEASURED 29 JULY 2026, PRAAT 6.6.30
+#
+#   The extractor DROPS paired range fields. Praat renders a range as two
+#   boxes on one row using the `left Xxx` / `right Xxx` label idiom (see
+#   APPENDIX_C_GUI.txt §C.1, "Side-by-side fields"). The extraction counted
+#   those as one field, or as none. Every affected command is therefore
+#   documented with 1, 2 or 4 FEWER parameters than it actually takes.
+#
+#   Confirmed examples (catalogue arity vs live Praat 6.6.30):
+#     Harmonicity  Draw                 catalogue 0  actual 4  (from/to time, min, max)
+#     Harmonicity  Get mean             catalogue 0  actual 2  (from/to time)
+#     Harmonicity  Get standard deviation catalogue 0 actual 2
+#     Intensity    Draw                 catalogue 3  actual 5
+#     Intensity    Get quantile         catalogue 1  actual 3
+#     Intensity    Get standard deviation catalogue 0 actual 2
+#     Pitch        Draw/Speckle × erb, mel, semitones(100/200/440)
+#                                       catalogue 3  actual 5  (10 commands)
+#     PointProcess Draw                 catalogue 1  actual 3
+#     TextGrid     Draw                 catalogue 3  actual 5
+#     TextGrid     Merge                catalogue 0  actual 1
+#     Sound        To Covariance (channels)  catalogue 0  actual 2
+#     Sound        To CrossCorrelationTable  catalogue 1  actual 3
+#     Sound        To Polygon                catalogue 4  actual 6
+#
+#   Measured rate: 22 defects in 542 commands probed across 8 object types
+#   (4.1%). Projected ~100 more of the same class in the object types that
+#   have no COMMANDS_*.txt file.
+#
+#   WHERE THIS BITES. 22 of the 136 object types have a curated
+#   COMMANDS_*.txt, and those files carry the CORRECT arity — they were
+#   hand-verified and this sweep confirmed them. The remaining 114 types
+#   (2,464 commands: KlattGrid, Matrix, TableOfReal, DTW, Discriminant,
+#   FormantModeler, EEG, OTGrammar, …) have no curated file, so the
+#   catalogue is the sole authority — which is exactly the fallback case it
+#   exists to serve. Assume any range-taking command in those sections is
+#   under-specified.
+#
+#   HOW TO USE IT SAFELY. Before emitting a catalogue-sourced command that
+#   plausibly takes a time, frequency, quefrency or value RANGE, verify the
+#   real arity — either in the sandbox (call it with excess arguments; Praat
+#   replies "Command requires only N arguments") or against the dialog. Do
+#   not trust a catalogue parameter list that lacks an obvious range pair.
+#
+#   This catalogue is NOT exhaustive. Other known gaps:
 #     - Some object types appear only in the §1 class hierarchy and expose
 #       no commands in §2. Electroglottogram is the clear case: the tree
 #       line "Electroglottogram -> Sound -> Vector -> Matrix" is present,

@@ -20,6 +20,17 @@
 # 2. To Sound WITH TEXTGRID
 #    To Sound: text$, "yes" creates BOTH a Sound and a TextGrid with
 #    word and phoneme tiers aligned to the synthetic audio. Both objects
+# Sandbox arity check: Praat 6.6.30 (Linux x64v3), 29 July 2026.
+#   20 documented commands probed against a live Praat install by invoking each
+#   with excess arguments; Praat's "requires only N arguments" error reports the
+#   true arity, compared against what this file documents.
+#   Result: 6 exact arity match, 12 present and accepting the documented
+#   argument count, 2 requiring a co-selection or class-specific selection
+#   this harness could not supply (spot-checked, not exhaustively resolved).
+#   SCOPE — this establishes that each command EXISTS on this object type and
+#   that its documented PARAMETER COUNT is right. It does NOT verify parameter
+#   ORDER, parameter TYPES, default values, or semantic correctness. Those
+#   remain as previously sourced.
 #    are selected after the command. The "yes" argument is for creating
 #    the TextGrid annotation — without it, only a Sound is produced.
 #    Provenance: Empirical testing, 25 March 2026.
