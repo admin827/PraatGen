@@ -21,12 +21,13 @@ running Praat installation rather than assembled from documentation.
 
 ## What's in it
 
-**Command references.** 24 `COMMANDS_*.txt` files covering the object types used
-in voice and speech work — Sound, Pitch, Formant, Intensity, Harmonicity,
+**Command references.** 27 `COMMANDS_*.txt` files — 22 object types used
+in voice and speech work (Sound, Pitch, Formant, Intensity, Harmonicity,
 PointProcess, PowerCepstrogram, Spectrum, Spectrogram, Ltas, TextGrid, Table,
-Strings, the tier types, Electroglottogram, the Picture and Demo windows, and
-editor scripting. Each documents verified syntax, parameter order, arity and
-known failure modes.
+Strings, the tier types, Electroglottogram and others), plus the Picture window,
+the Demo window, editor scripting, and universal commands. Each documents
+verified syntax, parameter order, arity and known failure modes; 207 entries
+carry a pasted working example call.
 
 **Clinical defaults.** `APPENDIX_D_CLINICAL_DEFAULTS.txt` carries canonical
 parameter sets for pitch extraction (three algorithms), jitter, shimmer,
@@ -170,22 +171,36 @@ the conversation starts.
 
 Each is stated with the evidence behind it.
 
-**Parameter order and types are unverified.** Verification this cycle probed
-every documented command by invoking it with excess arguments and reading
-Praat's `Command requires only N arguments` reply. That establishes two things:
-the command exists on that object type, and its documented parameter *count* is
-right. It says nothing about whether the parameters are in the right *order* or
-have the right *types*, because a wrongly-ordered call of the correct arity is
-accepted without complaint.
+**Parameter order is verified by evidence, but not exhaustively.** Three
+independent layers cover it, and they do not cover everything:
 
-Demonstrated: swapping the 6th and 7th arguments of
-`To Pitch (raw cross-correlation)` — silence threshold and voicing threshold,
+- **Executed end-to-end.** All twelve APPENDIX_D canonical clinical calls were
+  run against Praat 6.6.30 on a synthetic with known properties and returned
+  correct values — 150.00 Hz recovered from a 150 Hz signal by all three pitch
+  algorithms, HNR 33.1/34.9 dB, jitter 0.047%, shimmer 0.367%, CPPS 10.67 dB. A
+  call that returns the right answer has the right parameter order. The
+  clinical set, which carries the highest stakes, is verified this way.
+- **Pasted working examples.** 207 of ~800 documented commands (26%) carry a
+  `# Verified: <exact call>` line — a real invocation with real arguments. Where
+  present, that establishes order, not just count.
+- **Original hand verification.** The remainder derive from the Praat C API,
+  the official manual, and Paste Commands sessions. That is how the files were
+  built and it has held up: the arity sweep this release checked ~630 commands
+  and found three defects, all corrected.
+
+What is *not* covered: an automated order check. This release's sweep probes
+existence and parameter *count* by invoking each command with excess arguments
+and reading Praat's `requires only N arguments` reply. A wrongly-ordered call of
+the correct arity is accepted silently, so the sweep cannot see it.
+
+The consequence is worth stating concretely. Swapping the 6th and 7th arguments
+of `To Pitch (raw cross-correlation)` — silence threshold and voicing threshold,
 both reals — on a signal with a quiet passage yields **441 voiced frames in
-canonical order and 295 swapped**, a 33% difference, with no error raised. On a
-clean sustained tone the two orders give identical output, so the defect is also
-invisible to casual testing. This is the failure class PraatGen exists to
-prevent and it currently has no automated coverage; the `COMMANDS_*.txt` files'
-parameter order rests on their original hand verification.
+canonical order and 295 swapped**, with no error raised. On a clean sustained
+tone the two orders give identical output, so this class of defect is invisible
+to casual testing as well as to the sweep. For the ~74% of commands without a
+pasted example, order rests on the original sourcing rather than on a check that
+runs every release.
 
 **The fallback catalogue under-specifies range-taking commands.** Praat renders
 a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
@@ -204,8 +219,8 @@ exactly the fallback case it exists to serve. At the measured rate, **roughly
 catalogue-sourced range-taking command before use.
 
 **Reference coverage is not exhaustive.** The `COMMANDS_*.txt` files cover 22 of
-the 136 object types Praat exposes, chosen as those used in voice and speech
-work, and cover them thoroughly. The rest fall back to the catalogue, with the
+the 136 object types Praat exposes — those used in voice and speech work — and
+cover them thoroughly. The rest fall back to the catalogue, with the
 caveat above. Gaps are filled as they are found — report them.
 
 **Two reference files carry older verification.**
