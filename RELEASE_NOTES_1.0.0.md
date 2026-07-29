@@ -198,16 +198,23 @@ layers:
   corrected (`Sound Multiply`, `TextGrid Scale times`, and an undocumented
   co-selection requirement across the TextGrid Draw/Speckle block).
 
-The remaining gap: most commands have no pasted example at all — 169 examples
-against roughly 800 documented commands — and for those, order derives from the
-Praat C API, the manual and Paste Commands sessions, and no automated check
-covers it — a wrongly-ordered call of the correct arity is accepted silently, so
-the arity probe cannot see it. Concretely, swapping the 6th and 7th arguments of
-`To Pitch (raw cross-correlation)` (silence threshold and voicing threshold,
-both reals) on a signal with a quiet passage yields 441 voiced frames in
-canonical order and 295 swapped, with no error — and identical output on a clean
-tone, so the class is invisible to casual testing too. Extending pasted-example coverage, and
-the harness that executes it, is the way to close it.
+**On what the absence of a pasted example means.** 169 examples cover roughly
+800 documented commands, but the other commands are not therefore unverified.
+The `COMMANDS_*.txt` files were built from Praat's C API (`praatlib.h`), the
+official manual, Praat source files, and **Paste Commands sessions — where the
+syntax string is emitted by Praat itself**, not typed by hand. That is machine
+ground truth for parameter order, captured at the time.
+
+The measured evidence supports it. The arity sweep this release probed ~630
+commands independently of any example and found **three** defects (0.5%). The
+pasted-example execution found five in 111 (4.5%) — but examples get pasted
+precisely when a command is awkward, so that rate comes from the hardest cases,
+not the typical one.
+
+What is genuinely missing is a *standing automated check* on parameter order for
+commands without an example — not evidence that they are wrong. Extending
+pasted-example coverage, and the harness that executes it, is the way to convert
+that from sound-by-sourcing to checked-every-release.
 
 **The fallback catalogue under-specifies range-taking commands.** Praat renders
 a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
