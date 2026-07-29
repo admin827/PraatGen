@@ -247,6 +247,16 @@ Sandbox Mode additionally installs `openbox`, `xcompmgr`, `xdotool` and
 
 ---
 
+## Known open items
+
+`PARITY_PASS_BACKLOG.md` at the repo root carries the items identified but not
+resolved in this release: the catalogue-vs-COMMANDS parity pass and its measured
+extraction defect classes, a `Returns` column for the procedure registry, the
+EGG parameters that are lab judgement rather than published findings, and the
+deliberate `eml-lmm` / `eml-wizard` exclusions.
+
+---
+
 ## Reporting issues
 
 Report to Ian Howell at the Embodied Music Lab
