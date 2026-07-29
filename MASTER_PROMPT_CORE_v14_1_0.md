@@ -119,7 +119,7 @@ standard of proof.
     ✓ Object preservation (4B) — [no pre-existing objects removed / removals listed with user justification]
     ✓ Typing (5,5B,5C,5D,20) — compliant [or: derivation table above]
     ✓ Output commands — compliant
-    ✓ File output (26,27) — [not used / cite the script line showing the overwrite guard and the derived (non-hardcoded) output path]
+    ✓ File output (26,27) — [not used / cite the script line showing the overwrite guard and the derived (non-hardcoded) output path; confirm every written string literal is pure ASCII — one non-ASCII char makes Praat write the whole file UTF-16 BE even under --utf8]
     ✓ State ops (10) — [A-only / list B/C with guards]
     ✓ SOT (12,14,15,17,23) — [N] commands verified ([source files])
     ✓ Time-domain (9) — [queries used / not applicable]
@@ -245,7 +245,19 @@ Load reference files from Project Knowledge based on the task requirements. Load
 7. Load APPENDIX_C_GUI.txt when the script requires user input forms
 8. Load APPENDIX_F_UX_STANDARDS.txt when the script has user input, file output, or batch processing
 9. These files are the Source of Truth for command and function verification
-10. **Fallback verification:** If a command, object type, or capability is not found in the primary COMMANDS_*.txt files, load PRAAT_DEFINITIVE_CATALOGUE.txt before concluding it does not exist. This file covers all 136 object types including David Weenink's extensions (dwtools/) which are absent from the primary reference files. It also contains the Formula engine function list (see the catalogue's own §3 header/footer for the current entry count) which supplements APPENDIX_B_FUNCTIONS.txt. **The catalogue is not exhaustive, and a "not found" there is not proof of absence.** It carries known gaps: some object types are present only as a class-hierarchy line and expose no commands (Electroglottogram is the clear case — the catalogue lists only `Electroglottogram -> Sound -> Vector -> Matrix` and no actions), and some query commands are under-specified relative to the COMMANDS_*.txt files (e.g. from-time/to-time fields on `Get mean` / `Get minimum` / `Get quantile`). When an object-specific COMMANDS file exists, it governs over the catalogue; an empty or missing catalogue result for a type that has its own COMMANDS file means "check the COMMANDS file," not "the capability does not exist." FormantPath (automated formant ceiling optimization) is one such
+10. **Fallback verification:** If a command, object type, or capability is not found in the primary COMMANDS_*.txt files, load PRAAT_DEFINITIVE_CATALOGUE.txt before concluding it does not exist. This file covers all 136 object types including David Weenink's extensions (dwtools/) which are absent from the primary reference files. It also contains the Formula engine function list (see the catalogue's own §3 header/footer for the current entry count) which supplements APPENDIX_B_FUNCTIONS.txt. **The catalogue has a measured, systematic arity defect (hard).** Its extractor
+dropped Praat's paired range fields (`left Xxx` / `right Xxx`, which render as
+one row with two boxes), so affected commands are documented with 1, 2 or 4
+FEWER parameters than they take. Measured 29 Jul 2026 against Praat 6.6.30: 22
+defects in 542 commands probed, 4.1%. The 22 object types that have a curated
+`COMMANDS_*.txt` are correct — those files were hand-verified and the sweep
+confirmed them. The other 114 types (2,464 commands) have no curated file, so
+the catalogue is the sole authority there, which is precisely the fallback case.
+**Before emitting any catalogue-sourced command that plausibly takes a time,
+frequency or value range, verify the arity** — in SANDBOX, call it with excess
+arguments and read Praat's "requires only N arguments" reply. Never emit a
+catalogue range command unverified. **The catalogue is also not exhaustive, and
+a "not found" there is not proof of absence.** It carries known gaps: some object types are present only as a class-hierarchy line and expose no commands (Electroglottogram is the clear case — the catalogue lists only `Electroglottogram -> Sound -> Vector -> Matrix` and no actions), and some query commands are under-specified relative to the COMMANDS_*.txt files (e.g. from-time/to-time fields on `Get mean` / `Get minimum` / `Get quantile`). When an object-specific COMMANDS file exists, it governs over the catalogue; an empty or missing catalogue result for a type that has its own COMMANDS file means "check the COMMANDS file," not "the capability does not exist." FormantPath (automated formant ceiling optimization) is one such
 underestimated capability — it eliminates manual ceiling selection
 entirely, yet the primary COMMANDS file now documents it as the
 default algorithm. If a script design assumes manual ceiling
@@ -2232,7 +2244,28 @@ debugging hypothesis testing). Do not install preemptively.
 2. **Output goes to files, not stdout.** Use `writeFileLine:` /
    `appendFileLine:` to write results to disk.
 
-3. **Use `--utf8`.** Without it, Praat writes UTF-16 BE on Linux.
+3. **`--utf8` is NOT sufficient (hard) — sandbox-verified, Praat 6.6.30, 29 Jul 2026.**
+   `--utf8` alone does not guarantee UTF-8 output. **A single non-ASCII
+   character anywhere in a written string makes Praat write the ENTIRE file
+   as UTF-16 BE, with `--utf8` set.** Verified triggers include:
+   `—` `–` `…` `’` `“` `°` `µ` `±` `Δ` `é` `≥` — every one of them flips the
+   file. Once flipped, later `appendFileLine:` calls keep it UTF-16.
+
+   This is the actual cause of the historical UTF-16 `eml-batch-process.txt`
+   incident, and it means the old note "em-dashes in string literals are
+   harmless unless something re-encodes" was wrong: writing one to a file IS
+   the re-encoding.
+
+   **Rule: any string literal written to a file with `writeFileLine:`,
+   `appendFileLine:`, `writeFile:` or `appendFile:` must be pure ASCII.**
+   Use `->` not `→`, `-` not `—`, `deg` not `°`, `+/-` not `±`, `u` not `µ`.
+   Non-ASCII is fine in Info-window output and in Picture text (where
+   APPENDIX_E's escape conventions govern); it is the FILE path that breaks.
+   Downstream tools — R `read.csv`, pandas, Excel import, `grep` — read a
+   UTF-16 CSV as binary or garbage.
+
+   SELF-AUDIT (Rules 26/27 line): when the script writes any file, confirm
+   every written literal is ASCII, or state which are not and why that is safe.
 
 4. **Use `--pref-dir` with a fresh directory.** Stale lock files
    cause "An instance of Praat that is not me is already running."
@@ -3271,7 +3304,10 @@ attest "compliant."
 
     ✓ **File output safety (Rules 26, 27):** [no file output / cite the
        script line showing the overwrite guard (27) and the line showing
-       the output path is solicited or derived, never hardcoded (26)]
+       the output path is solicited or derived, never hardcoded (26); and
+       confirm every string literal written to the file is pure ASCII — a
+       single non-ASCII character makes Praat emit the entire file as
+       UTF-16 BE even with --utf8, breaking R/pandas/Excel/grep downstream]
 
     ✓ **UX standards (Rule 33, Appendix F):** [confirm compliance or "no user input / file output / batch processing"]
        - Dialog conventions (S0): all endPause use trailing 0; exit buttons read "Quit"; Standard button present where canonical parameters are editable
