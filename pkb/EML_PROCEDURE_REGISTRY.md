@@ -358,6 +358,9 @@ All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `
 | `@emlVibratoDrawFigure` | Master procedure: draws the full 8-panel vibrato figure. | .smoothedTableId, .includeId, .excludeId, | public |
 
 ## Demo Window
+> ⚠️ Version not verified against source — the 29 Jul 2026 plugin archive omitted
+> the `tutorial/` folder. Retained deliberately (Demo-deck generation depends on
+> it; parses clean under Praat 6.6.30). Re-sync at the next reconciliation.
 **File:** `tutorial/eml-demo-procedures.praat` (v1.2) — 31 procedures
 
 | Procedure | Purpose | Parameters | Scope |

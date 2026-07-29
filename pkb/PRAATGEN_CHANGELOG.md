@@ -7,6 +7,30 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### Release 1.0.0 — 29 July 2026
+
+**Leaving beta.** The combined package (Master Prompt 14.1.0 + PKB) is now a
+stable 1.0.0 release. What changed to justify it, in one line each:
+
+- The PKB is reconciled against the EML plugin source rather than audited
+  against itself. Seven library files were shipping truncated.
+- The procedure registry is generated **from** that source, not hand-maintained
+  alongside it — 295 procedures, verified equal in both directions.
+- Every library file is syntax-checked against a real Praat 6.6.30 install, not
+  assumed correct.
+- Every PKB file carries the plugin's version verbatim, so drift is detectable
+  rather than invisible.
+- The clinical values that a benchmark actually turns on (CPPS especially) were
+  read off the live dialog, not inferred from a source extraction.
+
+Known and deliberate at 1.0.0: `eml-lmm` and its numerical dependencies are not
+shipped (`@emlRunLMMAnalysis` is documented as not routable);
+`eml-demo-procedures.txt` is retained but its version is unverified against the
+`tutorial/` folder, which was absent from the plugin archive; and the shipped
+sources carry 39 `+=` and 2 `elif` deliberately, because PKB copies are
+byte-faithful to plugin source so Rule 223 works — the style fix belongs
+upstream and ships as `plugin_style_fix.sh`.
+
 ### 14.1.0 — 29 July 2026 (same day, post-plugin reconciliation)
 
 The v14.0.0 audit was run against the PKB alone. Reconciling it against the

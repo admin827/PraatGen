@@ -14,7 +14,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)
-**Version:** 0.9.5-beta.01
+**Version:** 1.0.0
 **Release:** 29 July 2026
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -261,22 +261,23 @@ PraatGen tracks three version numbers:
 
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
-| **Release** | 0.9.3-beta.02 | The combined package (prompt + PKB). This is the version that matters to users. |
-| **Master Prompt** | 13.9.4 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **Release** | 1.0.0 | The combined package (prompt + PKB). This is the version that matters to users. |
+| **Master Prompt** | 14.1.0 | The system instructions. Bumped when rules, workflow, or protocols change. |
 | **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
-- **0.x.y** — Beta. Expect changes based on tester feedback.
-- **1.0.0** — Stable release. Prompt and PKB verified across a broad range of scripting tasks.
+- **1.0.0** — First stable release (29 July 2026). Prompt and PKB reconciled against the EML plugin source, procedure registry rebuilt programmatically from that source, and every library file syntax-checked against Praat 6.6.30.
 - **x.y.z** — Major.Minor.Patch. Major = breaking workflow changes. Minor = new capabilities or reference files. Patch = corrections.
 
 ---
 
-## Known Limitations (Beta)
+## Known Limitations
 
 **Reference coverage gaps.** The `COMMANDS_*.txt` files cover the most commonly used object types thoroughly but are not exhaustive for every parameter variant. The Definitive Catalogue (`PRAAT_DEFINITIVE_CATALOGUE.txt`) provides fallback coverage for all object types but with less contextual annotation. Gaps are filled as they're discovered — report them.
 
-**EML Tools integration.** PraatGen generates flat scripts inspired by the EML library procedures. The EML Tools plugin itself is in pre-release and distributed separately.
+**EML Tools integration.** PraatGen generates **self-contained** scripts. Where it uses an EML library procedure, the procedure body is copied into the delivered script (or into a folder shipped alongside it) — generated code never `include`s the plugin, and you are never assumed to have it installed. The EML Tools plugin itself is distributed separately.
+
+**Mixed models not included.** The linear-mixed-model layer (`eml-lmm`, with its `eml-linalg` / `eml-optimizer` dependencies) is deliberately excluded from the PKB pending further validation. `@emlRunLMMAnalysis` is documented as not routable; ask if you need a mixed model and PraatGen will say so rather than improvise one.
 
 **Thinking / effort management.** Complex scripts benefit from deliberation, and the prompt includes gates that assess it — but the setting is yours to manage manually, and on 4.8+ the guidance is provisional (see "Choosing a model").
 
@@ -292,7 +293,7 @@ PraatGen tracks three version numbers:
 
 ## Reporting Issues
 
-During the beta period, report issues to Ian Howell at the Embodied Music Lab (www.embodiedmusiclab.com):
+Report issues to Ian Howell at the Embodied Music Lab (www.embodiedmusiclab.com):
 
 - **Script errors:** Include the task description, the generated script, and the exact Praat error message with line number.
 - **Reference gaps:** If PraatGen can't find a command it should know about, note the object type and command name.

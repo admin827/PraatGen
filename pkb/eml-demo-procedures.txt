@@ -28,6 +28,16 @@
 #   Image: @emlDemoShowFigure
 #
 # Dependencies: Calling script must set these globals before use:
+# ⚠️ PKB PROVENANCE — VERSION NOT VERIFIED AGAINST SOURCE (29 Jul 2026)
+#   This file lives at tutorial/eml-demo-procedures.praat in the EML plugin
+#   tree. The 29 Jul 2026 plugin archive did not include the tutorial/ folder,
+#   so this copy could not be reconciled with its source the way the other
+#   library files were. Version 1.2 / 2 April 2026 is what the PKB has held;
+#   it may or may not be current.
+#   RETAINED DELIBERATELY: the Demo-window layout engine is required for Demo
+#   deck generation, and its 31 procedures parse clean under Praat 6.6.30.
+#   Re-sync from tutorial/ at the next reconciliation.
+#   License normalized to GPL-3.0-or-later per repo policy.
 #   Typography: bodySize, captionSize, subheadSize, headingSize,
 #               titleSize, heroSize, numSize, codeSize,
 #               lineHeightFactor, ambientSize, sans$, serif$, mono$
