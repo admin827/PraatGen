@@ -70,6 +70,28 @@ from source again, the fix goes upstream: `plugin_style_fix.sh` at repo root
 applies it to the plugin. The MP now names this as a known SOT exception so a
 model does not "correct" the library it is copying from.
 
+**Self-containment rule added (hard) — retrieval protocol step 12.** Generated
+scripts must never `include` the EML plugin. The end user is not assumed to
+have it installed, at any path, ever. This became urgent precisely because the
+refresh above made the PKB byte-faithful to plugin source: `eml-graphs.txt` now
+ships nine real `include ../graphs/….praat` lines, which a model copying from
+it could carry straight into delivered code, producing a script that dies with
+"Cannot open file" on any machine without the plugin.
+
+Two accepted delivery shapes: (a) procedure bodies pasted into the delivered
+script under a marked block — the default; (b) script plus a sibling `*_lib/`
+folder included by a script-relative path only. Never `../`, never
+`preferencesDirectory$`, never absolute. Copying is transitive: a copied
+procedure's own `@eml…` calls come with it, until every `@`-call in the
+delivery resolves inside the delivery.
+
+Enforced on all four surfaces a model can reach: retrieval protocol step 12
+(the rule), both SELF-AUDIT templates (a line item requiring the delivery shape
+be named and the closure confirmed), the AUTO pre-delivery domain table (AUTO
+suppresses SELF-AUDIT, so it needs its own row), the registry header, a new §0
+in EML_PROCEDURE_GUIDE.md, and a warning banner directly above the include
+block in `eml-graphs.txt` itself.
+
 **Verified:** all 16 refreshed sources parse in Praat 6.6.30 (the sole flag is
 `eml-graphs.txt`'s plugin-tree `include` paths — known, M11). Zero signature
 drift on shared procedures, confirming `emlReportKWComparison` was the only one.

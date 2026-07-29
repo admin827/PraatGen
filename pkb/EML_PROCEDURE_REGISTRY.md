@@ -12,6 +12,14 @@ Generated: 8 April 2026 | **Rebuilt 29 July 2026 (PraatGen v14.0.0) directly fro
 > `include ../graphs/….praat` lines inside sources are plugin-tree references
 > and are not expected to resolve in the flat PK layout.
 
+> **Generated code must never `include` these files (hard).** The paths above
+> describe a plugin tree that the end user is NOT assumed to have. When a
+> generated script uses a library procedure, copy the procedure body into the
+> delivered script (or into a sibling folder shipped with it) — never emit
+> `include ../graphs/….praat`, `preferencesDirectory$`, or any absolute path.
+> Copy transitively: a copied procedure's own `@eml…` calls come too. See
+> Master Prompt retrieval protocol step 12.
+
 > **Version discipline.** Each `**File:**` version below is the PLUGIN's version,
 > copied verbatim into the PKB file header. PKB version == plugin version, always.
 > A mismatch means the PKB has drifted and must be re-synced from source — that

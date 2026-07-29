@@ -28,6 +28,12 @@
 #   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
 
+# ⚠️ THE include LINES BELOW ARE PLUGIN-INTERNAL — NEVER COPY THEM INTO
+#    GENERATED CODE. They resolve only inside an installed EML plugin tree.
+#    A delivered script must be self-contained: paste the procedure bodies
+#    in, or ship them in a sibling folder next to the script. See Master
+#    Prompt retrieval protocol step 12. Emitting one of these lines produces
+#    a script that fails on any machine without the plugin.
 include ../graphs/eml-graph-procedures.praat
 include ../stats/eml-core-utilities.praat
 include ../stats/eml-core-descriptive.praat

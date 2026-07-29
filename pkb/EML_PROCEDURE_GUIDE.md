@@ -48,6 +48,29 @@
 # needs review.
 
 # ====================================================================
+# 0. DELIVERY RULE — SELF-CONTAINED SCRIPTS ONLY (hard)
+# ====================================================================
+#
+# Never assume the user has the EML plugin installed. Generated scripts
+# must run on a bare Praat installation.
+#
+# When a script uses a library procedure, COPY THE PROCEDURE BODY into
+# the delivered artifact — either pasted at the bottom of the script
+# itself (default), or in a folder shipped alongside it and included by
+# a script-relative path. Copy transitively: whatever the copied
+# procedure calls comes too, until every @-call resolves inside the
+# delivery.
+#
+# NEVER emit an `include` line pointing at the plugin tree
+# (`include ../graphs/eml-graph-procedures.praat` and friends). Those
+# lines exist inside the plugin sources and are plugin-internal; copying
+# one into generated code produces a script that fails with
+# "Cannot open file" on any machine without the plugin installed.
+#
+# See Master Prompt retrieval protocol step 12 for the two accepted
+# delivery shapes and the SELF-AUDIT requirement.
+#
+# ====================================================================
 # 1. DRAWING METHODOLOGY
 # ====================================================================
 #

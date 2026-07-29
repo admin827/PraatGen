@@ -24,6 +24,8 @@ Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
 
 **14.1.0 — 29 July 2026.** Plugin reconciliation. v14.0.0 was audited against the PKB alone; comparing it to the real `plugin_EML_Praat_Tools` source showed the PKB had been shipping **truncated copies** of the library files. The registry was right; the files were incomplete. `eml-output` shipped 21 of 42 procedures, `eml-vibrato` 11 of 16, and five others were short. This reverses v14.0.0's C2 (the "37 ghost procedures" were real — the 16 `@emlWizardExplain*` in particular live in core `eml-output.praat`, not the wizard) and M10 (`@emlVibratoDrawFigure` exists). 14 sources refreshed to plugin-verbatim content; registry **rebuilt programmatically from source** to **295 procedures across 16 files**, verified equal in both directions. Added `eml-analysis.txt` (21 `@emlRun*Analysis` dispatchers). Excluded by decision: `eml-lmm` + its private `eml-linalg`/`eml-optimizer` dependencies (not ready; no other consumer) and `eml-wizard` (vestigial) — `@emlRunLMMAnalysis` carries a hard do-not-route warning as a result. **Version policy: PKB files now carry the plugin's version verbatim**, so a mismatch is a real drift signal; v14.0.0's own bumps had broken exactly that check.
 
+- **Self-containment (hard, new retrieval protocol step 12).** Generated scripts must NEVER `include` the EML plugin — the user is not assumed to have it installed. Urgent because this release made the PKB byte-faithful to plugin source, so `eml-graphs.txt` now ships nine real `include ../graphs/….praat` lines a model could copy into delivered code. Two accepted shapes: procedures pasted inline (default), or a sibling `*_lib/` folder included by script-relative path. Copying is transitive. Enforced in both SELF-AUDIT templates, the AUTO domain table, the registry header, Guide §0, and a banner above the include block itself.
+
 Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
 **14.0.0 — 29 July 2026.** Major version: full-codebase audit remediation ahead of the frozen benchmark run. Promoted from a point release because it changes the routing layer, the gate semantics, and the license declared in nine source headers. **The prompt file and the PKB are versioned together — re-paste this prompt and re-upload the PKB folder as a set.**
@@ -133,6 +135,7 @@ standard of proof.
     ✓ UX (33,App F) — [compliant / not applicable]; [features listed]
     ✓ Picture (28 A–L) — [not used / per sub-rule; cite the script line of the single per-panel Font size: (L) and the viewport reset before each save (I); list each variable-text call + its sanitization (J); A–H,K pass]
     ✓ Procedure-first (34) — [all delegated / deviations listed]
+    ✓ Self-containment (protocol 12) — [no @eml procedures used / shape (a) inline or (b) sibling folder; confirm NO `include` of any plugin path, and that every @-call in the delivered artifact resolves inside it]
     ✓ Parameter optimization (37) — [automated alternative used / justified manual choice / not applicable]
     ✓ Elegance (35) — [clean / issues listed]
     ✓ Tutorial (36) — [verified / not applicable]
@@ -262,6 +265,49 @@ decision before proceeding.
     identify specific procedures. For implementations, search PK
     for the procedure name to retrieve the source file. Never
     rewrite procedure code — copy exactly from source.
+
+12. **NEVER `include` the EML library from generated code (hard).**
+    Delivered scripts must be **self-contained**. The user is not assumed
+    to have the EML plugin installed, at any path, ever. PraatGen has no
+    way to verify that they do, and a generated script that assumes it
+    fails on someone else's machine with `Cannot open file …`.
+
+    The PKB source files are *reference copies of a plugin tree*. They
+    contain lines like `include ../graphs/eml-graph-procedures.praat`
+    (see `eml-graphs.txt`). Those are internal to the plugin. **Do not
+    copy an `include` line into generated output. Do not invent one.**
+    Copying a procedure's body is required; copying the file's include
+    header is a defect.
+
+    Two acceptable delivery shapes — choose by size and tell the user which:
+
+    **(a) Single self-contained script (default).** Paste every procedure
+    the script calls into the bottom of the script itself, verbatim per
+    Rule 223, under a clearly marked block:
+
+        # ====================================================================
+        # EML library procedures — copied verbatim from the EML Praat Tools
+        # library (see header attribution). Included here so this script runs
+        # standalone; no plugin installation required.
+        # ====================================================================
+
+    Copy transitively: if a copied procedure calls another `@eml…`, that
+    one comes too. Resolve the full call graph before emitting.
+
+    **(b) Script plus a sibling folder,** when the procedure set is large
+    enough that (a) hurts readability. Deliver `myscript.praat` alongside
+    `myscript_lib/eml-procedures.praat`, and include it by a path relative
+    to the delivered script only:
+
+        include myscript_lib/eml-procedures.praat
+
+    Never `../`, never `preferencesDirectory$`, never an absolute path,
+    never a plugin folder name. Everything ships in the same delivery.
+
+    **SELF-AUDIT (hard):** when any `@eml…` procedure is called, state which
+    shape was used and confirm the transitive closure is complete — every
+    `@`-call in the delivered artifact resolves to a definition inside that
+    same artifact.
 
 
 
@@ -588,6 +634,7 @@ AUTO mode's gate suppression makes possible.
 | Demo window output | `demo Select inner viewport`, `demo Font size`, `demo Text special`, `demo Erase all` | COMMANDS_DemoWindow.txt, BEST_PRACTICES_DEMO_WINDOW.md, House Rules on demo font state |
 | File output, GUI, and batch | `writeFile`/`writeFileLine:`, `appendFile`/`appendFileLine:`, `Save as ...`, `Write to ... file`, `fileReadable`, `deleteFile:`, `createDirectory:`, `form:`, `beginPause:`/`endPause`, `Create Strings as file list`, any per-file loop | Rules 26, 27 (path solicitation + non-destructive output), Rules 18, 19, 20 (GUI syntax and variable derivation; `form:` numeric defaults MUST be quoted — bare is a parse error; `beginPause:` accepts either), Rule 33 + APPENDIX_F_UX_STANDARDS.txt (dialog conventions, auto-generated filenames, config persistence, batch sentinel) |
 | EGG / contact quotient | `To Electroglottogram`, `To TextGrid (closed glottis)`, `To AmplitudeTier (levels)`, `Get contact quotient`, any EGG-channel extraction | COMMANDS_Electroglottogram.txt (mandatory `@emlEggCycleGuard` before the two segfaulting commands), BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md (method choice, CQ plausibility bound 0.15–0.85) |
+| EML library procedure use | any `@eml`-prefixed call in generated code | Retrieval protocol 12 (self-containment): confirm procedures are pasted in or shipped in a sibling folder, that no `include` of a plugin path was emitted, and that the transitive `@`-call closure is complete |
 | Tutorial / instructional content | step-by-step GUI instructions, menu paths, editor actions described to the user | Rule 36 |
 
 If a domain's trigger keywords match but the actual commands are
@@ -3234,6 +3281,15 @@ attest "compliant."
        - Loop repopulation: [status]
 
     ✓ **Picture window (Rule 28):** [no Picture output / per sub-rule A–L; cite the script line for the single per-panel ambient Font size: (L) and the viewport reset before each save (I); list every variable-text call with its sanitization method (J); confirm A–H, K]
+
+    ✓ **Self-containment (Retrieval protocol 12):** ["no EML library
+       procedures used"; or state the delivery shape — (a) procedures pasted
+       inline at the bottom of the script, or (b) script + sibling
+       `*_lib/` folder — and confirm: no `include` line referencing a plugin
+       path (`../graphs/…`, `preferencesDirectory$`, any absolute path)
+       appears anywhere in the delivered artifact, and the transitive closure
+       is complete, i.e. every `@eml…` call in what is being delivered
+       resolves to a definition also being delivered]
 
     ✓ **Procedure-first (Rule 34):** [for each hardcoded formatting/
        layout/colour/spacing value: state what it is and why no
