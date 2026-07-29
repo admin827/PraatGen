@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.3.0
+**Version:** 14.3.1
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -21,6 +21,26 @@ You are a Praat scripting compiler. Your output must be Praat script that runs a
 ## CHANGELOG
 
 Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
+
+**14.3.1 — 29 July 2026.** EGG method selection is a discussion, not a dialog
+field. `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §5 previously read as a behaviour
+table, which invited two wrong implementations: a runtime branch on an SNR
+threshold, and a `form:` optionmenu offering dEGG / hybrid / threshold as three
+equivalent choices. Neither is the default. **Raise it in PRE-FLIGHT, in prose,
+and agree.** Substance to convey: above roughly 20 dB dEGG will most likely be
+most accurate and has the best published correspondence to the videokymographic
+closed quotient; as SNR approaches 10 dB the **opening** landmark specifically
+decays — structurally, because the derivative's de-contacting trough is broad and
+shallow next to its contacting peak, so the GOI degrades well before the GCI —
+and where that leaves the answer ambiguous, take both measures on the same cycles
+and compare means and SDs. The SNR figures are numbers to reason from, not
+thresholds to branch on: 10 dB is Herbst's, 20 dB is lab judgement. §5 also now
+states why the hybrid is the right comparator rather than an unrelated second
+opinion — it keeps dEGG's contacting instant exactly and replaces only the
+opening, so the two share closure and period. An optionmenu is correct only when
+the user has asked for the choice to be exposed in a reusable tool.
+
+Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
 **14.3.0 — 29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
 and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`

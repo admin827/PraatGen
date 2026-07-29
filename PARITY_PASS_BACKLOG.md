@@ -1,6 +1,6 @@
 # PraatGen — Open Items for the Catalogue Parity Pass
 
-**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.3.0
+**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.3.1
 **Purpose:** carry forward the items that were identified but deliberately not
 resolved in this release, so the next dedicated session starts from a written
 scope rather than a rediscovery.

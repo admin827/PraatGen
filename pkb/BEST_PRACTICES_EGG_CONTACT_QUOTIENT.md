@@ -4,7 +4,7 @@
 **Compiled from:** EML PraatGen sandbox verification session, 29 July 2026
 **Praat version:** 6.6.30
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
-**Revised:** 29 July 2026 — §4 spectral thresholding **parked**: untested on real material, withdrawn from distribution along with `@emlEggSpectralThreshold`; sub-10 dB signals are now refused outright. §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
+**Revised:** 29 July 2026 — §5: method selection is a PRE-FLIGHT discussion, **not** a `form:` optionmenu; the SNR figures are guidance to reason from, not thresholds to branch on. §4 spectral thresholding **parked**: untested on real material, withdrawn from distribution along with `@emlEggSpectralThreshold`; sub-10 dB signals are now refused outright. §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -186,20 +186,63 @@ Herbst et al. (2017) excluded sub-10 dB signals from **their analysis**. Whether
 
 **dEGG is the default method. There is no upper SNR gate on it.**
 
-| EGG waveform SNR (§2) | behaviour |
+### The default is a conversation, not a dialog field (hard)
+
+**Do not put method selection in a `form:` or `beginPause:` optionmenu by
+default.** An option menu asks the user to arbitrate a methodological question
+before they have seen their own signal-to-noise figure, and it presents dEGG,
+hybrid and threshold as three equivalent choices, which they are not.
+
+The default is: **raise it in PRE-FLIGHT, in prose, and reach an agreement.**
+What to say, in substance:
+
+- Above roughly 20 dB EGG SNR, dEGG will most likely give the most accurate
+  measure, and it is the method with the best published correspondence to the
+  videokymographic closed quotient (Herbst et al. 2017).
+- As SNR approaches 10 dB, the **opening** landmark specifically becomes
+  unreliable. This is not general noise sensitivity — it is structural. The
+  derivative's de-contacting trough is broad and shallow next to its contacting
+  peak (§1b), so the GOI degrades well before the GCI does. The closure instant
+  stays trustworthy; the opening instant is what decays.
+- Where that leaves the answer genuinely ambiguous, the sensible move is to take
+  **both** measures on the same cycles and compare means and standard
+  deviations, rather than committing to one in advance.
+
+Then write the script to do what was agreed. Say in the output which method ran
+and why.
+
+**Why the hybrid is the right comparator, and not an unrelated second opinion.**
+The hybrid keeps dEGG's contacting instant *exactly* — same derivative, same
+positive peak — and replaces only the de-contacting instant with a waveform
+threshold crossing. It is dEGG with a more robust opening, so the two share the
+closure landmark and the period. That is what makes comparing them informative;
+a threshold-only measure (§1c) shares neither and is not the comparator here.
+
+**An option menu is appropriate when** the deliverable is a reusable tool the
+user will run repeatedly across varied material and they have asked for the
+choice to be exposed — or when the agreed answer is "let me decide per file."
+That is a UX decision the user makes, not a default PraatGen picks to avoid
+having the discussion.
+
+### Guidance for that conversation, not gates
+
+| EGG waveform SNR (§2) | what to advise |
 |---|---|
 | ≥ 20 dB | dEGG. Report it as the measurement. |
-| 10 dB ≤ SNR < 20 dB | **Report dEGG and hybrid-at-0.43 side by side**, each with its cycle-to-cycle SD, and let the operator choose. Do not silently substitute one for the other. |
+| 10 dB ≤ SNR < 20 dB | Ambiguous. Advise taking dEGG **and** hybrid-at-0.43 on the same cycles, reported side by side with mean, cycle-to-cycle SD and cycle count. Do not silently substitute one for the other. |
 | < 10 dB | **Refuse.** There is no de-noising path in this release (§4). |
 
-Detection yield overrides the table in both directions. Count GCIs against the
-expected cycle count for the duration and F0; a large shortfall means the
-derivative is unusable on that material whatever the waveform SNR says, and the
-hybrid is the fallback. This matters because what binds is the SNR *of the
-derivative*, which §3 measures at roughly 8 dB below the waveform figure and
-which varies with hardware and F0.
+**These are numbers to reason from, not thresholds to branch on.** The 20 dB
+boundary is lab judgement (see `PARITY_PASS_BACKLOG.md` §3b); 10 dB is Herbst's
+and is the only published figure here.
 
-### Reading the side-by-side band (10–20 dB)
+Detection yield overrides all of it in both directions. Count GCIs against the
+expected cycle count for the duration and F0; a large shortfall means the
+derivative is unusable on that material whatever the waveform SNR says. This
+matters because what binds is the SNR *of the derivative*, which §3 measures at
+roughly 8 dB below the waveform figure and which varies with hardware and F0.
+
+### Reading the two measures when both were taken
 
 Report, for each method: CQ mean, cycle-to-cycle SD, and cycles used.
 
@@ -297,7 +340,7 @@ endfor
 
 **Bisect on [tPeak, tValley], not [tPeak, tNext].** The signal crosses the threshold twice per cycle — once descending (wanted) and once ascending before the next closure. Only [tPeak, tValley] brackets exactly one.
 
-### Side-by-side dEGG + hybrid (the 10–20 dB band)
+### Side-by-side dEGG + hybrid
 
 Both methods share the same GCI and period — the derivative's positive peak —
 so one pass computes both. They diverge only in the GOI: dEGG takes the
@@ -383,7 +426,7 @@ Companion measure: Ternström (2019) also defines a normalised contact quotient 
 4. `To Sound` — keep this; it is the working object for every query.
 5. Measure EGG SNR (§2) on the Sound.
 6. Guard (`COMMANDS_Electroglottogram.txt`) before any call to `To TextGrid (closed glottis)` or `To AmplitudeTier (levels)`.
-7. Select method (§5). At SNR ≥ 20 dB compute dEGG. In the 10–20 dB band compute **both** dEGG and hybrid-at-0.43 and report them side by side with cycle-to-cycle SD and cycle count.
+7. Method per the §5 agreement reached in PRE-FLIGHT — not a dialog field. dEGG by default; where the discussion concluded the answer was ambiguous, compute **both** dEGG and hybrid-at-0.43 on the same cycles and report them side by side with mean, cycle-to-cycle SD and cycle count.
 8. Plausibility-bound the **output** — every method reported, not just the preferred one. Refuse rather than report an impossible value.
 9. Report, in every output row: method (and differentiator — `Derivative` with its cutoff, or `First central difference`), threshold criterion, EGG SNR, cycles used, and cycle-to-cycle SD.
 

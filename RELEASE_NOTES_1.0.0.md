@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 29 July 2026
-**Master Prompt:** 14.3.0 (was 13.9.4)
+**Master Prompt:** 14.3.1 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.3.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.3.1) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -58,6 +58,26 @@ the plugin.
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
 (4.6/4.7) it recommends thinking on/off and waits on a recommended change, and on
 effort models (4.8+) it is advisory and does not gate the turn.
+
+---
+
+## EGG method selection (14.3.1)
+
+**Method selection is a PRE-FLIGHT discussion, not a dialog field.** §5 read as a
+behaviour table, which invited both a runtime branch on an SNR threshold and a
+`form:` optionmenu offering dEGG / hybrid / threshold as equivalent choices.
+Neither is the default. PraatGen now raises it in prose and agrees an approach:
+above roughly 20 dB dEGG will most likely be the most accurate measure; as SNR
+approaches 10 dB the **opening** landmark specifically decays, because the
+derivative's de-contacting trough is broad and shallow next to its contacting
+peak, so the GOI degrades well before the GCI; and where that leaves the answer
+ambiguous, take both measures on the same cycles and compare means and standard
+deviations. The SNR figures are numbers to reason from — 10 dB is Herbst's,
+20 dB is lab judgement. §5 also states why the hybrid is the right comparator
+rather than an unrelated second opinion: it keeps dEGG's contacting instant
+exactly and replaces only the opening, so the two share closure and period. An
+optionmenu is correct when you have asked for the choice to be exposed in a
+reusable tool.
 
 ---
 
@@ -251,7 +271,7 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.3.0** | 13.9.4 |
+| Master Prompt | **14.3.1** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
@@ -261,7 +281,7 @@ files.
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_3_0.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_3_1.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`

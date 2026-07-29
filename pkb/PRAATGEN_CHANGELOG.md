@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.3.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.3.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,24 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.3.1 — 29 July 2026 (same day, post-release)
+
+**EGG method selection is a discussion, not a dialog field.** §5 of
+`BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` read as a behaviour table and invited
+two wrong implementations: a runtime branch on an SNR threshold, and a `form:`
+optionmenu presenting dEGG / hybrid / threshold as equivalent choices. The
+default is now explicitly a PRE-FLIGHT conversation — dEGG most likely most
+accurate above ~20 dB; the **opening** landmark specifically decaying as SNR
+approaches 10 dB (the de-contacting trough is broad and shallow next to the
+contacting peak, so the GOI degrades before the GCI); both measures taken and
+compared where that leaves the answer ambiguous. SNR figures are guidance, not
+gates — 10 dB is Herbst's, 20 dB is lab judgement. Adds why the hybrid is the
+right comparator: it keeps dEGG's contacting instant exactly and replaces only
+the opening, so the two share closure and period. Optionmenu is correct only when
+the user asks for the choice to be exposed.
+
+---
 
 ### 14.3.0 — 29 July 2026 (same day, post-release)
 
