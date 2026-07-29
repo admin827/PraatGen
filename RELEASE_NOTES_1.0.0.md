@@ -291,13 +291,6 @@ stating how many commands were probed, how many had exact arity confirmed, and
 what the check does *not* establish. Three that could not be probed headlessly say
 so rather than implying coverage.
 
-**Not shipped, by decision.** `eml-lmm` (linear mixed models, pending validation)
-with its private numerical dependencies `eml-linalg` and `eml-optimizer`, which
-have no other consumer. `@emlRunLMMAnalysis` is consequently the one dispatcher
-with unresolvable calls and carries a hard do-not-route warning at its
-definition. `eml-wizard` excluded as vestigial — its `@emlWizardExplain*` helpers
-are core and remain.
-
 **Style exception, deliberate.** PKB copies are byte-faithful to plugin source so
 Rule 223 ("copy exactly from source") is satisfiable. That reintroduces 39 `+=`
 and 2 `elif` the audit had rewritten. The fix belongs upstream in the plugin; the

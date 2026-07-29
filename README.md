@@ -241,8 +241,6 @@ the plugin layout, not to the flat PKB. For the full procedure catalogue and sig
 
 Each PKB source carries the **plugin's** version number verbatim. If a PKB file's version differs from the plugin file it was copied from, the PKB has drifted and should be re-synced.
 
-Not shipped in the PKB by design: the linear-mixed-model layer (`eml-lmm`, with its `eml-linalg` / `eml-optimizer` dependencies) and the vestigial `eml-wizard`.
-
 **Workflow support:**
 
 | File | Purpose |
@@ -276,8 +274,6 @@ PraatGen tracks three version numbers:
 **Reference coverage gaps.** The `COMMANDS_*.txt` files cover the most commonly used object types thoroughly but are not exhaustive for every parameter variant. The Definitive Catalogue (`PRAAT_DEFINITIVE_CATALOGUE.txt`) provides fallback coverage for all object types but with less contextual annotation. Gaps are filled as they're discovered — report them.
 
 **EML Tools integration.** PraatGen generates **self-contained** scripts. Where it uses an EML library procedure, the procedure body is copied into the delivered script (or into a folder shipped alongside it) — generated code never `include`s the plugin, and you are never assumed to have it installed. The EML Tools plugin itself is distributed separately.
-
-**Mixed models not included.** The linear-mixed-model layer (`eml-lmm`, with its `eml-linalg` / `eml-optimizer` dependencies) is deliberately excluded from the PKB pending further validation. `@emlRunLMMAnalysis` is documented as not routable; ask if you need a mixed model and PraatGen will say so rather than improvise one.
 
 **Thinking / effort management.** Complex scripts benefit from deliberation, and the prompt includes gates that assess it — but the setting is yours to manage manually, and on 4.8+ the guidance is provisional (see "Choosing a model").
 
