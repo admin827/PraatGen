@@ -117,7 +117,7 @@ maintained alongside it. Retrieval-table gaps that made five reference files
 unreachable are closed. Contradictions between the HARD GATE and the Phase 3B
 thinking gate, and between the STEP 1 mode menu and the mode definitions, are
 resolved. DEBUGGING mode gained the defining section it lacked. Corrections were
-made to CPPS parameter documentation, three command arities, the
+made to CPPS parameter documentation, eight command signatures, the
 form/beginPause quoting rule, and file-output encoding guidance. Nine source
 headers carried incompatible licenses and are now uniformly GPL-3.0-or-later.
 
@@ -171,36 +171,33 @@ the conversation starts.
 
 Each is stated with the evidence behind it.
 
-**Parameter order is verified by evidence, but not exhaustively.** Three
-independent layers cover it, and they do not cover everything:
+**Parameter order is verified, with a bounded gap.** Coverage comes from three
+layers:
 
-- **Executed end-to-end.** All twelve APPENDIX_D canonical clinical calls were
-  run against Praat 6.6.30 on a synthetic with known properties and returned
-  correct values — 150.00 Hz recovered from a 150 Hz signal by all three pitch
+- **Executed end-to-end.** All twelve APPENDIX_D canonical clinical calls ran
+  against Praat 6.6.30 on a synthetic with known properties and returned correct
+  values — 150.00 Hz recovered from a 150 Hz signal by all three pitch
   algorithms, HNR 33.1/34.9 dB, jitter 0.047%, shimmer 0.367%, CPPS 10.67 dB. A
-  call that returns the right answer has the right parameter order. The
-  clinical set, which carries the highest stakes, is verified this way.
-- **Pasted working examples.** 207 of ~800 documented commands (26%) carry a
-  `# Verified: <exact call>` line — a real invocation with real arguments. Where
-  present, that establishes order, not just count.
-- **Original hand verification.** The remainder derive from the Praat C API,
-  the official manual, and Paste Commands sessions. That is how the files were
-  built and it has held up: the arity sweep this release checked ~630 commands
-  and found three defects, all corrected.
+  call returning the right answer has the right parameter order.
+- **Executed from pasted examples.** 207 `COMMANDS_*.txt` entries carry a
+  `# Verified: <exact call>` line. Every one was executed this release rather
+  than trusted. Five were wrong and are corrected — four had a REALVECTOR
+  argument written as bare whitespace-separated numbers (`0 0.5 1`), which Praat
+  rejects; one had four arguments where the command takes five. Every corrected
+  call now runs. The rest that could be executed did so cleanly.
+- **Arity-checked.** ~630 commands were probed for existence and parameter count
+  by invoking each with excess arguments; three further defects were found and
+  corrected.
 
-What is *not* covered: an automated order check. This release's sweep probes
-existence and parameter *count* by invoking each command with excess arguments
-and reading Praat's `requires only N arguments` reply. A wrongly-ordered call of
-the correct arity is accepted silently, so the sweep cannot see it.
-
-The consequence is worth stating concretely. Swapping the 6th and 7th arguments
-of `To Pitch (raw cross-correlation)` — silence threshold and voicing threshold,
-both reals — on a signal with a quiet passage yields **441 voiced frames in
-canonical order and 295 swapped**, with no error raised. On a clean sustained
-tone the two orders give identical output, so this class of defect is invisible
-to casual testing as well as to the sweep. For the ~74% of commands without a
-pasted example, order rests on the original sourcing rather than on a check that
-runs every release.
+The remaining gap: for commands with no pasted example, order derives from the
+Praat C API, the manual and Paste Commands sessions, and no automated check
+covers it — a wrongly-ordered call of the correct arity is accepted silently, so
+the arity probe cannot see it. Concretely, swapping the 6th and 7th arguments of
+`To Pitch (raw cross-correlation)` (silence threshold and voicing threshold,
+both reals) on a signal with a quiet passage yields 441 voiced frames in
+canonical order and 295 swapped, with no error — and identical output on a clean
+tone, so the class is invisible to casual testing too. Extending the pasted-
+example coverage is the way to close it.
 
 **The fallback catalogue under-specifies range-taking commands.** Praat renders
 a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
