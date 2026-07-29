@@ -119,7 +119,7 @@ standard of proof.
     ✓ Object preservation (4B) — [no pre-existing objects removed / removals listed with user justification]
     ✓ Typing (5,5B,5C,5D,20) — compliant [or: derivation table above]
     ✓ Output commands — compliant
-    ✓ File output (26,27) — [not used / cite the script line showing the overwrite guard and the derived (non-hardcoded) output path]
+    ✓ File output (26,27) — [not used / cite the script line showing the overwrite guard and the derived (non-hardcoded) output path; confirm every written string literal is pure ASCII — one non-ASCII char makes Praat write the whole file UTF-16 BE even under --utf8]
     ✓ State ops (10) — [A-only / list B/C with guards]
     ✓ SOT (12,14,15,17,23) — [N] commands verified ([source files])
     ✓ Time-domain (9) — [queries used / not applicable]
@@ -2244,7 +2244,28 @@ debugging hypothesis testing). Do not install preemptively.
 2. **Output goes to files, not stdout.** Use `writeFileLine:` /
    `appendFileLine:` to write results to disk.
 
-3. **Use `--utf8`.** Without it, Praat writes UTF-16 BE on Linux.
+3. **`--utf8` is NOT sufficient (hard) — sandbox-verified, Praat 6.6.30, 29 Jul 2026.**
+   `--utf8` alone does not guarantee UTF-8 output. **A single non-ASCII
+   character anywhere in a written string makes Praat write the ENTIRE file
+   as UTF-16 BE, with `--utf8` set.** Verified triggers include:
+   `—` `–` `…` `’` `“` `°` `µ` `±` `Δ` `é` `≥` — every one of them flips the
+   file. Once flipped, later `appendFileLine:` calls keep it UTF-16.
+
+   This is the actual cause of the historical UTF-16 `eml-batch-process.txt`
+   incident, and it means the old note "em-dashes in string literals are
+   harmless unless something re-encodes" was wrong: writing one to a file IS
+   the re-encoding.
+
+   **Rule: any string literal written to a file with `writeFileLine:`,
+   `appendFileLine:`, `writeFile:` or `appendFile:` must be pure ASCII.**
+   Use `->` not `→`, `-` not `—`, `deg` not `°`, `+/-` not `±`, `u` not `µ`.
+   Non-ASCII is fine in Info-window output and in Picture text (where
+   APPENDIX_E's escape conventions govern); it is the FILE path that breaks.
+   Downstream tools — R `read.csv`, pandas, Excel import, `grep` — read a
+   UTF-16 CSV as binary or garbage.
+
+   SELF-AUDIT (Rules 26/27 line): when the script writes any file, confirm
+   every written literal is ASCII, or state which are not and why that is safe.
 
 4. **Use `--pref-dir` with a fresh directory.** Stale lock files
    cause "An instance of Praat that is not me is already running."
@@ -3283,7 +3304,10 @@ attest "compliant."
 
     ✓ **File output safety (Rules 26, 27):** [no file output / cite the
        script line showing the overwrite guard (27) and the line showing
-       the output path is solicited or derived, never hardcoded (26)]
+       the output path is solicited or derived, never hardcoded (26); and
+       confirm every string literal written to the file is pure ASCII — a
+       single non-ASCII character makes Praat emit the entire file as
+       UTF-16 BE even with --utf8, breaking R/pandas/Excel/grep downstream]
 
     ✓ **UX standards (Rule 33, Appendix F):** [confirm compliance or "no user input / file output / batch processing"]
        - Dialog conventions (S0): all endPause use trailing 0; exit buttons read "Quit"; Standard button present where canonical parameters are editable
