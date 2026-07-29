@@ -134,7 +134,14 @@
   Quantile-quantile plot: x column name$, y column name$, number of quantiles, xmin, xmax, ymin, ymax, label size, label$, garnish?
   Quantile-quantile plot (between levels): data column name$, factor column name$, x level string$, y level string$, number of quantiles, xmin, xmax, ymin, ymax, label size, label$, garnish?
   Lag plot: data column name$, lag, from xy, to xy, label size, label$, garnish?
-  Bar plot: ymin, ymax, label column name$, distance from border, distance between groups, distance within group, angle, garnish?
+  Bar plot: vertical columns$#, left vertical range, right vertical range, column with labels$, distance of first bar from border, distance between bar groups, distance between bars within group, colours$#, label text angle, garnish?
+  # Verified: Bar plot: {"val"}, 0, 50, "lab", 1, 1, 0, {"blue"}, 0, "yes"
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): this signature CHANGED.
+  #   It was documented with 8 parameters (ymin first, no colours). Praat 6.6.30
+  #   takes 10, and both "Vertical column" and "Colours" are STRING ARRAYS —
+  #   passing a number gives "should be a string array, not a number".
+  #   PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) still shows the old 8-parameter
+  #   form, so this is version drift between 6.4.x and 6.6.30.
   Line graph: y column name$, ymin, ymax, x column name$, xmin, xmax, text$, text font size, angle, garnish?
   Distribution plot: data column name$, minimum value, maximum value, number of bins, minimum frequency, maximum frequency, garnish?
   Horizontal error bars plot: x column name$, xmin, xmax, y column name$, ymin, ymax, lower error column name$, upper error column name$, bar size mm, garnish?

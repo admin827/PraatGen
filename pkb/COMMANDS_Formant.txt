@@ -212,7 +212,13 @@
   # Modify
   Formula (frequencies): formula$
   Formula (bandwidths): formula$
-  Formula: left formant range, right formant range, formula$
+  Formula: from time, to time, left formant range, right formant range, formula$
+  # Verified: Formula: 0, 0, 1, 5, "self"
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): the leading TIME RANGE pair
+  #   was missing — the command was documented with 3 parameters and takes 5.
+  #   The 3-argument form fails with "Argument left Formant range should be a
+  #   number, not a string". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) also shows
+  #   only 3, so this is version drift, not a transcription slip.
   # Source: PRAAT_DEFINITIVE_CATALOGUE.txt — operates on Matrix representation
   # where odd rows = frequencies, even rows = bandwidths
 

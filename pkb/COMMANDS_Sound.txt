@@ -184,7 +184,6 @@
   Filter
   Filter (no scale)
   View & Edit
-  Multiply: scale to09?
   Play
   Voice report: from time, to time, from pitch, to pitch, maximum period factor, maximum amplitude factor, silence threshold, voicing threshold
   Save as Kay sound file: file name$
@@ -200,6 +199,7 @@
   Reverse
   Subtract mean
   Multiply: multiplication factor
+  # Verified: Multiply: 0.5
   Multiply by window: window shape$
   Scale peak: new absolute peak
   Scale intensity: new average intensity
