@@ -96,7 +96,8 @@
   # Cross-type: SpeechRecognizer & Sound (1 command)
 
   Recognize sound
-  # Verified: Recognize sound (no colon, no arguments)
+  # Verified: Recognize sound
+  #   No colon, no arguments.
   # Provenance: Paste Commands, 25 March 2026.
   # CRITICAL: The catalogue lists this as "Transcribe" — that is WRONG.
   #   The actual command name is "Recognize sound".

@@ -155,7 +155,8 @@
   Extract part for overlap: from time, to time, overlap
   # Combine (multiple objects selected)
   Concatenate
-  # Verified: Concatenate (with 2+ Sound objects selected)
+  # Verified: Concatenate
+  #   Requires 2+ Sound objects selected.
   # Provenance: Phonanium AVQI v02.06 script; Paste Commands 24 Feb 2026
 
   # Draw

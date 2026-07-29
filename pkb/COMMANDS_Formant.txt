@@ -122,7 +122,8 @@
 
   # Extract
   Extract Formant
-  # Verified: Extract Formant (on fresh FormantPath only)
+  # Verified: Extract Formant
+  #   Valid on a fresh FormantPath only — see the segfault note above.
   # Returns: Formant object ID
   #
   # ⚠️ BUG (Praat 6.4.60–6.4.62, confirmed macOS):

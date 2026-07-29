@@ -40,7 +40,8 @@
 
   # Convert / Analyze
   To Sound
-  # Verified: To Sound (no arguments)
+  # Verified: To Sound
+  #   Takes no arguments.
   # NOTE: The bridge out of this type. Returns a Sound with identical
   #   duration, sampling frequency, and 1 channel. Registered without "..."
   #   — it has no dialog. Do not write a colon.
