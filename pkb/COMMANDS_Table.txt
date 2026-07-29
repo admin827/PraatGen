@@ -136,12 +136,13 @@
   Lag plot: data column name$, lag, from xy, to xy, label size, label$, garnish?
   Bar plot: vertical columns$#, left vertical range, right vertical range, column with labels$, distance of first bar from border, distance between bar groups, distance between bars within group, colours$#, label text angle, garnish?
   # Verified: Bar plot: {"val"}, 0, 50, "lab", 1, 1, 0, {"blue"}, 0, "yes"
-  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): this signature CHANGED.
-  #   It was documented with 8 parameters (ymin first, no colours). Praat 6.6.30
-  #   takes 10, and both "Vertical column" and "Colours" are STRING ARRAYS —
-  #   passing a number gives "should be a string array, not a number".
-  #   PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) still shows the old 8-parameter
-  #   form, so this is version drift between 6.4.x and 6.6.30.
+  # NOTE (sandbox, 29 Jul 2026): both "Vertical columns" and "Colours" are
+  #   STRING ARRAYS — passing a number gives "should be a string array, not a
+  #   number". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) lists an 8-parameter form
+  #   with neither string array — an extraction artefact, NOT a version change:
+  #   the 10-parameter form is identical in 6.4.62 and 6.6.30, both verified by
+  #   execution. String-array fields are a catalogue blind spot alongside paired
+  #   ranges; see its header banner.
   Line graph: y column name$, ymin, ymax, x column name$, xmin, xmax, text$, text font size, angle, garnish?
   Distribution plot: data column name$, minimum value, maximum value, number of bins, minimum frequency, maximum frequency, garnish?
   Horizontal error bars plot: x column name$, xmin, xmax, y column name$, ymin, ymax, lower error column name$, upper error column name$, bar size mm, garnish?

@@ -7,24 +7,24 @@
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-The first stable release. The EML procedure library is synchronised with the
-current plugin, adding the analysis orchestrators, regression, normality and the
-vibrato drawing family; the command reference is verified against Praat 6.6.30;
-generated scripts are now self-contained by rule; and Phase 3B adapts to the
-model in use. It folds in two Master Prompt increments (14.0.0 → 14.1.0) and
-supersedes 0.9.3-beta.02.1 (22 June 2026).
+The first stable release. The EML procedure library is updated and expanded to
+match the current plugin — the analysis orchestrators, regression, normality and
+the vibrato drawing family; the command reference is verified against Praat
+6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
+increments (14.0.0 → 14.1.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
 ## Highlights
 
-**The EML procedure library is resynchronised with plugin source.** Fourteen
-source files updated to their current plugin versions. `eml-output` gains the
+**The EML procedure library is updated and expanded.** Fourteen source files
+brought to their current plugin versions. `eml-output` gains the
 `@emlWizardExplain*` plain-language helpers and the dialog wrappers;
 `eml-vibrato` gains its drawing family including the 8-panel
 `@emlVibratoDrawFigure`; `eml-inferential` gains `@emlLinearRegression` and
-`@emlTheilSen`; `eml-core-descriptive` gains `@emlShapiroWilk`;
-`eml-extract` gains column-role inference.
+`@emlTheilSen`; `eml-core-descriptive` gains `@emlShapiroWilk`; `eml-extract`
+gains column-role inference; `eml-annotation-procedures` gains its two report
+procedures.
 
 **`eml-analysis.txt` — new.** 21 `@emlRun*Analysis` orchestrators covering
 regression, normality, RM-ANOVA, Friedman, reliability, and the two-group,
@@ -36,20 +36,24 @@ TextGrid (closed glottis)` and `To AmplitudeTier (levels)` — both segfault
 Praat when no cycle falls within the pitch range — and
 `@emlEggSpectralThreshold` for low-SNR EGG rescue.
 
-**The procedure registry is generated from source.** 264 procedures across 15
-files, checked in both directions against the shipped sources. Each library file
-now carries its plugin source's version verbatim, so the two can be compared at
-a glance.
+**The procedure registry is updated to match.** 264 procedures across 15 files,
+checked in both directions against the shipped sources. Each library file now
+carries its plugin source's version verbatim, so the two can be compared at a
+glance.
 
-**Command reference brought to Praat 6.6.30.** Two signatures changed since
-6.4.x and are updated: `Formant Formula` takes a leading time-range pair (5
-parameters), and `Table Bar plot` takes 10 parameters with `Vertical column` and
-`Colours` as string arrays. Scripts using either need updating.
+**Command reference verified against Praat 6.6.30.** Two entries that the
+catalogue extraction had under-specified are now complete: `Formant: Formula`
+takes a leading time-range pair (5 parameters), and `Table: Bar plot` takes 10
+with `vertical columns` and `colours` as string arrays. Both were executed
+against 6.4.62 and 6.6.30 and are identical in each — the gap was in the
+extraction, not in Praat. String-array fields join paired ranges as a known
+catalogue blind spot.
 
-**Generated scripts are self-contained.** Library procedure bodies are copied
-into the delivered script, or into a folder shipped alongside it, transitively.
-Generated code never `include`s the plugin, so a delivered script runs on a bare
-Praat installation.
+**Self-containment is now an explicit rule.** Generated scripts have always been
+standalone; Step 12 states the requirement and both SELF-AUDIT templates check
+it. Library procedure bodies are copied into the delivered script, or into a
+folder shipped alongside it, transitively, and generated code never `include`s
+the plugin.
 
 **Phase 3B is model-conditional.** Extended thinking as a user-facing toggle was
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
@@ -168,29 +172,29 @@ lower setting serves once the COMMAND PLAN exists. Experiment.
 
 ## PKB updates
 
-Every file changed. Replacing the whole `pkb/` folder is the only supported
+57 of 61 files changed. Replacing the whole `pkb/` folder is the only supported
 upgrade path.
 
-**Resynchronised with plugin source (14 files).** `eml-annotation-procedures`,
+**Updated and expanded from plugin source (14 files).** `eml-annotation-procedures`,
 `eml-batch-process`, `eml-core-descriptive`, `eml-core-utilities`,
 `eml-draw-procedures`, `eml-extract`, `eml-graph-procedures`, `eml-graphs`,
 `eml-graphs-form`, `eml-inferential`, `eml-output`, `eml-test-helpers`,
 `eml-vibrato-procedures`, `eml-analysis`. Content verbatim from plugin source;
 only the License line is normalised, and each carries a provenance block.
 
+**Renamed.** `eml-annotation-procedures` shipped as both
+`.praat` and `.praat.txt`; it is now a single `eml-annotation-procedures.txt`,
+matching every other library file.
+
 **New:** `eml-analysis.txt`, `eml-egg-procedures.txt`.
 
 **Removed:** `eml-demo-procedures.txt`. `COMMANDS_DemoWindow.txt` and
 `BEST_PRACTICES_DEMO_WINDOW.md` are the source of truth for the Demo window.
 
-**`EML_PROCEDURE_REGISTRY.md`** — generated from source; 264 procedures across 15
+**`EML_PROCEDURE_REGISTRY.md`** — updated from source; 264 procedures across 15
 files.
 
 **License headers** normalised to GPL-3.0-or-later across the `eml-*` sources.
-
-**Style note.** PKB copies are byte-faithful to plugin source so "copy exactly
-from source" is satisfiable; the Master Prompt names the resulting `+=` and
-`elif` instances as a known SOT exception so they are not rewritten in place.
 
 ---
 
@@ -212,15 +216,11 @@ from source" is satisfiable; the Master Prompt names the resulting `+=` and
 Replace your project's instructions with `MASTER_PROMPT_CORE_v14_1_0.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
-Replace the entire `pkb/` folder. Every file changed and two are gone
-(`eml-demo-procedures.txt`, and the duplicate `eml-annotation-procedures.praat` /
-`.praat.txt` pair, now consolidated to `.txt`). Delete the old folder rather than
-overwriting into it.
+Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`
+is gone, and the `eml-annotation-procedures.praat` / `.praat.txt` pair is now a
+single `.txt`. Delete the old folder rather than overwriting into it.
 
 Do not rename files; the Master Prompt references them by exact filename.
-
-Scripts using `Table Bar plot` or `Formant Formula` need updating — Praat
-changed both signatures.
 
 Sandbox Mode additionally installs `openbox`, `xcompmgr`, `xdotool` and
 `imagemagick`. It still requires `www.fon.hum.uva.nl` in Settings → Capabilities

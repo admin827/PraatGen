@@ -214,11 +214,12 @@
   Formula (bandwidths): formula$
   Formula: from time, to time, left formant range, right formant range, formula$
   # Verified: Formula: 0, 0, 1, 5, "self"
-  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): the leading TIME RANGE pair
-  #   was missing — the command was documented with 3 parameters and takes 5.
+  # NOTE (sandbox, 29 Jul 2026): the leading TIME RANGE pair is easy to lose.
   #   The 3-argument form fails with "Argument left Formant range should be a
-  #   number, not a string". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) also shows
-  #   only 3, so this is version drift, not a transcription slip.
+  #   number, not a string". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) lists only
+  #   3 — an extraction artefact, NOT a version change: the 5-parameter form is
+  #   identical in 6.4.62 and 6.6.30, both verified by execution. Paired range
+  #   fields are the catalogue's known blind spot; see its header banner.
   # Source: PRAAT_DEFINITIVE_CATALOGUE.txt — operates on Matrix representation
   # where odd rows = frequencies, even rows = bandwidths
 
