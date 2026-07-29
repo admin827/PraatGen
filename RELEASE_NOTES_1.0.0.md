@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 29 July 2026
-**Master Prompt:** 14.4.1 (was 13.9.4)
+**Master Prompt:** 14.4.2 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.4.1) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.4.2) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -61,14 +61,15 @@ effort models (4.8+) it is advisory and does not gate the turn.
 
 ---
 
-## Compaction survival, and two new commands (14.4.1)
+## Compaction survival, and two new commands (14.4.2)
 
-**`VERIFY YOUR STATE`.** Say it at any point and PraatGen re-reads what is actually
-saved — the current script and notes in the output folder, or the last file
-delivered — and reports where that disagrees with its own recollection, before
-touching anything. A post-summary turn counts as an implicit invocation. The file
-wins: PraatGen reconciles by reading, and never regenerates delivered work from a
-recollection of what it should contain.
+**`VERIFY YOUR STATE`.** Say it after a compaction and PraatGen re-reads what is
+actually saved in the output folder — current script, notes, open items — and
+reports where that disagrees with its own recollection, before touching anything.
+**The command is yours to give:** PraatGen does not self-invoke it, because it
+cannot reliably tell from the inside that a summary has happened. The file wins —
+it reconciles by reading, and never regenerates delivered work from a recollection
+of what it should contain.
 
 **A new hard `CONTEXT COMPACTION` section** requires the current script, test
 results and open items to be written to the output folder and kept current there,
@@ -293,7 +294,7 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.4.1** | 13.9.4 |
+| Master Prompt | **14.4.2** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
@@ -303,7 +304,7 @@ files.
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_4_1.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_4_2.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`
