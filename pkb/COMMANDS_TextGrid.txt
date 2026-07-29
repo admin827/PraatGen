@@ -115,7 +115,7 @@
   # Other
   View & Edit
   Scale times: new start time, new end time
-  # Verified: Scale times: 0, 2   (sandbox, Praat 6.6.30, 29 Jul 2026)
+  # Verified: Scale times: 0, 2
   # CORRECTION (29 Jul 2026): previously documented with no arguments. The bare
   # form fails with "Command Scale times not available for current selection".
   Align interval: tier number, interval number, language$, include words?, include phonemes?
@@ -124,7 +124,9 @@
   View & Edit alone
   View & Edit with Sound?
   Tabulate occurrences: search tiers#, list every label that$, the text$, case sensitive?
-  # Verified: Tabulate occurrences: 1, "is equal to", "a", "no"
+  # Verified: Tabulate occurrences: {1}, "is equal to", "a", "no"
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): "Search tiers" is a
+  #   numeric VECTOR — a bare 1 fails with "should be a numeric vector, not a number".
   # `search tiers#` is a REALVECTOR of 1-based tier indices; default is
   # the single-tier case `1` which the autocomplete renderer expands to
   # the vector literal `{1}`. Multi-tier example: `{1, 2}`.

@@ -53,7 +53,11 @@
   Play sine
   & Manipulation: Replace?
   Modify interval: from time, to time, relative times#, relative times are$, pitch values$, pitches are$, which is the$, pitch unit$
-  # Verified: Modify interval: 0, 0.5, 0 0.5 1, "fractions", "100 200 100", "frequencies", "start", "Hertz"
+  # Verified: Modify interval: 0, 0.5, {0, 0.5, 1}, "fractions", "100 200 100", "frequencies", "start", "Hertz"
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): the vector argument was
+  #   previously written unquoted (0 0.5 1), which is a parse error —
+  #   "Expected the end of the formula, but found a number". A REALVECTOR
+  #   argument must be a vector literal {0, 0.5, 1} or a quoted "0 0.5 1".
   # OPTIONMENU option strings (empirically verified, Praat 6.4.65, 17 May 2026):
   #   relative times are$: "fractions" | "percentages"
   #   pitches are$:        "frequencies" | "fractions" | "percentages" |
@@ -67,7 +71,8 @@
   # values without braces so the autocomplete renderer wraps it correctly.
   # Provenance: Empirical verification + Praat manual lookup, 17 May 2026.
   Modify interval (tone levels): from time, to time, fmin, fmax, number of tone levels, relative times#, relative times are$, pitches as tone levels#
-  # Verified: Modify interval (tone levels): 0, 0.5, 80, 200, 5, 0 0.5 1, "fractions", 2.1 2.1 5.0
+  # Verified: Modify interval (tone levels): 0, 0.5, 80, 200, 5, {0, 0.5, 1}, "fractions", {2.1, 2.1, 5.0}
+  #   (same REALVECTOR correction as above)
   # Both `relative times#` and `pitches as tone levels#` are REALVECTORs.
   # Earlier 6-arg signature was missing both vector args.
   # Provenance: Empirical verification, Praat 6.4.65, 17 May 2026.

@@ -143,7 +143,10 @@
   Report difference (Student t): column1$, column2$, one tailed unconfidence
   Report group mean (Student t): column$, group column$, group$, one tailed unconfidence
   Report group difference (Student t): column$, group column$, group1$, group2$, one tailed unconfidence
-  # Verified: Report group difference (Student t): "latency_ms", "peer", "A", "B"
+  # Verified: Report group difference (Student t): "latency_ms", "peer", "A", "B", 0.95
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): 5 arguments, not 4. The
+  #   5th is "One-tailed unconfidence" (0.95). The 4-argument form fails with
+  #   "argument One-tailed unconfidence not given".
   # Provenance: Ping analysis v1.4, 10 Mar 2026
   Report group difference (Wilcoxon rank sum): column$, group column$, group1$, group2$
   # Verified: Report group difference (Wilcoxon rank sum): "latency_ms", "peer", "A", "B"

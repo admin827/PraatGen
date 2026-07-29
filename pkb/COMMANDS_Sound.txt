@@ -177,7 +177,7 @@
   # Other
   Record Sound (fixed time): input source$, gain, balance, sampling frequency$, duration
   Multiply: multiplication factor
-  # Verified: Multiply: 0.5   (sandbox, Praat 6.6.30, 29 Jul 2026)
+  # Verified: Multiply: 0.5
   # CORRECTION (29 Jul 2026): previously documented with no arguments. The bare
   # form fails with "Command Multiply not available for current selection".
   Filter

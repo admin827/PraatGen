@@ -18,7 +18,10 @@
 
   # Query (API)
   List values at times: times#, unit$, interpolation$
-  # Verified: List values at times: 0.1 0.3 0.5 0.7 0.9, "Hertz", "linear"
+  # Verified: List values at times: {0.1, 0.3, 0.5, 0.7, 0.9}, "Hertz", "linear"
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): the vector argument was
+  #   previously written unquoted, which is a parse error. REALVECTOR arguments
+  #   take a vector literal {a, b, c} or a quoted "a b c".
   # The first argument is a REALVECTOR of query times, written here as
   # space-separated numbers so the autocomplete renderer wraps it to
   # `{0.1, 0.3, 0.5, 0.7, 0.9}`. Earlier docs showed `unit$, interpolation$`
