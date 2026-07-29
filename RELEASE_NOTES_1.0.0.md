@@ -86,6 +86,13 @@ Cepstrogram command. Praat's dialog defaults recorded alongside the Maryn set.
 co-selected and the `Extract` commands require a Sound — both now stated.
 Bare-TextGrid `Draw:` is a separate 5-parameter command.
 
+**`BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`.** §5 method selection: the
+`T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default method at
+any SNR where GCI detection succeeds; the gate is detection yield plus the
+plausibility bound, and the hybrid at 0.43 is the fallback when detection fails.
+The withdrawn gate rested on cycle-to-cycle SD, which measures dispersion rather
+than error and is not comparable between a threshold and a derivative method.
+
 **`APPENDIX_C_GUI.txt`.** The form/beginPause default-quoting asymmetry is
 one-directional: bare numeric defaults are a parse error in `form:`, while
 `beginPause:` accepts either. Rule 19 and the SELF-AUDIT line now say so.

@@ -4,6 +4,7 @@
 **Compiled from:** EML PraatGen sandbox verification session, 29 July 2026
 **Praat version:** 6.6.30
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
+**Revised:** 29 July 2026 — §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default at any SNR where GCI detection succeeds.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -219,13 +220,45 @@ Plateau width tracks accuracy monotonically and its absence is a refusal criteri
 
 Herbst et al. (2017) excluded sub-10 dB signals from **their analysis**. Whether a tool should refuse or flag is a design decision, not a published finding. Current EML position: refuse, on the grounds that a flagged number gets used anyway.
 
-| EGG SNR | method |
+**dEGG is the default method. There is no upper SNR gate on it.**
+
+| condition | method |
 |---|---|
-| ≥ T1 | dEGG |
-| 10 dB ≤ SNR < T1 | hybrid at 0.43 |
+| GCI detection succeeds with adequate yield | dEGG |
+| GCI detection fails or yield is poor, SNR ≥ 10 dB | hybrid at 0.43, reported as such |
 | < 10 dB | offer de-noising; refuse if it does not lift the signal above 10 dB |
 
-**T1 is unresolved.** There is no published upper cutoff. Synthetic testing found the hybrid more stable than dEGG from SNR 40 downward — cycle-to-cycle SD 0.0029 vs 0.0104 at SNR 40; 0.0158 vs 0.0916 at SNR 15, where the dEGG mean also biased +0.011. That suggests T1 near 40 dB, but it rests on synthetic white noise and a single waveform shape. Pending a ruling, report the method used and do not treat T1 as settled.
+The gate is **detection yield plus the plausibility bound**, not a waveform SNR
+tier. Count the GCIs against the expected cycle count for the duration and F0;
+a large shortfall means the derivative is not usable on that material and the
+hybrid is the fallback. A dB threshold cannot substitute for that count, because
+what matters is the SNR *of the derivative*, which §3 shows runs roughly 8 dB
+below the waveform figure and varies with hardware and F0.
+
+**CORRECTION (29 July 2026) — the earlier `T1 ≈ 40 dB` recommendation was wrong
+and is withdrawn.** It rested on cycle-to-cycle SD being lower for the hybrid
+than for dEGG on synthetic white noise (0.0029 vs 0.0104 at SNR 40). That
+inference does not hold, for three reasons:
+
+1. **SD is dispersion, not error.** A fixed-threshold criterion is insensitive
+   by construction to the peak structure that carries the physiological
+   information, so it is *expected* to be smoother. Threshold and derivative
+   methods also have different expected values — that is the entire subject of
+   Herbst & Ternström (2006), and §1 of this file measures a 0.124 spread across
+   methods on identical data. Two estimators of different quantities cannot be
+   ranked for accuracy by comparing their variances.
+2. **It inverts the primary source.** Herbst et al. (2017) set the criterion at
+   10 dB and found dEGG-derived CQ to have the *best* correspondence with the
+   videokymographic closed quotient of the five algorithms compared. A 40 dB
+   floor would make the best-validated method effectively unreachable: real EGG
+   waveform SNR sits around 20–30 dB.
+3. **This file's own measurements contradict it.** §1 reports dEGG CQ = 0.4280
+   over 1874 cycles on a real recording at 27.1 dB. §3 reports full GCI yield
+   (297/297) at SNR 30 and 268/297 at SNR 15 using `Derivative`. Under a 40 dB
+   gate none of those measurements would have been permitted.
+
+The synthetic SD figures are retained above as an observation about smoothness.
+They are not a method-selection criterion.
 
 **In all cases, apply the plausibility bound to the output** (`COMMANDS_Electroglottogram.txt`, final section) regardless of which method ran. It is the only check that caught a differentiated signal presented as an EGG.
 
