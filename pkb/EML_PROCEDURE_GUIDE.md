@@ -215,7 +215,12 @@
 #       ├── Both continuous
 #       │   ├── Linear, normal → @emlPearsonCorrelation
 #       │   └── Monotonic or non-normal → @emlSpearmanCorrelation
-#       └── (Regression: not yet implemented)
+#       └── (Regression: @emlLinearRegression / @emlTheilSen exist in the
+#           plugin tree but are NOT wired into the stats-and-graphs
+#           workflow, and their source is not shipped in the PKB — see
+#           "Plugin-tree-only procedures" in EML_PROCEDURE_REGISTRY.md.
+#           Do not reconstruct them. For a regression line on a scatter
+#           plot, @emlBridgeCorrelation + @emlDrawRegressionLine cover it.)
 #
 # 2.2 PARAMETRIC VS. NONPARAMETRIC
 #

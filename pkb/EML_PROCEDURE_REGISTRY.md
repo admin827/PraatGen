@@ -135,7 +135,12 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 | `@emlPairwiseT` | All pairwise t-tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$, .type$ | public |
 | `@emlPairwiseWilcoxon` | All pairwise Wilcoxon tests with p-value adjustment | .tableId, .dataCol$, .factorCol$, .method$ | public |
 | `@emlScheffe` | Scheffe post-hoc test after ANOVA | .tableId, .dataCol$, .factorCol$ | public |
+| `@emlLinearRegression` | OLS simple linear regression (slope, intercept, R², SE, F, p) | .x#, .y# | public ⚠️ |
+| `@emlTheilSen` | Theil-Sen robust median-based regression (Conover intercept, scipy-verified) | .x#, .y# | public ⚠️ |
 
+⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
+tree but their implementation is not in `eml-inferential.txt` (v1.2). See
+"Plugin-tree-only procedures" at the end of this file before calling them.
 
 ## Graphs: Core
 **File:** `graphs/eml-graph-procedures.praat` (v3.20) — 45 procedures
@@ -236,6 +241,12 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 | `@emlReportPairedComparison` | Shared reporter for paired t-test / Wilcoxon SR (Info + CSV) | .tableName$, .col1$, .col2$, .n, .mean1, .sd1, .median1, .mean2, .sd2, .median2, .testType$ | public |
 | `@emlReportCorrelationAnalysis` | Shared reporter for Pearson / Spearman correlation (Info + CSV) | .tableName$, .colX$, .colY$, .n, .testType$ | public |
 | `@emlReportTwoWayAnova` | Shared reporter for two-way ANOVA (Info + CSV) | .tableName$, .dataCol$, .factor1$, .factor2$ | public |
+| `@emlReportRegressionAnalysis` | Formatted Info window report for simple linear regression | .tableName$, .depCol$, .predCol$, .nValid, .nUndefined | public ⚠️ |
+| `@emlReportNormalityAnalysis` | Formatted Info window report for normality assessment (Shapiro-Wilk, skewness, kurtosis, recommendation) | .tableName$, .dataCol$, .nValid, .nUndefined | public ⚠️ |
+
+⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
+tree but their implementation is not in `eml-annotation-procedures.txt` (v3.15).
+See "Plugin-tree-only procedures" at the end of this file before calling them.
 
 ## Scripts: Graphs Main
 **File:** `scripts/eml-graphs.praat` (v3.0) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
@@ -343,4 +354,41 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 Canonical source for both is `eml-egg-procedures.txt` (flattened `.txt` copy of `egg/eml-egg-procedures.praat`). The guard is also printed, commented, in `COMMANDS_Electroglottogram.txt` and the de-noiser in `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` for documentation — those copies are illustrative; copy exactly from the source file per MP Rule 223.
 
 ---
-**Total: 238 procedures** (233 public, 5 internal) across 15 files
+
+## Plugin-tree-only procedures (source not in the PKB) ⚠️
+
+These four are real, implemented procedures in the EML Praat Tools plugin tree.
+They are **not** wired into the plugin's stats-and-graphs workflow (the Guide's
+"Regression: not yet implemented" refers to that wiring, not to the procedures'
+existence), and — the part that matters here — **their source is not currently
+shipped in the PKB**, so there is nothing in Project Knowledge to copy from.
+
+| Procedure | Plugin-tree home | PKB status |
+|-----------|------------------|------------|
+| `@emlLinearRegression` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.2 |
+| `@emlTheilSen` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.2 |
+| `@emlReportRegressionAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
+| `@emlReportNormalityAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
+
+**Handling (hard).** MP Rule 223 says never rewrite procedure code — copy
+exactly from source. For these four there is no PKB source to copy, so:
+
+1. Do **not** invent an implementation under these names. A registry entry is
+   not a licence to reconstruct the body.
+2. If a task would use one, say so explicitly and ask the user to paste the
+   procedure from their plugin tree, or route to an implemented alternative
+   (`@emlPearsonCorrelation` / `@emlSpearmanCorrelation` +
+   `@emlDrawRegressionLine` cover most regression-line needs;
+   `@emlSkewness` / `@emlKurtosis` cover normality description).
+3. The signatures above are accurate and safe to *call* against a pasted
+   source — they are listed so a caller binds arguments correctly.
+
+**To close this properly:** copy the four procedure bodies from the plugin tree
+into `eml-inferential.txt` and `eml-annotation-procedures.txt`, then move their
+rows out of this section and update the counts to 242.
+
+---
+**Total: 238 procedures resident in the PKB** (233 public, 5 internal) across 15
+files, plus **4 plugin-tree-only procedures** listed above whose source is not
+shipped. Counts in this file describe what is in Project Knowledge, because that
+is what the loading protocol can actually retrieve.

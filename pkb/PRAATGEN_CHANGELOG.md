@@ -29,13 +29,35 @@ addendum, T3 = tier-3 cosmetic).
   (APPENDIX_F ×2, DEVELOPER_MODE_ADDON, COMMANDS_DemoWindow ×2,
   BEST_PRACTICES_CONFIDENCE_FIGURES ×5) and repointed to the real source files.
 - **C2 — registry regenerated against measured ground truth.** Header claimed
-  251/15, body carried 273 rows, MP claimed 255/14; actual is 236 defined
-  procedures across 14 files. Deleted the entire ghost Wizard section (15
-  procedures, no such file), 18 ghost Output rows (`emlWrapperCommonFields`,
-  `emlHandleCommonFields`, 16× `emlWizardExplain*`), `emlLinearRegression` /
-  `emlTheilSen` (unimplemented), and `emlReportRegressionAnalysis` /
-  `emlReportNormalityAnalysis`. With the two newly registered EGG procedures
-  (E5) the total is **238 across 15 files**; MP retrieval row synced.
+  251/15, body carried 273 rows, MP claimed 255/14; actual is 236 procedures
+  whose source is present in the PKB, across 14 files. The registry had been
+  indexing procedures that exist in the **plugin tree** but whose source was
+  never copied into Project Knowledge — an important distinction, since MP
+  Rule 223 ("copy exactly from source") is unsatisfiable for them.
+  - Removed as not-shipped-and-not-needed: the Wizard section (15 procedures;
+    the wizard exists in the plugin tree but is vestigial), 18 Output rows
+    (`emlWrapperCommonFields`, `emlHandleCommonFields`, 16×
+    `emlWizardExplain*`).
+  - **Retained, but explicitly quarantined:** `emlLinearRegression`,
+    `emlTheilSen`, `emlReportRegressionAnalysis`, `emlReportNormalityAnalysis`.
+    These are real, implemented procedures in the plugin tree — the Guide's
+    "Regression: not yet implemented" refers to workflow *wiring*, not to
+    their existence — but their source is absent from `eml-inferential.txt`
+    v1.2 and `eml-annotation-procedures.txt` v3.15. New **"Plugin-tree-only
+    procedures"** section at the end of the registry lists them with accurate
+    signatures, a hard handling rule (do not invent a body; ask the user to
+    paste it, or route to an implemented alternative), and instructions for
+    closing the gap by copying the four bodies in and bumping the count to 242.
+  - With the two newly registered EGG procedures (E5), **238 procedures are
+    PKB-resident across 15 files**, plus the 4 quarantined. Counts describe
+    what the loading protocol can actually retrieve. MP retrieval row synced.
+- **NEW — dangling `@emlWrapperCommonFields` in APPENDIX_C_GUI.txt.** Not in the
+  original audit. The appendix's worked "shared wrapper fields" example called a
+  procedure that is not shipped in the PKB, so a reader following the example
+  would route to nothing. Rewritten as an explicit `@myCommonFields` placeholder
+  with a note on what happened. Found by a reference-vs-definition sweep run
+  after the registry rebuild; that sweep is now the check that would catch this
+  class of defect again.
 - **M4 / E1 / E2 — five missing retrieval rows added:** `COMMANDS_DemoWindow.txt`,
   `BEST_PRACTICES_DEMO_WINDOW.md`, `BEST_PRACTICES_CONFIDENCE_FIGURES.txt`
   (1,296 lines with zero inbound references), `COMMANDS_Electroglottogram.txt`,

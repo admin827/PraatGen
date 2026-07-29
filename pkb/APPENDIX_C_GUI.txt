@@ -266,12 +266,18 @@ available in the calling scope after endPause returns.
 
     beginPause: "Compare k Groups"
         # ... wrapper-specific fields ...
-        @emlWrapperCommonFields
+        @myCommonFields
     clicked = endPause: "Quit", "Run", 2, 0
 
 The procedure body must contain only commands valid inside a beginPause
 block (field declarations, comment:). Nested beginPause inside the
 procedure will error.
+
+⚠️ `@myCommonFields` above is a **placeholder illustrating the pattern**, not a
+library call. Earlier revisions of this appendix named
+`@emlWrapperCommonFields`, which is not a procedure shipped in the PKB —
+substitute your own shared-field procedure. See EML_PROCEDURE_REGISTRY.md for
+what the library actually provides.
 
 ---
 
