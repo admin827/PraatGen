@@ -245,7 +245,19 @@ Load reference files from Project Knowledge based on the task requirements. Load
 7. Load APPENDIX_C_GUI.txt when the script requires user input forms
 8. Load APPENDIX_F_UX_STANDARDS.txt when the script has user input, file output, or batch processing
 9. These files are the Source of Truth for command and function verification
-10. **Fallback verification:** If a command, object type, or capability is not found in the primary COMMANDS_*.txt files, load PRAAT_DEFINITIVE_CATALOGUE.txt before concluding it does not exist. This file covers all 136 object types including David Weenink's extensions (dwtools/) which are absent from the primary reference files. It also contains the Formula engine function list (see the catalogue's own §3 header/footer for the current entry count) which supplements APPENDIX_B_FUNCTIONS.txt. **The catalogue is not exhaustive, and a "not found" there is not proof of absence.** It carries known gaps: some object types are present only as a class-hierarchy line and expose no commands (Electroglottogram is the clear case — the catalogue lists only `Electroglottogram -> Sound -> Vector -> Matrix` and no actions), and some query commands are under-specified relative to the COMMANDS_*.txt files (e.g. from-time/to-time fields on `Get mean` / `Get minimum` / `Get quantile`). When an object-specific COMMANDS file exists, it governs over the catalogue; an empty or missing catalogue result for a type that has its own COMMANDS file means "check the COMMANDS file," not "the capability does not exist." FormantPath (automated formant ceiling optimization) is one such
+10. **Fallback verification:** If a command, object type, or capability is not found in the primary COMMANDS_*.txt files, load PRAAT_DEFINITIVE_CATALOGUE.txt before concluding it does not exist. This file covers all 136 object types including David Weenink's extensions (dwtools/) which are absent from the primary reference files. It also contains the Formula engine function list (see the catalogue's own §3 header/footer for the current entry count) which supplements APPENDIX_B_FUNCTIONS.txt. **The catalogue has a measured, systematic arity defect (hard).** Its extractor
+dropped Praat's paired range fields (`left Xxx` / `right Xxx`, which render as
+one row with two boxes), so affected commands are documented with 1, 2 or 4
+FEWER parameters than they take. Measured 29 Jul 2026 against Praat 6.6.30: 22
+defects in 542 commands probed, 4.1%. The 22 object types that have a curated
+`COMMANDS_*.txt` are correct — those files were hand-verified and the sweep
+confirmed them. The other 114 types (2,464 commands) have no curated file, so
+the catalogue is the sole authority there, which is precisely the fallback case.
+**Before emitting any catalogue-sourced command that plausibly takes a time,
+frequency or value range, verify the arity** — in SANDBOX, call it with excess
+arguments and read Praat's "requires only N arguments" reply. Never emit a
+catalogue range command unverified. **The catalogue is also not exhaustive, and
+a "not found" there is not proof of absence.** It carries known gaps: some object types are present only as a class-hierarchy line and expose no commands (Electroglottogram is the clear case — the catalogue lists only `Electroglottogram -> Sound -> Vector -> Matrix` and no actions), and some query commands are under-specified relative to the COMMANDS_*.txt files (e.g. from-time/to-time fields on `Get mean` / `Get minimum` / `Get quantile`). When an object-specific COMMANDS file exists, it governs over the catalogue; an empty or missing catalogue result for a type that has its own COMMANDS file means "check the COMMANDS file," not "the capability does not exist." FormantPath (automated formant ceiling optimization) is one such
 underestimated capability — it eliminates manual ceiling selection
 entirely, yet the primary COMMANDS file now documents it as the
 default algorithm. If a script design assumes manual ceiling
