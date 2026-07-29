@@ -369,12 +369,11 @@ All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `
 | `@emlVibratoDrawFigure` | Master procedure: draws the full 8-panel vibrato figure. | .smoothedTableId, .includeId, .excludeId, | public |
 
 ## EGG: Electroglottogram
-**File:** `egg/eml-egg-procedures.praat` (v1.0) — 2 procedures
+**File:** `egg/eml-egg-procedures.praat` (v1.1) — 1 procedure
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
 | `@emlEggCycleGuard` | Segfault guard for To TextGrid (closed glottis) / To AmplitudeTier (levels); sets `.safe` (1 = analyzable) | .eggId, .floor, .ceiling | public |
-| `@emlEggSpectralThreshold` | Spectral-threshold de-noiser (4:1 downward expansion) to rescue low-SNR EGG for CQ; returns `.resultId` | .soundId, .thresholdBelowPeak, .lowPassHz | public |
 
 ## Dev: Test Harness
 **File:** `dev/tests/eml-test-helpers.praat` (v1.0) — 9 procedures
@@ -392,7 +391,9 @@ All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `
 | `@emlTestSummary` | Print pass/fail summary and exit with status | (none) | public |
 
 ---
-**Total: 264 procedures** (256 public, 8 internal) across 15 files.
+**Total: 263 procedures** (255 public, 8 internal) across 15 files.
+
+**Withdrawn at 1.1:** `@emlEggSpectralThreshold`. Untested on real material — every figure behind it came from synthetic additive white Gaussian noise. Not distributed; do not reconstruct it. See `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §4.
 
 All entries above are backed by source shipped in the PKB. There is no
 quarantine section any more: the six procedures previously listed as

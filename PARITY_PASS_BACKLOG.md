@@ -1,6 +1,6 @@
 # PraatGen — Open Items for the Catalogue Parity Pass
 
-**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.2.0
+**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.3.0
 **Purpose:** carry forward the items that were identified but deliberately not
 resolved in this release, so the next dedicated session starts from a written
 scope rather than a rediscovery.
@@ -218,3 +218,64 @@ historically shared one gate.
 Whatever is decided, the Cowork build (`SKILL.md` §3) must match; it currently
 makes the post-plan gate conditional on the same criterion and would otherwise
 diverge.
+
+---
+
+## 8. Parked — EGG spectral thresholding (withdrawn 14.3.0)
+
+`@emlEggSpectralThreshold` and §4 of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
+briefly shipped and are now withdrawn. **Not ready for distribution.** Do not
+reinstate either without the validation below, and do not reconstruct the
+procedure from documentation or memory in the meantime.
+
+**Why it was pulled.** Never tested on real material. Every supporting figure
+came from synthetic signals with additive white Gaussian noise:
+
+- clean-signal penalty (CQ error 0.00002 raw vs 0.00015 de-noised)
+- zero-to-297 GCI recovery at SNR 20 / 15 / 10, CQ within 0.001 of truth
+- the 30–60 dB CQ stability plateau and QΔ's instability across it
+- the self-calibrating sweep (longest run where CQ is stable within 0.005, take
+  its centre) and the "no plateau → refuse" criterion
+
+White Gaussian noise is the easy case, and it is not what an EGG recording is
+noisy *like*. Absent from the test set entirely: mains hum and its harmonics,
+wandering side tones, electrode drift, movement artefact, and the low-frequency
+baseline shift that EGG hardware actually produces. A method that keys off a
+spectral peak and expands everything below a fixed offset behaves very
+differently when the noise is tonal and non-stationary rather than flat.
+
+The risk is not that it fails loudly. It is that it returns a plausible CQ from
+altered data — the same silent-failure class the plausibility bound exists to
+catch, except here the tool itself introduced the alteration.
+
+**What validation would require, at minimum:**
+
+1. Real EGG recordings across a graded quality range, not synthetic noise — with
+   an independent CQ reference on the same material (videokymography, or at
+   minimum a high-SNR recording of the same phonation).
+2. Tonal and non-stationary noise in the test set: 50/60 Hz hum with harmonics,
+   drifting side tones, movement artefact.
+3. Whether the plateau criterion survives contact with those. It was explicitly
+   validated only on white noise, and the file said so — "hum and wandering side
+   tones will narrow or fragment the plateau" was a prediction, never a
+   measurement.
+4. A decision on whether de-noising belongs in the tool at all, versus being
+   named as something the user does upstream with their own judgement. Altering
+   someone's data inside an analysis pipeline is a design question, not only a
+   validation question.
+
+**Where the withdrawn material lives.** Git history, at the commits preceding the
+14.3.0 withdrawal — not reprinted in the PKB, because a reader who finds a
+runnable listing will run it. `git log -- pkb/eml-egg-procedures.txt` and the §4
+history of `pkb/BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`.
+
+**Kept, being independent of de-noising** and true of any spectral work on an EGG
+signal: `To Spectrum: "yes"` zero-pads to the next power of two and `To Sound`
+returns the padded length (88200 → 131072), silently computing every per-cycle
+measure over a signal 49% too long; and Ltas dB versus raw Spectrum magnitude dB
+differ by ~91 dB, so anchoring any threshold to an Ltas peak strips every harmonic
+while appearing to do nothing.
+
+`@emlEggCycleGuard` is **not** affected. It is validated against all five
+segfault conditions, passes valid signals down to 10 dB SNR, and remains
+mandatory.

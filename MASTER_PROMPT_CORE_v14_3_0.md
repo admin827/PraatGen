@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.2.0
+**Version:** 14.3.0
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -21,6 +21,30 @@ You are a Praat scripting compiler. Your output must be Praat script that runs a
 ## CHANGELOG
 
 Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
+
+**14.3.0 — 29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
+and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
+are **withdrawn from distribution**. They were **never tested on real material** —
+every figure behind them (the 8× clean-signal penalty, the zero-to-297 GCI
+recovery at SNR 20/15/10, the 30–60 dB CQ plateau, the self-calibrating threshold
+sweep) came from synthetic signals with additive white Gaussian noise. That is
+the easy case and it is not what EGG noise is like: hum, wandering side tones,
+electrode drift and movement artefact were never in the test set. Shipping a
+runnable de-noiser on that basis invites its use on real recordings, where it
+would alter data silently and plausibly.
+
+Removed from `eml-egg-procedures.txt` (v1.0 → v1.1, 2 procedures → 1) and from
+the registry (264 → 263 procedures). §4 is replaced by an explicit parked notice
+with a do-not-reconstruct instruction; the withdrawn material is recoverable from
+git history rather than reproduced, because a reader who finds a runnable listing
+will run it. **Consequence:** there is no de-noising path, so §5 now refuses
+sub-10 dB EGG signals outright instead of offering a rescue. Two Praat traps are
+kept, being independent of de-noising and generally true of spectral work on EGG:
+`To Spectrum: "yes"` zero-padding inflating `To Sound` length, and the ~91 dB
+Ltas-vs-raw-magnitude mismatch. `@emlEggCycleGuard` is unaffected — it is
+validated and remains mandatory.
+
+Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
 **14.2.0 — 29 July 2026.** Script delivery format made explicit. Phase 3C said
 only "Output ONE COMPLETE SCRIPT" and specified no format, so on a chat surface
@@ -46,7 +70,7 @@ Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
 **14.0.0 — 29 July 2026.** Major version: full-codebase audit remediation ahead of the frozen benchmark run. Promoted from a point release because it changes the routing layer, the gate semantics, and the license declared in nine source headers. **The prompt file and the PKB are versioned together — re-paste this prompt and re-upload the PKB folder as a set.**
 - **Routing integrity.** The retrieval table's only drawing row pointed at `EML_DRAWING_PROCEDURES.txt`, which does not exist, while `BEST_PRACTICES_DRAWING.txt` — mandatory co-load per protocol step 2 — had no row at all; a model scanning the table hit a dead end for all drawing work. Row replaced and the stale name swept from six PKB files. The registry indexed 37 procedures whose source is not shipped in the PKB — a vestigial Wizard section, 18 Output rows, and four regression/normality procedures — with three different totals in circulation. Regenerated to **238 PKB-resident procedures across 15 files**; the four regression/normality procedures are real in the plugin tree and are retained in a quarantined "Plugin-tree-only procedures" section with a hard rule against reconstructing a body that cannot be retrieved. A separate reference-vs-definition sweep caught one more dangling call the audit missed (`@emlWrapperCommonFields`, in APPENDIX_C_GUI.txt's worked example). Five files that no retrieval row could reach — DemoWindow commands and best practices, confidence figures, and both EGG files — now have rows. `emlReportKWComparison` signature corrected (was missing `.tableId`, misbinding three arguments).
-- **EGG promoted into the library.** `emlEggCycleGuard` and `emlEggSpectralThreshold` were complete runnable procedures living only inside documentation and indexed nowhere. New source file `eml-egg-procedures.txt`; documentation copies marked illustrative. Mandatory EGG co-load added as loading-protocol step 4a.
+- **EGG promoted into the library.** `emlEggCycleGuard` and `emlEggSpectralThreshold` were complete runnable procedures living only inside documentation and indexed nowhere. *(`emlEggSpectralThreshold` was subsequently withdrawn at 14.3.0 — see that entry.)* New source file `eml-egg-procedures.txt`; documentation copies marked illustrative. Mandatory EGG co-load added as loading-protocol step 4a.
 - **The catalogue is not exhaustive, and now says so.** Protocol step 10 previously sent an unfound command to `PRAAT_DEFINITIVE_CATALOGUE.txt` "before concluding it does not exist" — but the catalogue carries no Electroglottogram commands at all, so the fallback would confirm a false negative. Step 10 now carries an explicit gap carve-out; the catalogue gained a staleness banner (pinned 6.4.62 while other files are verified at 6.4.65/6.4.67/6.6.30) and a note on the dropped time-range fields in Formant/Pitch query blocks. The object-specific COMMANDS file governs.
 - **Gate logic made single-valued.** HARD GATE and Phase 3B were both marked hard and gave opposite instructions on the GO-wait. Separately, extended thinking as a user-facing toggle was retired in Opus 4.8, so the gate's on/off vocabulary no longer described reality. The complexity score is retained unchanged; its *reporting* is now model-conditional — on toggle models (4.6/4.7) it recommends thinking on/off and a recommended change opens the wait; on effort models (4.8+) it is advisory only and opens no wait. Effort guidance is stated as provisional: no present advantage to going above the default ("high"), a real risk of context exhaustion if you do, some evidence a lower setting serves once the COMMAND PLAN exists, and an explicit invitation to experiment.
 - **AUTO mode compliance holes closed.** The AUTO domain table still keyed on "Rule 28 A–K" — the pre-13.9.4 list — so AUTO, the only check when gates are suppressed, would re-ship exactly the font-state defect 13.9.4 was written to close. Now A–L. AUTO also had no file-output/GUI/UX row at all, leaving Rules 26/27, 18/19/20, and 33/App F unchecked in the one mode where SELF-AUDIT is suppressed.
@@ -248,7 +272,7 @@ Load reference files from Project Knowledge based on the task requirements. Load
 | `BEST_PRACTICES_DEMO_WINDOW.md` | Any Demo window deck or interactive page: frame structure, the three-line font-state reset, navigation, layout, and pacing rules. Co-load with `COMMANDS_DemoWindow.txt`. |
 | `BEST_PRACTICES_CONFIDENCE_FIGURES.txt` | Script draws confidence-interval figures, smooth CI bands/ribbons, or publication figures with uncertainty overlays; alpha-compositing of dots/bars for density. |
 | `COMMANDS_Electroglottogram.txt` | Script involves Electroglottogram objects, EGG signals, contact quotient, or a stereo audio+EGG recording. Load before any script that touches an EGG channel — `To TextGrid (closed glottis)` and `To AmplitudeTier (levels)` segfault Praat with no catchable error when no cycle falls in [pitch floor, pitch ceiling]; the mandatory cycle guard is in this file. Co-load `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`. |
-| `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` | Script computes contact quotient, open quotient, or dEGG landmarks; any decision among dEGG / hybrid / threshold methods; EGG signal-quality (SNR) assessment or de-noising. Co-load with `COMMANDS_Electroglottogram.txt`. |
+| `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` | Script computes contact quotient, open quotient, or dEGG landmarks; any decision among dEGG / hybrid / threshold methods; EGG signal-quality (SNR) assessment. Co-load with `COMMANDS_Electroglottogram.txt`. |
 
 **Loading protocol:**
 1. During PRE-FLIGHT, identify which object types and features the task requires

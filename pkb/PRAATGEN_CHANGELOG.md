@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.2.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.3.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,27 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.3.0 — 29 July 2026 (same day, post-release)
+
+**Spectral thresholding parked.** `@emlEggSpectralThreshold` and §4 of
+`BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` are withdrawn from distribution: never
+tested on real material. Every supporting figure came from synthetic additive
+white Gaussian noise — the easy case, and not what EGG noise looks like (hum,
+wandering side tones, electrode drift, movement artefact were never in the test
+set). A runnable de-noiser shipped on that basis would alter real data silently
+and plausibly.
+
+`eml-egg-procedures.txt` v1.0 → v1.1 (2 procedures → 1); registry 264 → 263. §4
+becomes a parked notice with a do-not-reconstruct instruction; the material is
+recoverable from git history rather than reprinted. **Consequence:** no
+de-noising path exists, so §5 refuses sub-10 dB signals outright rather than
+offering a rescue. Two Praat traps retained as independent of de-noising:
+`To Spectrum: "yes"` zero-padding inflating `To Sound` length, and the ~91 dB
+Ltas-vs-raw-magnitude mismatch. `@emlEggCycleGuard` unaffected — validated, still
+mandatory.
+
+---
 
 ### 14.2.0 — 29 July 2026 (same day, post-release)
 

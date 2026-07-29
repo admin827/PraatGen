@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 29 July 2026
-**Master Prompt:** 14.2.0 (was 13.9.4)
+**Master Prompt:** 14.3.0 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.2.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.3.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -32,11 +32,10 @@ k-group, paired and correlation workflows. This is the layer the plugin's menu
 commands call.
 
 **`eml-egg-procedures.txt` — new.** `@emlEggCycleGuard`, mandatory before `To
-TextGrid (closed glottis)` and `To AmplitudeTier (levels)` — both segfault
-Praat when no cycle falls within the pitch range — and
-`@emlEggSpectralThreshold` for low-SNR EGG rescue.
+TextGrid (closed glottis)` and `To AmplitudeTier (levels)` — both segfault Praat
+when no cycle falls within the pitch range.
 
-**The procedure registry is updated.** 264 procedures across 15 files,
+**The procedure registry is updated.** 263 procedures across 15 files,
 checked in both directions against the shipped sources. Each library file now
 carries its plugin source's version verbatim, so the two can be compared at a
 glance.
@@ -59,6 +58,22 @@ the plugin.
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
 (4.6/4.7) it recommends thinking on/off and waits on a recommended change, and on
 effort models (4.8+) it is advisory and does not gate the turn.
+
+---
+
+## EGG de-noising parked (14.3.0)
+
+**Spectral thresholding is withdrawn from distribution.**
+`@emlEggSpectralThreshold` and §4 of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` are
+removed: never tested on real material. Every figure behind them came from
+synthetic additive white Gaussian noise, which is the easy case and not what EGG
+noise is — hum, wandering side tones, electrode drift and movement artefact were
+never in the test set. §4 is now a parked notice with a do-not-reconstruct
+instruction. Consequence: there is no de-noising path, so §5 refuses sub-10 dB
+EGG signals outright rather than offering a rescue. `@emlEggCycleGuard` is
+unaffected and remains mandatory. Two Praat traps are kept, being independent of
+de-noising: `To Spectrum: "yes"` zero-padding inflates `To Sound` length, and
+Ltas dB and raw Spectrum magnitude dB differ by ~91 dB.
 
 ---
 
@@ -224,7 +239,7 @@ matching every other library file.
 **Removed:** `eml-demo-procedures.txt`. `COMMANDS_DemoWindow.txt` and
 `BEST_PRACTICES_DEMO_WINDOW.md` are the source of truth for the Demo window.
 
-**`EML_PROCEDURE_REGISTRY.md`** — updated; 264 procedures across 15
+**`EML_PROCEDURE_REGISTRY.md`** — updated; 263 procedures across 15
 files.
 
 **License headers** normalised to GPL-3.0-or-later across the `eml-*` sources.
@@ -236,17 +251,17 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.2.0** | 13.9.4 |
+| Master Prompt | **14.3.0** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
-| EML procedures | **264** across 15 files | 251 |
+| EML procedures | **263** across 15 files | 251 |
 
 ---
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_2_0.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_3_0.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`

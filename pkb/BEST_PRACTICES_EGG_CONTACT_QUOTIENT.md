@@ -4,7 +4,7 @@
 **Compiled from:** EML PraatGen sandbox verification session, 29 July 2026
 **Praat version:** 6.6.30
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
-**Revised:** 29 July 2026 — §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
+**Revised:** 29 July 2026 — §4 spectral thresholding **parked**: untested on real material, withdrawn from distribution along with `@emlEggSpectralThreshold`; sub-10 dB signals are now refused outright. §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -147,87 +147,36 @@ Differentiation cost 8 dB. Ternström (2024) makes the same point — that no cu
 
 ---
 
-## 4. De-noising — when, and only when
+## 4. De-noising — PARKED, not distributed
 
-Ternström (2024) describes spectral thresholding plus static notch filtering as a **pragmatic** toolkit for signals with identifiable problems. It is applied to problematic signals. It is not a stage every recording passes through.
+**Spectral thresholding is withdrawn from this release. Do not use it, do not
+offer it, and do not reconstruct it.**
 
-### Do not de-noise clean signals
+A `@emlEggSpectralThreshold` procedure and a threshold-selection method were
+drafted during the July 2026 sandbox session and briefly shipped. They are
+**untested on real material** — every figure behind them came from synthetic
+signals with additive white Gaussian noise, which is the easy case and not what
+an EGG recording is noisy *like*. Hum, wandering side tones, electrode drift and
+movement artefact were never in the test set. The procedure has been removed
+from `eml-egg-procedures.txt` and from the registry.
 
-Measured on a clean synthetic:
+The withdrawn material is retrievable from git history if the work is resumed;
+it is not reproduced here, because a reader who finds a runnable listing will run
+it. See `PARITY_PASS_BACKLOG.md` for what validation would require.
 
-| | CQ error |
-|---|---|
-| raw | 0.00002 |
-| de-noised | 0.00015 (8× worse) |
+**Consequence for method selection.** There is no de-noising path. A signal below
+10 dB EGG SNR is refused (§5). Do not attempt a rescue.
 
-### Where it earns its place
+**Two Praat traps worth keeping**, independent of de-noising and authoritative in
+`COMMANDS_Spectrum.txt` — they bite anyone doing spectral work on an EGG signal:
 
-At SNR 20, 15, and 10 the raw signal yielded **zero** GCIs. After spectral thresholding all 297 cycles were recovered with CQ within 0.001 of truth. De-noising can move a signal up a tier. Offer it as a rescue for a recording that is otherwise unusable, and **tell the user**, because it changes their data.
-
-### Praat implementation
-
-4:1 downward dB expansion below threshold, phase preserved. Expansion rather than zeroing avoids transients as components cross the threshold.
-
-`emlEggSpectralThreshold` is a registered library procedure; its canonical source is `eml-egg-procedures.txt` (registry: EGG section). The listing below is illustrative — copy exactly from the source file (MP Rule 223).
-
-```praat
-procedure emlEggSpectralThreshold: .soundId, .thresholdBelowPeak, .lowPassHz
-    selectObject: .soundId
-    .spec = To Spectrum: "no"
-    selectObject: .spec
-    .magCopy = Copy: "mag"
-    selectObject: .magCopy
-    Formula: ~ sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-    .magMat = To Matrix
-    selectObject: .magMat
-    .rawPeak = Get maximum
-    removeObject: .magCopy, .magMat
-    .thrLin = .rawPeak * 10 ^ (- .thresholdBelowPeak / 20)
-    selectObject: .spec
-    Formula: ~ self * (if sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... < .thrLin then ((sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... + 1e-30) / .thrLin) ^ 3 else 1 fi)
-    selectObject: .spec
-    .denoised = To Sound
-    removeObject: .spec
-    if .lowPassHz > 0
-        selectObject: .denoised
-        .resultId = Filter (pass Hann band): 0, .lowPassHz, 100
-        removeObject: .denoised
-    else
-        .resultId = .denoised
-    endif
-endproc
-```
-
-**Two traps, both authoritative in `COMMANDS_Spectrum.txt`, repeated here because this is where they bite:**
-
-- `To Spectrum: "yes"` zero-pads to the next power of two and `To Sound` returns the padded length (88200 → 131072 samples). Every per-cycle measurement is then computed over a signal 49% too long, with no warning. Use `"no"`.
-- Ltas dB and raw Spectrum magnitude dB differ by ~91 dB. Anchoring the threshold to an Ltas peak expands away every harmonic and leaves a sinusoid. Because the mismatch exceeds any plausible sweep range, the symptom is that the threshold appears to have no effect at all.
-
-### Threshold selection
-
-The threshold has a real operating window and the wrong value fails silently. Measured (truth: QΔ 4.16, CQ 0.4798):
-
-| threshold | QΔ | CQ | verdict |
-|---|---|---|---|
-| 20 dB | 2.22 | 0.5035 | over-aggressive, harmonics stripped |
-| 30 dB | 3.38 | 0.4798 | usable |
-| 40 dB | 4.07 | 0.4801 | optimum |
-| 50 dB | 4.23 | 0.4802 | usable |
-| 50 dB @ SNR 10 | **5.61** | 0.4819 | QΔ inflated 35%, looks plausible |
-| 60 dB @ SNR 15 | — | — | noise back in, detection collapses |
-
-CQ is stable across 30–60 dB; QΔ is not. A self-calibrating selection is available: sweep the threshold, find the longest run over which CQ is stable within 0.005, take its centre. Validated:
-
-| signal | plateau | centre | CQ |
-|---|---|---|---|
-| clean | 30–60 dB | 45 | 0.4800 |
-| SNR 20 | 30–60 dB | 45 | 0.4803 |
-| SNR 10 | 30–50 dB | 40 | 0.4814 |
-| no phonation | **none** | — | refuse |
-
-Plateau width tracks accuracy monotonically and its absence is a refusal criterion. Validated on white Gaussian noise — the easy case. Hum and wandering side tones will narrow or fragment the plateau.
+- `To Spectrum: "yes"` zero-pads to the next power of two and `To Sound` returns
+  the padded length (88200 → 131072 samples). Every per-cycle measurement is then
+  computed over a signal 49% too long, with no warning. Use `"no"`.
+- Ltas dB and raw Spectrum magnitude dB differ by ~91 dB. Anchoring a threshold
+  to an Ltas peak expands away every harmonic and leaves a sinusoid. Because the
+  mismatch exceeds any plausible sweep range, the symptom is that the threshold
+  appears to have no effect at all.
 
 ---
 
@@ -241,7 +190,7 @@ Herbst et al. (2017) excluded sub-10 dB signals from **their analysis**. Whether
 |---|---|
 | ≥ 20 dB | dEGG. Report it as the measurement. |
 | 10 dB ≤ SNR < 20 dB | **Report dEGG and hybrid-at-0.43 side by side**, each with its cycle-to-cycle SD, and let the operator choose. Do not silently substitute one for the other. |
-| < 10 dB | Offer de-noising (§4). Refuse if it does not lift the signal above 10 dB. |
+| < 10 dB | **Refuse.** There is no de-noising path in this release (§4). |
 
 Detection yield overrides the table in both directions. Count GCIs against the
 expected cycle count for the duration and F0; a large shortfall means the
@@ -436,7 +385,7 @@ Companion measure: Ternström (2019) also defines a normalised contact quotient 
 6. Guard (`COMMANDS_Electroglottogram.txt`) before any call to `To TextGrid (closed glottis)` or `To AmplitudeTier (levels)`.
 7. Select method (§5). At SNR ≥ 20 dB compute dEGG. In the 10–20 dB band compute **both** dEGG and hybrid-at-0.43 and report them side by side with cycle-to-cycle SD and cycle count.
 8. Plausibility-bound the **output** — every method reported, not just the preferred one. Refuse rather than report an impossible value.
-9. Report, in every output row: method (and differentiator — `Derivative` with its cutoff, or `First central difference`), threshold criterion, EGG SNR, cycles used, cycle-to-cycle SD, and any de-noising applied.
+9. Report, in every output row: method (and differentiator — `Derivative` with its cutoff, or `First central difference`), threshold criterion, EGG SNR, cycles used, and cycle-to-cycle SD.
 
 Object hygiene: `High-pass filter`, `Derivative`, and `First central difference` each create a new object. `To AmplitudeTier (levels)` creates up to three. Track every ID and remove only what the script created (Rule 4B).
 
