@@ -4,7 +4,7 @@
 **Compiled from:** EML PraatGen sandbox verification session, 29 July 2026
 **Praat version:** 6.6.30
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
-**Revised:** 29 July 2026 — §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default at any SNR where GCI detection succeeds.
+**Revised:** 29 July 2026 — §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -119,7 +119,22 @@ Measured consequence on synthetic signals at graded SNR — GCI detection yield:
 | 15 | **0** | 268 |
 | 10 | 0 | 0 |
 
-`Derivative` extends usable GCI detection two SNR steps further. Prefer it for detection on anything not pristine; use `First central difference` when replicating a protocol that specifies it.
+**`Derivative` is the default. Offer `First central difference` when it is
+appropriate** — that is, when the task replicates a published protocol that
+specifies FCD, or when the user asks for it. Say which one ran, in the output.
+
+`Derivative` extends usable GCI detection two SNR steps further, and FCD's
+collapse to zero at SNR 20 is not a graceful degradation — it is a cliff, at an
+SNR that real recordings routinely sit at or below.
+
+**Caveat on the low-pass, and it is a real one.** `5000, 100, 0` is a *chosen*
+parameter set, not a validated optimum, and the 5000 Hz cutoff is doing the work
+that produces the advantage in the table above. The right cutoff depends on
+sampling rate, F0 and the sharpness of the closure peak: too low smears the GCI
+and biases CQ, too high forfeits the noise rejection. The comparison above was
+run at one cutoff on one synthetic waveform shape. Treat 5000 Hz as a sensible
+starting point that should be sanity-checked against the peak timing on real
+material, not as a settled value — and if a task turns on the choice, sweep it.
 
 ### The derivative is the binding constraint
 
@@ -222,18 +237,41 @@ Herbst et al. (2017) excluded sub-10 dB signals from **their analysis**. Whether
 
 **dEGG is the default method. There is no upper SNR gate on it.**
 
-| condition | method |
+| EGG waveform SNR (§2) | behaviour |
 |---|---|
-| GCI detection succeeds with adequate yield | dEGG |
-| GCI detection fails or yield is poor, SNR ≥ 10 dB | hybrid at 0.43, reported as such |
-| < 10 dB | offer de-noising; refuse if it does not lift the signal above 10 dB |
+| ≥ 20 dB | dEGG. Report it as the measurement. |
+| 10 dB ≤ SNR < 20 dB | **Report dEGG and hybrid-at-0.43 side by side**, each with its cycle-to-cycle SD, and let the operator choose. Do not silently substitute one for the other. |
+| < 10 dB | Offer de-noising (§4). Refuse if it does not lift the signal above 10 dB. |
 
-The gate is **detection yield plus the plausibility bound**, not a waveform SNR
-tier. Count the GCIs against the expected cycle count for the duration and F0;
-a large shortfall means the derivative is not usable on that material and the
-hybrid is the fallback. A dB threshold cannot substitute for that count, because
-what matters is the SNR *of the derivative*, which §3 shows runs roughly 8 dB
-below the waveform figure and varies with hardware and F0.
+Detection yield overrides the table in both directions. Count GCIs against the
+expected cycle count for the duration and F0; a large shortfall means the
+derivative is unusable on that material whatever the waveform SNR says, and the
+hybrid is the fallback. This matters because what binds is the SNR *of the
+derivative*, which §3 measures at roughly 8 dB below the waveform figure and
+which varies with hardware and F0.
+
+### Reading the side-by-side band (10–20 dB)
+
+Report, for each method: CQ mean, cycle-to-cycle SD, and cycles used.
+
+**The two SDs are not directly comparable, and the presentation must say so.**
+A fixed-threshold criterion is insensitive by construction to the peak structure
+dEGG depends on, so the hybrid is *expected* to read smoother even where it is
+no more accurate — a naive "lower SD wins" would select the hybrid almost every
+time. What the comparison is good for is the **size** of the gap and how each
+method's SD compares to its own clean-signal behaviour:
+
+- Both SDs comparable, or dEGG only modestly higher → the derivative is holding
+  up. Prefer dEGG.
+- dEGG SD several times the hybrid's, and large in absolute terms → the
+  derivative is being driven by noise on that recording. The hybrid is the
+  better bet, reported as the hybrid.
+- Also compare cycle counts. dEGG yielding far fewer cycles than the hybrid is
+  the stronger signal, and a more interpretable one than any SD ratio.
+
+Report both numbers in the output regardless of which is preferred. Two CQ values
+from different methods are not interchangeable (§1 measures a 0.124 spread on
+identical data), so the method must travel with the number.
 
 **CORRECTION (29 July 2026) — the earlier `T1 ≈ 40 dB` recommendation was wrong
 and is withdrawn.** It rested on cycle-to-cycle SD being lower for the hybrid
@@ -257,8 +295,9 @@ inference does not hold, for three reasons:
    (297/297) at SNR 30 and 268/297 at SNR 15 using `Derivative`. Under a 40 dB
    gate none of those measurements would have been permitted.
 
-The synthetic SD figures are retained above as an observation about smoothness.
-They are not a method-selection criterion.
+The synthetic SD figures survive as an observation about smoothness, and they
+inform the side-by-side read above. They are not, on their own, a
+method-selection criterion.
 
 **In all cases, apply the plausibility bound to the output** (`COMMANDS_Electroglottogram.txt`, final section) regardless of which method ran. It is the only check that caught a differentiated signal presented as an EGG.
 
@@ -309,6 +348,64 @@ endfor
 
 **Bisect on [tPeak, tValley], not [tPeak, tNext].** The signal crosses the threshold twice per cycle — once descending (wanted) and once ascending before the next closure. Only [tPeak, tValley] brackets exactly one.
 
+### Side-by-side dEGG + hybrid (the 10–20 dB band)
+
+Both methods share the same GCI and period — the derivative's positive peak —
+so one pass computes both. They diverge only in the GOI: dEGG takes the
+derivative's negative peak, the hybrid takes the 0.43 descending crossing on the
+undifferentiated waveform. Accumulate sum and sum-of-squares per method and
+report mean, SD and n for each.
+
+```praat
+nD = 0
+sD = 0
+ssD = 0
+nH = 0
+sH = 0
+ssH = 0
+
+for i from 1 to nGci - 1
+    selectObject: pp
+    tGci = Get time from index: i
+    tNext = Get time from index: i + 1
+    period = tNext - tGci
+    # ... plausibility checks on period, as above ...
+
+    # --- dEGG GOI: negative peak of the derivative within the cycle
+    selectObject: degg
+    tGoiD = Get time of minimum: tGci, tNext, "Sinc70"
+    cqD = (tGoiD - tGci) / period
+
+    # --- hybrid GOI: 0.43 descending crossing on the waveform
+    #     (bisection block from above, yields cqH)
+    # cqH = ...
+
+    if cqD > 0.15 and cqD < 0.85
+        nD = nD + 1
+        sD = sD + cqD
+        ssD = ssD + cqD * cqD
+    endif
+    if cqH > 0.15 and cqH < 0.85
+        nH = nH + 1
+        sH = sH + cqH
+        ssH = ssH + cqH * cqH
+    endif
+endfor
+
+meanD = sD / nD
+sdD = sqrt ((ssD - nD * meanD * meanD) / (nD - 1))
+meanH = sH / nH
+sdH = sqrt ((ssH - nH * meanH * meanH) / (nH - 1))
+```
+
+Report both rows. Guard `nD` and `nH` against 0 and 1 before dividing — a
+recording where the derivative fails entirely gives `nD = 0`, which is itself the
+answer (see §5, cycle counts). Apply the plausibility bound per cycle as shown
+*and* to each reported mean.
+
+**Do not average the two methods, and do not report whichever looks better
+without saying which it is.** They estimate different quantities (§1).
+
 ---
 
 ## 7. QΔ — optional descriptor, not a gate
@@ -337,9 +434,9 @@ Companion measure: Ternström (2019) also defines a normalised contact quotient 
 4. `To Sound` — keep this; it is the working object for every query.
 5. Measure EGG SNR (§2) on the Sound.
 6. Guard (`COMMANDS_Electroglottogram.txt`) before any call to `To TextGrid (closed glottis)` or `To AmplitudeTier (levels)`.
-7. Select method (§5). Compute CQ.
-8. Plausibility-bound the **output**. Refuse rather than report an impossible value.
-9. Report, in every output row: method, threshold criterion, EGG SNR, cycles used, and any de-noising applied.
+7. Select method (§5). At SNR ≥ 20 dB compute dEGG. In the 10–20 dB band compute **both** dEGG and hybrid-at-0.43 and report them side by side with cycle-to-cycle SD and cycle count.
+8. Plausibility-bound the **output** — every method reported, not just the preferred one. Refuse rather than report an impossible value.
+9. Report, in every output row: method (and differentiator — `Derivative` with its cutoff, or `First central difference`), threshold criterion, EGG SNR, cycles used, cycle-to-cycle SD, and any de-noising applied.
 
 Object hygiene: `High-pass filter`, `Derivative`, and `First central difference` each create a new object. `To AmplitudeTier (levels)` creates up to three. Track every ID and remove only what the script created (Rule 4B).
 
