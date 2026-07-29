@@ -198,6 +198,17 @@ layers:
   corrected (`Sound Multiply`, `TextGrid Scale times`, and an undocumented
   co-selection requirement across the TextGrid Draw/Speckle block).
 
+- **Order-checked automatically.** A parameter-order check was built for this
+  release and run over 317 commands across nine files: each documented parameter
+  list is turned into a call with type-appropriate values and executed, with
+  Praat's *type* errors as the discriminator. Three further defects surfaced — a
+  corrupted duplicate `Multiply` entry, `Formant Formula` missing its leading
+  time-range pair (3 parameters documented, 5 actual), and `Table Bar plot`
+  whose signature changed to 10 parameters with string-array arguments. The last
+  two are **version drift**: the catalogue, extracted from 6.4.62, still shows
+  the old forms, so Praat changed these between 6.4.x and 6.6.30. All corrected
+  and verified; the check now reports clean.
+
 **On what the absence of a pasted example means.** 169 examples cover roughly
 800 documented commands, but the other commands are not therefore unverified.
 The `COMMANDS_*.txt` files were built from Praat's C API (`praatlib.h`), the
@@ -211,10 +222,11 @@ pasted-example execution found five in 111 (4.5%) — but examples get pasted
 precisely when a command is awkward, so that rate comes from the hardest cases,
 not the typical one.
 
-What is genuinely missing is a *standing automated check* on parameter order for
-commands without an example — not evidence that they are wrong. Extending
-pasted-example coverage, and the harness that executes it, is the way to convert
-that from sound-by-sourcing to checked-every-release.
+Order for those commands is now checked directly, not only inferred from
+sourcing: the order check above covers 317 commands regardless of whether they
+carry an example. What remains uncovered is the object types the harness cannot
+instantiate headlessly, and commands whose arguments are option menus whose
+valid values are not known to the harness.
 
 **The fallback catalogue under-specifies range-taking commands.** Praat renders
 a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
