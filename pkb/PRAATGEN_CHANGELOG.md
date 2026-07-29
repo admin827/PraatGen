@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.3.1)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.4.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,28 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.4.0 — 29 July 2026 (same day, post-release)
+
+**Compaction survival.** New hard section `CONTEXT COMPACTION`. A summary is lossy
+prose, not the work, so anything of value must exist outside the context window
+before context fills — the current script, test results and open items written to
+the output folder where a filesystem exists (SANDBOX, Cowork), or the delivered
+`.praat` file in plain chat, since an undelivered script does not survive
+compaction.
+
+**`VERIFY YOUR STATE` (new command).** Reorient from disk, never memory: list the
+output folder, read the current script and open items, then state what is actually
+there and name every disagreement with the summary. A post-summary turn is an
+implicit invocation. The file wins — reconcile by reading, never regenerate
+delivered work from recollection. Announced in the STEP 1 response.
+
+**`NOINTRO` (new command).** In the first message, skips the STEP 1 greeting —
+straight to PRE-FLIGHT if the four items are supplied, otherwise ask only for what
+is missing. Suppresses the greeting and nothing else; composes with the other mode
+keywords.
+
+---
 
 ### 14.3.1 — 29 July 2026 (same day, post-release)
 
