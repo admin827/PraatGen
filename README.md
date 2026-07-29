@@ -14,7 +14,7 @@ Ask PraatGen questions. Push it to do what you want, not what you currently know
 
 **Author:** Ian Howell, Embodied Music Lab — [www.embodiedmusiclab.com](http://www.embodiedmusiclab.com)
 **Development:** Prompt engineering and code generation in collaboration with Claude (Anthropic)
-**Version:** 1.0.0
+**Version:** 14.1.0
 **Release:** 29 July 2026
 **License:** Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -231,7 +231,6 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `eml-graphs.txt` | Graphs entry point (loads the form system and draw layers) |
 | `eml-graphs-form.txt` | Form system, guided statistical workflow, config persistence |
 | `eml-vibrato-procedures.txt` | Vibrato detection, cycle analysis, summary statistics, 8-panel publication figure |
-| `eml-demo-procedures.txt` | Demo window layout engine for interactive tutorials |
 | `eml-batch-process.txt` | Batch infrastructure: file stamps, stop sentinel, unique-path generation |
 | `eml-egg-procedures.txt` | EGG support: mandatory cycle guard (segfault protection), spectral-threshold de-noiser |
 | `eml-test-helpers.txt` | Test harness for procedure verification |
@@ -261,13 +260,14 @@ PraatGen tracks three version numbers:
 
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
-| **Release** | 1.0.0 | The combined package (prompt + PKB). This is the version that matters to users. |
+| **Release** | 14.1.0 | The combined package (prompt + PKB). This is the version that matters to users. Tracks the Master Prompt version. |
 | **Master Prompt** | 14.1.0 | The system instructions. Bumped when rules, workflow, or protocols change. |
 | **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
-- **1.0.0** — First stable release (29 July 2026). Prompt and PKB reconciled against the EML plugin source, procedure registry rebuilt programmatically from that source, and every library file syntax-checked against Praat 6.6.30.
 - **x.y.z** — Major.Minor.Patch. Major = breaking workflow changes. Minor = new capabilities or reference files. Patch = corrections.
+- The release number tracks the Master Prompt version; the two are shipped and versioned together.
+- **14.1.0 (29 July 2026)** is the first release out of beta. The PKB is reconciled against the EML plugin source, the procedure registry is generated from that source, and every library file is syntax-checked against Praat 6.6.30.
 
 ---
 

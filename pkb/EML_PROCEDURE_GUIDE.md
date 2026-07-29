@@ -27,7 +27,6 @@
 #   eml-inferential.praat           v1.2
 #   eml-analysis.praat              (new to PKB, 29 Jul 2026)
 #   eml-vibrato-procedures.praat    v2.0  (16 procs incl. drawing)
-#   eml-demo-procedures.praat       v1.2
 #   eml-batch-process.praat         v1.1
 #   eml-test-helpers.praat          v1.0
 #   eml-egg-procedures.praat        v1.0
@@ -666,11 +665,17 @@
 #
 # "Build a tutorial / interactive Demo window display"
 #   → Demo Window family
-#   → @emlResetSans + @emlClearPage to initialize
+#   → Demo window: drive it directly from COMMANDS_DemoWindow.txt (syntax,
+#     the font-metric contamination bug, Text special alignment, animation
+#     input, lifecycle) and BEST_PRACTICES_DEMO_WINDOW.md (canonical
+#     patterns). There is no EML layout-helper library in the PKB — write
+#     layout from the documented demo commands.
 #   → @emlPlace* procedures for typographic layout
-#   → @emlDrawNav for navigation bar
-#   → @emlWrapText for paragraph text
-#   → @emlPlaceCodeLine for monospace code examples
+#   → Demo window: drive it directly from COMMANDS_DemoWindow.txt (syntax,
+#     the font-metric contamination bug, Text special alignment, animation
+#     input, lifecycle) and BEST_PRACTICES_DEMO_WINDOW.md (canonical
+#     patterns). There is no EML layout-helper library in the PKB — write
+#     layout from the documented demo commands.
 
 # ====================================================================
 # 6. SCRIPT GENERATION MODEL

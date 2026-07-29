@@ -357,46 +357,6 @@ All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `
 | `@emlVibratoDrawSummaryTable` | Renders the averaged measures summary table in the Picture window. | .vpLeft, .vpRight, .vpTop, .vpBottom | public |
 | `@emlVibratoDrawFigure` | Master procedure: draws the full 8-panel vibrato figure. | .smoothedTableId, .includeId, .excludeId, | public |
 
-## Demo Window
-> ⚠️ Version not verified against source — the 29 Jul 2026 plugin archive omitted
-> the `tutorial/` folder. Retained deliberately (Demo-deck generation depends on
-> it; parses clean under Praat 6.6.30). Re-sync at the next reconciliation.
-**File:** `tutorial/eml-demo-procedures.praat` (v1.2) — 31 procedures
-
-| Procedure | Purpose | Parameters | Scope |
-|-----------|---------|------------|-------|
-| `@emlResetSans` | Reset Demo window to Helvetica, ambient size, 0-100 axes | demo Helvetica | public |
-| `@emlClearPage` | Clear Demo window with background color | @emlResetSans | public |
-| `@emlAccentLine` | Draw decorative accent line at position | .x, .y | public |
-| `@emlGuideTick` | Draw development guide tick mark (only if showGrid = 1) | .y | public |
-| `@emlDrawGuides` | Draw full development grid overlay (only if showGrid = 1) | if showGrid = 0 | public |
-| `@emlWrapText` | Word-wrap text within a rectangular region in Demo window | .x1, .x2, .yTop, .yBottom, .align$, .font$, .text$ | public |
-| `@emlDrawNav` | Draw navigation bar (arrows, page counter, progress bar) | .pageNum, .totalPages, .showBack | public |
-| `@emlDrawImage` | Draw image placeholder rectangle with centered label | .x1, .x2, .y1, .y2, .label$ | public |
-| `@emlPlaceHero` | Place hero-sized text (36pt); returns .nextY | .y, .text$ | public |
-| `@emlPlaceTitle` | Place title-sized text (28pt); returns .nextY | .y, .text$ | public |
-| `@emlPlaceHeading` | Place heading-sized text (20pt) at left margin; returns .nextY | .y, .text$ | public |
-| `@emlPlaceHeadingAt` | Place heading-sized text at specified x; returns .nextY | .y, .x, .text$ | public |
-| `@emlPlaceSubhead` | Place subhead-sized text (17pt); returns .nextY | .y, .text$ | public |
-| `@emlPlacePartLabel` | Place part label (caption size, light color); returns .nextY | .y, .text$ | public |
-| `@emlPlaceModuleNum` | Place large embossed module number at right margin | .y, .text$ | public |
-| `@emlPlaceAccent` | Place decorative accent line with typographic clearance | .y, .x, .ownerSize | public |
-| `@emlPlaceTextAccent` | Place text with accent decoration at specified size | .y, .x, .size, .text$ | public |
-| `@emlPlaceBody` | Place wrapped body text (serif); returns .nextY | .y, .x1, .x2, .color$, .text$ | public |
-| `@emlPlaceBodyLine` | Place single line of body text; returns .nextY | .y, .text$ | public |
-| `@emlPlaceCodeLine` | Place code-formatted text line (monospace); returns .nextY | .y, .x, .text$ | public |
-| `@emlPlaceBullet` | Place bullet point with wrapped text; returns .nextY | .y, .x, .xEnd, .text$ | public |
-| `@emlPlaceCaption` | Place caption text with alignment; returns .nextY | .y, .x, .halign$, .text$ | public |
-| `@emlPlaceModuleListItem` | Place numbered module list entry; returns .nextY | .y, .num$, .name$ | public |
-| `@emlPlaceOption` | Place lettered option (A, B, C) for interactive pages | .y, .letter$, .label$ | public |
-| `@emlPlaceTreeBranch` | Place tree branch node with bullet; returns .nextY | .y, .x, .text$ | public |
-| `@emlPlaceTreeSub` | Place tree sub-branch node; returns .nextY | .y, .x, .text$ | public |
-| `@emlPlaceTreeLeaf` | Place tree leaf node (accent color); returns .nextY | .y, .x, .text$ | public |
-| `@emlDemoDrawDot` | Draw colored data point at demo coordinates | .x, .y, .groupIndex, .radius | public |
-| `@emlDemoDrawLine` | Draw colored line with specified width in demo coordinates | .x1, .y1, .x2, .y2, .color$, .width | public |
-| `@emlDemoDrawHRule` | Draw horizontal rule (mean line, median line, etc.) | .y, .x1, .x2, .color$, .width | public |
-| `@emlDemoShowFigure` | Display pre-rendered PNG in Demo window region with fallback | .left, .right, .bottom, .top, .path$ | public |
-
 ## EGG: Electroglottogram
 **File:** `egg/eml-egg-procedures.praat` (v1.0) — 2 procedures
 
@@ -421,7 +381,7 @@ All `@emlWizardExplain*` helpers set `emlWizardExplain$`, consumed by the next `
 | `@emlTestSummary` | Print pass/fail summary and exit with status | .empty$ = "" | public |
 
 ---
-**Total: 295 procedures** (287 public, 8 internal) across 16 files.
+**Total: 264 procedures** (256 public, 8 internal) across 15 files.
 
 All entries above are backed by source shipped in the PKB. There is no
 quarantine section any more: the six procedures previously listed as
@@ -430,6 +390,8 @@ quarantine section any more: the six procedures previously listed as
 `emlWrapperCommonFields`, `emlHandleCommonFields`) were never missing from the
 plugin — the PKB was shipping truncated copies of the files that contain them.
 The refresh restored all six.
+
+**Removed at 14.1.0:** the Demo-window layout-helper library (`eml-demo-procedures`, 31 procedures). It was never the source of truth for driving the Demo window — `COMMANDS_DemoWindow.txt` and `BEST_PRACTICES_DEMO_WINDOW.md` are, and neither depends on it. It was a convenience wrapper around documented `demo` commands, dated April 2026, of uncertain current quality, and its source could not be reconciled. Write Demo layout from the documented commands instead.
 
 **Deliberately NOT in the PKB:** `stats/eml-lmm.praat` (linear mixed models —
 not ready for general use) and its private numerical dependencies

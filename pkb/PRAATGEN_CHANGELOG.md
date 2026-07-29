@@ -7,29 +7,19 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — 29 July 2026
+### Release note — out of beta, 29 July 2026
 
-**Leaving beta.** The combined package (Master Prompt 14.1.0 + PKB) is now a
-stable 1.0.0 release. What changed to justify it, in one line each:
+The package leaves beta at **14.1.0**. The release number now simply tracks the
+Master Prompt version; the old separate `0.9.x-beta` package track is retired
+(it had drifted to 0.9.3 in the README while the prompt was at 13.9.4, which
+helped nobody). No renumbering, no reset — 14.1.0 is 14.1.0, without the beta tag.
 
-- The PKB is reconciled against the EML plugin source rather than audited
-  against itself. Seven library files were shipping truncated.
-- The procedure registry is generated **from** that source, not hand-maintained
-  alongside it — 295 procedures, verified equal in both directions.
-- Every library file is syntax-checked against a real Praat 6.6.30 install, not
-  assumed correct.
-- Every PKB file carries the plugin's version verbatim, so drift is detectable
-  rather than invisible.
-- The clinical values that a benchmark actually turns on (CPPS especially) were
-  read off the live dialog, not inferred from a source extraction.
-
-Known and deliberate at 1.0.0: `eml-lmm` and its numerical dependencies are not
-shipped (`@emlRunLMMAnalysis` is documented as not routable);
-`eml-demo-procedures.txt` is retained but its version is unverified against the
-`tutorial/` folder, which was absent from the plugin archive; and the shipped
-sources carry 39 `+=` and 2 `elif` deliberately, because PKB copies are
-byte-faithful to plugin source so Rule 223 works — the style fix belongs
-upstream and ships as `plugin_style_fix.sh`.
+What made it stable rather than beta: the PKB is reconciled against the EML
+plugin source instead of audited against itself; the procedure registry is
+generated from that source rather than maintained alongside it; every library
+file is syntax-checked against a real Praat 6.6.30 install; every PKB file
+carries the plugin's version verbatim so drift is detectable; and the clinical
+values a benchmark actually turns on were read off the live dialog.
 
 ### 14.1.0 — 29 July 2026 (same day, post-plugin reconciliation)
 
@@ -74,6 +64,17 @@ newly supplied `eml-vibrato-procedures` v2.0 with the drawing family. Registry
 (287 public, 8 internal) across 16 files**, verified equal in both directions
 against the shipped sources — no registry row without source, no source
 procedure unlisted. All 295 carry a purpose string.
+
+**Removed:** `eml-demo-procedures.txt` (31 procedures). It was carried on the
+assumption that Demo-deck generation depended on it. It does not: the source of
+truth for driving the Demo window is `COMMANDS_DemoWindow.txt` (16 sections —
+the `demo` keyword, coordinate system, the font-metric contamination bug,
+`Text special` alignment, animation input handling, the Polygon bug, lifecycle,
+known bugs) plus `BEST_PRACTICES_DEMO_WINDOW.md`, and **neither references it**.
+It was a convenience wrapper around already-documented `demo` commands, dated
+April 2026, of uncertain current quality, whose source could not be reconciled
+because the plugin archive omitted the `tutorial/` folder. Registry: 295 → 264
+procedures across 15 files. The Demo window remains fully supported.
 
 **Added:** `eml-analysis.txt` (21 `@emlRun*Analysis` dispatchers) — the layer
 the plugin's menu wrappers call. Brings regression, normality, RM-ANOVA,
