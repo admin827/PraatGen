@@ -330,7 +330,9 @@ Get shimmer (local): 0, 0, 0.0001, 0.02, 1.3, 1.6
 #   apq11        11-point; heaviest smoothing.
 #   ddp / dda    REDUNDANT. Both verified exactly 3x their base measure
 #                in Praat 6.6.30 (ddp/rap = 3.000000, dda/apq3 = 3.000000,
-#                sandbox, 29 Jul 2026). They carry no information rap and
+#                sandbox, 29 Jul 2026), and the Praat manual states both
+#                identities outright ("The value is three times RAP" /
+#                "three times APQ3"). They carry no information rap and
 #                apq3 do not. Do not report both.
 #
 # ---------------------------------------------------------------------
@@ -424,6 +426,65 @@ Get shimmer (local): 0, 0, 0.0001, 0.02, 1.3, 1.6
 #   - Emit local, rap, the ratio and the cycle count; warn above ~2.2 that
 #     a smooth modulation is inflating `local`.
 #
+# ---------------------------------------------------------------------
+# CROSS-PROGRAM COMPARABILITY — PRAAT VALUES ARE NOT MDVP VALUES (hard)
+#
+# Praat manual, "Voice 5. Comparison with other programs":
+#   https://www.fon.hum.uva.nl/praat/manual/Voice_5__Comparison_with_other_programs.html
+# Variant definitions and the MDVP thresholds below:
+#   https://www.fon.hum.uva.nl/praat/manual/Voice_2__Jitter.html
+#   https://www.fon.hum.uva.nl/praat/manual/Voice_3__Shimmer.html
+#
+# Give the user the URL, or this summary, whenever a jitter or shimmer
+# number will be compared against a clinical threshold or against a value
+# from other software. Most published norms come from MDVP.
+#
+# THE MEASURES ARE NOT THE SAME QUANTITY. Boersma's worked case: a
+# computer-generated glottal source with a CONSTANT period, vocal-tract
+# filtered, plus 1% additive white noise ("a quite usual amount") —
+#
+#     Praat measures jitter 0.02%      MDVP measures jitter 0.6%
+#
+# True jitter is zero. The 30x gap is method, not implementation quality:
+#   Praat  — period boundaries by waveform matching (cross-correlation),
+#            which averages the noise out
+#   MDVP   — period boundaries by peak-picking, which follows the noise
+# So MDVP's "jitter" conflates period variation with additive noise;
+# Praat's isolates period variation. On clean synthetic signals both
+# recover 1% jitter, so the divergence is a NOISE effect and grows with
+# recording quality problems.
+#
+# Voicing decisions also differ, which changes which cycles are measured
+# at all: MDVP quantizes amplitudes to -1/0/+1 before autocorrelation,
+# does not divide by the window's autocorrelation, and does not
+# sinc-interpolate the peak. Praat's voicing threshold is 0.45 against
+# MDVP's 0.29 — MDVP calls more frames voiced.
+#
+# MDVP PATHOLOGY THRESHOLDS, AND WHY THEY DO NOT TRANSFER (hard).
+# The Praat manual reproduces MDVP's thresholds:
+#
+#   Jitter (local)              1.040 %
+#   Jitter (local, absolute)   83.200 us
+#   Jitter (rap)                0.680 %
+#   Jitter (ppq5)               0.840 %
+#   Shimmer (local)             3.810 %
+#   Shimmer (local, dB)         0.350 dB
+#   Shimmer (apq11)             3.070 %
+#
+# and states that because these were derived from noise-influenced MDVP
+# measurements, "the correct threshold is probably lower" for the jitter
+# measures. That asymmetry has a clinical direction: applying an MDVP
+# threshold to a Praat value UNDER-CALLS pathology, because the Praat
+# number is systematically smaller on any recording with noise in it.
+# Never present a Praat jitter value against an MDVP cutoff without
+# saying so. This is a silent failure — the number is plausible, in
+# range, and wrong for the comparison being made.
+#
+# COROLLARY. Do not compare a jitter or shimmer value to a published norm,
+# or to a measurement from other software, without naming the program the
+# norm came from. Report the variant, the program, and the recording SNR.
+#
+# ---------------------------------------------------------------------
 # THE §7 PLAUSIBILITY BAND DOES NOT CATCH THIS. Jitter 0-5% passed a
 # 0.4431% reading that was roughly 60% vibrato.
 #

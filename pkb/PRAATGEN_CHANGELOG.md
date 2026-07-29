@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,36 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.6.1 — 29 July 2026 (same day, post-release)
+
+**APPENDIX_D §3D — cross-program comparability (hard).** Praat jitter and shimmer
+values are not MDVP values, and most published clinical norms are MDVP-derived.
+Sourced from the Praat manual, "Voice 5. Comparison with other programs", whose URL
+is now in the file so it can be given to the user directly.
+
+Boersma's worked case: a computer-generated constant-period glottal source, vocal
+tract filtered, plus 1% additive white noise ("a quite usual amount") — Praat reads
+0.02% jitter, MDVP reads 0.6%, against a true jitter of zero. The cause is method:
+Praat locates period boundaries by waveform matching (cross-correlation), which
+averages noise out; MDVP peak-picks, which follows it. On clean synthetic signals
+both recover 1%, so the divergence is a noise effect that grows with recording
+quality problems. Voicing differs too — MDVP quantizes amplitude to -1/0/+1 before
+autocorrelation, skips the window-autocorrelation division and the sinc-interpolated
+peak, and uses a 0.29 voicing threshold against Praat's 0.45, so it calls more
+frames voiced.
+
+MDVP's pathology thresholds are reproduced (jitter local 1.040%, local absolute
+83.200 us, rap 0.680%, ppq5 0.840%; shimmer local 3.810%, local dB 0.350, apq11
+3.070%) along with the manual's caveat that they came from noise-influenced
+measurements so "the correct threshold is probably lower". **The clinical direction
+matters: applying an MDVP cutoff to a Praat value UNDER-calls pathology**, because
+the Praat number is systematically smaller on any noisy recording. Plausible, in
+range, wrong for the comparison — the silent-failure shape. `COMMANDS_PointProcess`
+carries a pointer. The manual also states both x3 identities outright, corroborating
+the sandbox measurements from 14.6.0.
+
+---
 
 ### 14.6.0 — 29 July 2026 (same day, post-release)
 
