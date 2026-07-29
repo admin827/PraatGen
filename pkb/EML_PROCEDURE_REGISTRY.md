@@ -1,6 +1,6 @@
 # EML Praat Tools — Procedure Registry
 
-Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 pre-release | 238 procedures (233 public, 5 internal)
+Generated: 8 April 2026 | Revised: 29 July 2026 (PraatGen v14.0.0) | Source: plugin_EMLTools v1.0 pre-release | 238 PKB-resident procedures (233 public, 5 internal) across 15 files, plus 6 plugin-tree-only (see end of file)
 
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
@@ -15,7 +15,7 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 ---
 
 ## Stats: Descriptive
-**File:** `stats/eml-core-descriptive.praat` (v1.0) — 18 procedures
+**File:** `stats/eml-core-descriptive.praat` (v1.1) — 18 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -39,7 +39,7 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 | `@emlDescribe` | Full descriptive summary (all stats in one call) | .data# | public |
 
 ## Stats: Utilities
-**File:** `stats/eml-core-utilities.praat` (v1.0) — 15 procedures (14 public, 1 internal)
+**File:** `stats/eml-core-utilities.praat` (v1.1) — 15 procedures (14 public, 1 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -79,7 +79,7 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 | `@eml_getGroupData` | Extract one group's data from Table by label (internal helper) | .tableId, .dataCol$, .groupCol$, .groupLabel$ | internal |
 
 ## Stats: Output
-**File:** `stats/eml-output.praat` (v1.3) — 21 procedures
+**File:** `stats/eml-output.praat` (v1.4) — 21 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -104,9 +104,16 @@ Generated: 8 April 2026 | Revised: 29 July 2026 | Source: plugin_EMLTools v1.0 p
 | `@emlCSVInit` | Initialize CSV export accumulator arrays | — | public |
 | `@emlCSVAddRow` | Add one row to CSV accumulator | .table$, .dataCol$, .groupCol$, .g1$, .g2$, .test$, .stat, .df, .p, .es, .esType$, .esLabel$, .n1, .n2, .mean1, .sd1, .median1, .mean2, .sd2, .median2 | public |
 | `@emlExportStatsCSV` | Export accumulated CSV data to file | .filePath$ | public |
+| `@emlWrapperCommonFields` | Injects shared fields ("Clear Info window") into the active beginPause dialog | (none) | public ⚠️ |
+| `@emlHandleCommonFields` | Post-endPause handler for those shared fields (clears Info if toggled) | (none) | public ⚠️ |
+
+⚠️ **Source not currently shipped in the PKB.** These two exist in the plugin
+tree but are not in `eml-output.txt` (v1.4). `APPENDIX_C_GUI.txt` §C.2 documents
+the shared-wrapper-fields pattern they implement. See "Plugin-tree-only
+procedures" at the end of this file before calling them.
 
 ## Stats: Inferential
-**File:** `stats/eml-inferential.praat` (v1.2) — 25 procedures (22 public, 3 internal)
+**File:** `stats/eml-inferential.praat` (v1.3) — 25 procedures (22 public, 3 internal)
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -143,7 +150,7 @@ tree but their implementation is not in `eml-inferential.txt` (v1.2). See
 "Plugin-tree-only procedures" at the end of this file before calling them.
 
 ## Graphs: Core
-**File:** `graphs/eml-graph-procedures.praat` (v3.20) — 45 procedures
+**File:** `graphs/eml-graph-procedures.praat` (v3.21) — 45 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -249,10 +256,10 @@ tree but their implementation is not in `eml-annotation-procedures.txt` (v3.15).
 See "Plugin-tree-only procedures" at the end of this file before calling them.
 
 ## Scripts: Graphs Main
-**File:** `scripts/eml-graphs.praat` (v3.0) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
+**File:** `scripts/eml-graphs.praat` (v3.1) — 0 procedures (thin entry point; includes eml-graphs-form.praat)
 
 ## Scripts: Graphs Form & Workflow
-**File:** `graphs/eml-graphs-form.praat` (v1.4) — 8 procedures
+**File:** `graphs/eml-graphs-form.praat` (v1.5) — 8 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -266,7 +273,7 @@ See "Plugin-tree-only procedures" at the end of this file before calling them.
 | `@emlGraphsWorkflow` | Unified graph creation workflow (standalone and stats-wrapper entry) | .objectId | public |
 
 ## Scripts: Batch Processing
-**File:** `scripts/eml-batch-process.praat` (v1.1) — 3 procedures
+**File:** `scripts/eml-batch-process.praat` (v1.2) — 3 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -275,7 +282,7 @@ See "Plugin-tree-only procedures" at the end of this file before calling them.
 | `@emlCheckStopSentinel` | Check if user requested batch stop via sentinel file | .sentinelPath$ | public |
 
 ## Vibrato
-**File:** `vibrato/eml-vibrato-procedures.praat` (v2.0) — 11 procedures
+**File:** `vibrato/eml-vibrato-procedures.praat` (v2.1) — 11 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -329,7 +336,7 @@ See "Plugin-tree-only procedures" at the end of this file before calling them.
 | `@emlDemoShowFigure` | Display pre-rendered PNG in Demo window region with fallback | .left, .right, .bottom, .top, .path$ | public |
 
 ## Dev: Test Harness
-**File:** `dev/tests/eml-test-helpers.praat` (v1.0) — 9 procedures
+**File:** `dev/tests/eml-test-helpers.praat` (v1.1) — 9 procedures
 
 | Procedure | Purpose | Parameters | Scope |
 |-----------|---------|------------|-------|
@@ -357,7 +364,7 @@ Canonical source for both is `eml-egg-procedures.txt` (flattened `.txt` copy of 
 
 ## Plugin-tree-only procedures (source not in the PKB) ⚠️
 
-These four are real, implemented procedures in the EML Praat Tools plugin tree.
+These six are real, implemented procedures in the EML Praat Tools plugin tree.
 They are **not** wired into the plugin's stats-and-graphs workflow (the Guide's
 "Regression: not yet implemented" refers to that wiring, not to the procedures'
 existence), and — the part that matters here — **their source is not currently
@@ -365,10 +372,17 @@ shipped in the PKB**, so there is nothing in Project Knowledge to copy from.
 
 | Procedure | Plugin-tree home | PKB status |
 |-----------|------------------|------------|
-| `@emlLinearRegression` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.2 |
-| `@emlTheilSen` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.2 |
+| `@emlLinearRegression` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.3 |
+| `@emlTheilSen` | `stats/eml-inferential.praat` | absent from `eml-inferential.txt` v1.3 |
 | `@emlReportRegressionAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
 | `@emlReportNormalityAnalysis` | `graphs/eml-annotation-procedures.praat` | absent from `eml-annotation-procedures.txt` v3.15 |
+| `@emlWrapperCommonFields` | `stats/eml-output.praat` | absent from `eml-output.txt` v1.4 |
+| `@emlHandleCommonFields` | `stats/eml-output.praat` | absent from `eml-output.txt` v1.4 |
+
+**Not** in this category, and deliberately removed rather than quarantined: the
+15 `@wizard*` procedures and the 16 `@emlWizardExplain*` helpers. The wizard is
+vestigial — it exists in the plugin tree but is not wired into the workflow and
+is not wanted in PraatGen. Do not route to it or reinstate it.
 
 **Handling (hard).** MP Rule 223 says never rewrite procedure code — copy
 exactly from source. For these four there is no PKB source to copy, so:
@@ -383,12 +397,13 @@ exactly from source. For these four there is no PKB source to copy, so:
 3. The signatures above are accurate and safe to *call* against a pasted
    source — they are listed so a caller binds arguments correctly.
 
-**To close this properly:** copy the four procedure bodies from the plugin tree
-into `eml-inferential.txt` and `eml-annotation-procedures.txt`, then move their
-rows out of this section and update the counts to 242.
+**To close this properly:** copy the six procedure bodies from the plugin tree
+into `eml-inferential.txt`, `eml-annotation-procedures.txt`, and
+`eml-output.txt`, then move their rows out of this section and update the counts
+to 244.
 
 ---
 **Total: 238 procedures resident in the PKB** (233 public, 5 internal) across 15
-files, plus **4 plugin-tree-only procedures** listed above whose source is not
+files, plus **6 plugin-tree-only procedures** listed above whose source is not
 shipped. Counts in this file describe what is in Project Knowledge, because that
 is what the loading protocol can actually retrieve.

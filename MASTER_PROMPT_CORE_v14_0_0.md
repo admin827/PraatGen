@@ -117,7 +117,7 @@ standard of proof.
     ✓ State ops (10) — [A-only / list B/C with guards]
     ✓ SOT (12,14,15,17,23) — [N] commands verified ([source files])
     ✓ Time-domain (9) — [queries used / not applicable]
-    ✓ GUI (18,19,20) — [compliant / not used]; defaults quoted in form:/bare in beginPause:; if form/beginPause present, verified through the actual form (runScript:), not by direct variable assignment
+    ✓ GUI (18,19,20) — [compliant / not used]; numeric defaults QUOTED in form: (bare is a parse error); beginPause: accepts either, bare preferred for consistency — quoted is NOT a defect; if form/beginPause present, verified through the actual form (runScript:), not by direct variable assignment
     ✓ Pitch (22B) — [algorithm chosen / not used]
     ✓  Clinical (App D) — [all parameters canonical per §0 / deviations listed with signal-loss evidence / not used]; Formant: [FormantPath / Formant(burg) ceiling=X / not used]
     ✓ FormantModeler (App D §4D) — [sustained vowel / per-segment / not used]
@@ -568,7 +568,7 @@ AUTO mode's gate suppression makes possible.
 | Statistical procedures | hypothesis tests, p-values, computed thresholds, derived constants, `chiSquareQ`, `studentP`, `fisherQ`, distribution quantiles | Rule 32 |
 | Picture window output | `Draw:`, `Paint:`, `Save as ... PNG file`, `Save as ... PDF file`, `Text top/left/bottom/right`, `One mark`, axis label commands | Rule 28 A–L (L = font-state invariant: exactly one per-panel `Font size:`), Appendix E (special characters), BEST_PRACTICES_DRAWING.txt |
 | Demo window output | `demo Select inner viewport`, `demo Font size`, `demo Text special`, `demo Erase all` | COMMANDS_DemoWindow.txt, BEST_PRACTICES_DEMO_WINDOW.md, House Rules on demo font state |
-| File output, GUI, and batch | `writeFile`/`writeFileLine:`, `appendFile`/`appendFileLine:`, `Save as ...`, `Write to ... file`, `fileReadable`, `deleteFile:`, `createDirectory:`, `form:`, `beginPause:`/`endPause`, `Create Strings as file list`, any per-file loop | Rules 26, 27 (path solicitation + non-destructive output), Rules 18, 19, 20 (GUI syntax and variable derivation; `form:` numeric defaults quoted, `beginPause:` bare), Rule 33 + APPENDIX_F_UX_STANDARDS.txt (dialog conventions, auto-generated filenames, config persistence, batch sentinel) |
+| File output, GUI, and batch | `writeFile`/`writeFileLine:`, `appendFile`/`appendFileLine:`, `Save as ...`, `Write to ... file`, `fileReadable`, `deleteFile:`, `createDirectory:`, `form:`, `beginPause:`/`endPause`, `Create Strings as file list`, any per-file loop | Rules 26, 27 (path solicitation + non-destructive output), Rules 18, 19, 20 (GUI syntax and variable derivation; `form:` numeric defaults MUST be quoted — bare is a parse error; `beginPause:` accepts either), Rule 33 + APPENDIX_F_UX_STANDARDS.txt (dialog conventions, auto-generated filenames, config persistence, batch sentinel) |
 | EGG / contact quotient | `To Electroglottogram`, `To TextGrid (closed glottis)`, `To AmplitudeTier (levels)`, `Get contact quotient`, any EGG-channel extraction | COMMANDS_Electroglottogram.txt (mandatory `@emlEggCycleGuard` before the two segfaulting commands), BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md (method choice, CQ plausibility bound 0.15–0.85) |
 | Tutorial / instructional content | step-by-step GUI instructions, menu paths, editor actions described to the user | Rule 36 |
 
@@ -1778,13 +1778,23 @@ the APPENDIX_C "Side-by-side fields (ranges)" section.
         # conditional logic permitted between fields
     clicked = endPause: "Button1", "Button2", defaultButton
 
-**Numeric default values are BARE in `beginPause:` (hard).** This is the
-mirror image of Rule 18: in `beginPause:`, numeric and vector field defaults
-are written as bare numbers — `natural: "Phase tier", 1`, not `"1"` — while
-in `form:` they must be quoted. String/path field defaults are quoted in
-both. Getting this backwards is a parse error in `form:` and (per APPENDIX_C,
-verified 6.4.67) the wrong form in `beginPause:`. SELF-AUDIT must confirm the
-correct default-type for whichever block is used.
+**Numeric default values: bare is PREFERRED in `beginPause:`, but the
+asymmetry is one-directional.** Sandbox-verified against Praat 6.6.30
+(Linux x64v3), 29 July 2026:
+
+| Block | Bare `1` | Quoted `"1"` |
+|---|---|---|
+| `form:` | **Parse error** — `Only “choice”, “optionmenu” and “boolean” fields can take a number` | Required |
+| `beginPause:` | Works (house preference) | **Also works** — parses, renders, and binds correctly |
+
+So: in `form:`, numeric and vector defaults MUST be quoted; bare is a hard
+error that stops the script. In `beginPause:`, write them bare —
+`natural: "Phase tier", 1` — for consistency with the rest of the library,
+but **quoted is not a defect and must not be flagged as one.** An earlier
+edition of this rule (13.9.3) stated the beginPause half as "must be bare";
+that was an overclaim, and the SELF-AUDIT item derived from it would have
+flagged compliant code. String/path field defaults are quoted in both.
+SELF-AUDIT confirms the `form:` requirement, which is the one that breaks.
 
 **Requirements:**
 - Always capture `endPause` return value (button index, 1-based)
@@ -3086,7 +3096,7 @@ attest "compliant."
 
     ✓ **Time-domain (Rule 9):** [confirm queries used, domain inheritance acknowledged if TextGrid]
 
-    ✓ **GUI input (Rules 18, 19, 20):** [confirm compliance or "not used"; confirm numeric/vector defaults are quoted in form: and bare in beginPause:; if a form/beginPause is present and the script was sandbox-verified, confirm it was driven through the actual form via runScript: (positional args), NOT by direct variable assignment]
+    ✓ **GUI input (Rules 18, 19, 20):** [confirm compliance or "not used"; confirm numeric/vector defaults are QUOTED in every form: field — bare there is a hard parse error ("Only “choice”, “optionmenu” and “boolean” fields can take a number"). beginPause: accepts BOTH quoted and bare; prefer bare for consistency but do NOT flag quoted as a violation. If a form/beginPause is present and the script was sandbox-verified, confirm it was driven through the actual form via runScript: (positional args), NOT by direct variable assignment]
 
     ✓ **Pitch algorithm (Rule 22B):** [state algorithm and rationale, or "not used"]
 

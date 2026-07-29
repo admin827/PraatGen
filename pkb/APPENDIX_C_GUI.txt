@@ -7,6 +7,7 @@
 ---
 
 ## C.1 FORM BLOCKS
+# Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — form:/beginPause numeric-default quoting asymmetry retested; beginPause accepts both forms
 
 Structure:
 
@@ -136,9 +137,16 @@ that was incorrect and has been removed.
 FIRST WORD of a numeric field's label: they place two boxes on one row,
 sharing the remainder of the label. This is the idiom for a range
 (time range, frequency range). Works identically in form: and
-beginPause: — only the default-quoting differs (quoted in form:,
-bare in beginPause:). Verified empirically (parse, render, and variable
-binding), Praat 6.4.67.
+beginPause: — only the default-quoting convention differs (quoted in form:,
+bare by convention in beginPause:). Verified empirically (parse, render, and
+variable binding), Praat 6.4.67.
+
+⚠️ Correction, sandbox-verified Praat 6.6.30, 29 July 2026: the asymmetry is
+ONE-DIRECTIONAL. In `form:`, a bare numeric default is a hard parse error
+(`Only "choice", "optionmenu" and "boolean" fields can take a number`). In
+`beginPause:`, BOTH forms work — a quoted numeric default parses, renders and
+binds correctly. Bare in beginPause: is a house convention, not a requirement,
+and quoted must not be treated as a defect.
 
 form:
 
