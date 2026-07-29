@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.5.1
+**Version:** 14.6.0
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,8 +25,8 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.5.1.** The changelog moved out of this file. 14.5.0 gave Rule 24C
-container-recycle handling and a corrected display readiness probe.
+**Current: 14.6.0.** APPENDIX_D §3D — jitter/shimmer variant selection, the
+local/rap diagnostic ratio, and a task-appropriateness matrix.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into

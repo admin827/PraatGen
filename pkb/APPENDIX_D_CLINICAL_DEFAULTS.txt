@@ -287,6 +287,155 @@ Get shimmer (local): 0, 0, 0.0001, 0.02, 1.3, 1.6
 #   maximum period factor = 1.3
 #   maximum amplitude factor = 1.6
 
+### 3D. Variant selection (hard)
+
+# Jitter and shimmer each have several variants. They are NOT
+# interchangeable, and the difference is large enough to invert a
+# clinical reading. Do not pick one silently.
+#
+# CLARIFICATION (Step 1B hook) — ONE question, not two:
+#   "What is the phonation task? Sustained vowel / sustained with
+#    vibrato / pitch-varying (glide, scale, register transition) /
+#    connected speech."
+# Task type governs which variants are VALID at all (matrix below), so it
+# is the question that must be asked. Do NOT also present the variant list
+# as a menu — emit local, rap and the ratio by default (see below) and the
+# data answers the variant question. Offer a specific variant only if the
+# user asks or a protocol names one. Never explain what jitter is; anyone
+# requesting it has a working definition.
+#
+# ---------------------------------------------------------------------
+# VARIANTS  (arity verified, Praat 6.6.30, 29 Jul 2026)
+#
+# Jitter — PointProcess selected, 5 arguments:
+#   Get jitter (local):            0, 0, 0.0001, 0.02, 1.3
+#   Get jitter (local, absolute):  0, 0, 0.0001, 0.02, 1.3    [seconds]
+#   Get jitter (rap):              0, 0, 0.0001, 0.02, 1.3
+#   Get jitter (ppq5):             0, 0, 0.0001, 0.02, 1.3
+#   Get jitter (ddp):              0, 0, 0.0001, 0.02, 1.3
+#
+# Shimmer — PointProcess + Sound selected, 6 arguments:
+#   Get shimmer (local):     0, 0, 0.0001, 0.02, 1.3, 1.6
+#   Get shimmer (local_dB):  0, 0, 0.0001, 0.02, 1.3, 1.6     [dB]
+#   Get shimmer (apq3):      0, 0, 0.0001, 0.02, 1.3, 1.6
+#   Get shimmer (apq5):      0, 0, 0.0001, 0.02, 1.3, 1.6
+#   Get shimmer (apq11):     0, 0, 0.0001, 0.02, 1.3, 1.6
+#   Get shimmer (dda):       0, 0, 0.0001, 0.02, 1.3, 1.6
+#
+#   local        raw first difference between CONSECUTIVE periods or
+#                amplitudes, over the mean. Absorbs any smooth modulation
+#                of F0 or amplitude.
+#   rap / apq3   deviation from a 3-point running mean.
+#   ppq5 / apq5  deviation from a 5-point running mean.
+#   apq11        11-point; heaviest smoothing.
+#   ddp / dda    REDUNDANT. Both verified exactly 3x their base measure
+#                in Praat 6.6.30 (ddp/rap = 3.000000, dda/apq3 = 3.000000,
+#                sandbox, 29 Jul 2026). They carry no information rap and
+#                apq3 do not. Do not report both.
+#
+# ---------------------------------------------------------------------
+# THE CRITICAL PROPERTY
+#
+# `local` is a first difference, so it is sensitive to smooth F0 or
+# amplitude modulation in proportion to (extent x RATE). `rap` and `ppq5`
+# are effectively second-difference measures and reject smooth modulation
+# almost entirely.
+#
+# Consequence: on a sustained tone WITH VIBRATO, `local` measures the
+# vibrato, not phonatory stability. Monte Carlo, 8000 cycles, F0 244 Hz,
+# underlying perturbation sigma 0.18%:
+#
+#   modulation             local%    rap%   local/rap
+#   none                   0.2023  0.1170     1.730
+#   2 Hz   +/-0.5 st       0.2198  0.1175     1.870
+#   5.5 Hz +/-0.25 st      0.2346  0.1179     1.990
+#   5.5 Hz +/-0.5 st       0.3157  0.1171     2.694
+#   5.5 Hz +/-1.0 st       0.5472  0.1183     4.625
+#   12 Hz  +/-0.5 st       0.5890  0.1279     4.606
+#
+# `rap` is invariant (0.117-0.128) across every condition; `local` varies
+# by ~2.9x. A SLOW glide barely moves the ratio — rate drives this, not
+# F0 excursion alone.
+#
+# ---------------------------------------------------------------------
+# DIAGNOSTIC RATIO — emit local, rap and local/rap by DEFAULT
+#
+# For purely uncorrelated cycle-to-cycle perturbation, local/rap = sqrt(3)
+# = 1.7321. Derivable analytically (local -> 2s/sqrt(pi);
+# rap -> 2s/sqrt(3pi)) and confirmed by Monte Carlo at N = 400,000 for
+# sigma = 0.2%, 0.5%, 1.0% (1.7302, 1.7314, 1.7327).
+#
+#   ratio ~1.73        clean; `local` is a valid stability measure
+#   ratio > ~2.2       smooth modulation present (vibrato, tremor).
+#                      Report rap or ppq5, and say why.
+#   ratio -> 1.5       period-alternating structure (diplophonia,
+#                      subharmonics). Investigate before reporting any
+#                      perturbation value.
+#
+# 1.5 IS A FLOOR, NOT A THRESHOLD (correction, verified). Pure period
+# alternation gives local/rap = 1.5000 EXACTLY, independent of alternation
+# depth (Monte Carlo, N = 200,000, d = 0.2% and 1.0%: both 1.5000).
+# Analytically: with e_i = -e_(i+1), the rap numerator is 4|e_i|/3 against
+# a local numerator of 2|e_i|. So mixtures of alternation and noise fall
+# BETWEEN 1.5 and 1.732, and a test written as "ratio < 1.5" can never
+# fire. Test for approach to 1.5, not for falling below it.
+#
+# THE RATIO NEEDS CYCLES. It is an asymptotic expectation and scatters on
+# short samples. Measured 95% spread on clean uncorrelated data:
+#
+#   N cycles     95% of ratios fall within
+#      100         1.64 - 1.86
+#      200         1.66 - 1.80
+#      500         1.69 - 1.78
+#     2000         1.71 - 1.76
+#     8000         1.72 - 1.75
+#
+# The >2.2 flag is safe at any of these. The approach-to-1.5 flag is NOT
+# reliable below ~500 cycles, where clean data alone reaches 1.64. State
+# the cycle count whenever the ratio is reported, and do not call
+# diplophonia on a short sample.
+#
+# ---------------------------------------------------------------------
+# TASK APPROPRIATENESS MATRIX
+#
+#   Sustained vowel, steady pitch and loudness
+#       All variants valid. `local` is the conventional clinical report.
+#
+#   Sustained vowel WITH VIBRATO  (most trained singers)
+#       `local` is inflated by the vibrato and is NOT a stability measure.
+#       Use rap/ppq5 (jitter) and apq3/apq5 (shimmer). Report vibrato rate
+#       and extent alongside.
+#
+#   Pitch-varying (glide, scale, portamento, register transition)
+#       Slow movement does not inflate `local` much, but this is not a
+#       stability paradigm. Segment into steady portions and measure per
+#       segment; a whole-file mean averages across registers. Same for
+#       shimmer under a crescendo.
+#
+#   Connected speech
+#       Perturbation measures are NOT valid. Use CPPS, or AVQI per §10.
+#       Do not report jitter/shimmer on running speech.
+#
+# ---------------------------------------------------------------------
+# RUNTIME GUARD (recommended). Both come free from the Pitch object the
+# script already builds — no extra analysis object:
+#   - F0 range in semitones over the analysis window; if > ~2 st, warn
+#     that the window is not steady-pitch.
+#   - Emit local, rap, the ratio and the cycle count; warn above ~2.2 that
+#     a smooth modulation is inflating `local`.
+#
+# THE §7 PLAUSIBILITY BAND DOES NOT CATCH THIS. Jitter 0-5% passed a
+# 0.4431% reading that was roughly 60% vibrato.
+#
+# Provenance: EML PraatGen sandbox, 29 July 2026, Praat 6.6.30
+# (linux-x64v3). Real recording: stereo audio+EGG, 7.95 s, two-register
+# task spanning 9.84 st, mean F0 244 Hz — local 0.4431%, rap 0.1148%,
+# ppq5 0.1432%, ddp 0.3443%, ratio 3.860, implying ~+/-0.8 st vibrato at
+# ~5.5 Hz over an underlying rap of 0.115%. Ratio baselines, the 1.5
+# alternation floor, the N-dependence table and both x3 identities
+# re-verified independently before adoption (Rule 32; Praat execution for
+# the identities, fixed-seed Monte Carlo for the rest).
+
 ---
 
 ## 4. FORMANT ANALYSIS
@@ -589,6 +738,9 @@ To Intensity: 100, 0.0, "yes"
 # F0 (Hz)               50 – 1000                "F0 value outside typical speech or singing range"
 # Jitter (local, %)     0 – 5                   "Jitter unusually high; check voicing"
 # Shimmer (local, %)    0 – 15                  "Shimmer unusually high; check voicing"
+#   ⚠️ These bands do NOT detect a WRONG-VARIANT reading. A `local` jitter of
+#   0.4431% that was roughly 60% vibrato passed this band cleanly. The
+#   local/rap ratio is the check that catches it — see §3D.
 # HNR (dB)              -20 – 40                "HNR outside expected range"
 # Intensity (dB SPL)    20 – 120                "Intensity outside typical recording range"
 # CPPS (dB)             0 – 25                  "CPPS outside expected range"

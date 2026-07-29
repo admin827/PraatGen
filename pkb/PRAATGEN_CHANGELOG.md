@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.5.1)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,42 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.6.0 — 29 July 2026 (same day, post-release)
+
+**APPENDIX_D §3D — perturbation variant selection (hard).** Jitter and shimmer each
+have several variants; they are not interchangeable and the difference can invert a
+clinical reading. All eleven are now documented with verified arity in §3D and
+`COMMANDS_PointProcess.txt` (previously only `local` and `local_dB` appeared).
+
+The core finding: `local` is a first difference and absorbs smooth F0/amplitude
+modulation in proportion to extent x rate, so on a sustained tone with vibrato it
+measures the vibrato rather than phonatory stability. `rap`/`ppq5` are
+second-difference measures and reject it. Monte Carlo at 8000 cycles: `rap` holds
+0.117-0.128% across every modulation condition while `local` varies 2.9x.
+
+**The local/rap ratio is the cheap self-interpreting check** and is now emitted by
+default alongside both measures: ~1.73 clean, >2.2 smooth modulation present,
+approaching 1.5 period-alternating structure. Adds a task-appropriateness matrix
+(sustained / with vibrato / pitch-varying / connected speech — the last invalid for
+perturbation entirely) and a runtime guard that costs no extra analysis object.
+Clarification is ONE question — the phonation task, which governs validity — not a
+variant menu; consistent with the EGG §5 rule that method choice is a discussion,
+not a dialog field.
+
+Three corrections made during verification before adoption. `dda = 3 x apq3` was
+submitted as unverified: confirmed exactly (3.000000), as was `ddp = 3 x rap`, so
+both are redundant and neither should be reported alongside its base. The
+"ratio < 1.5" diplophonia test could never fire — pure alternation gives exactly
+1.5000 regardless of depth, analytically and by Monte Carlo, so 1.5 is a floor and
+the test must be for approach to it. And the ratio is asymptotic: measured 95%
+spread is 1.64-1.86 at 100 cycles versus 1.72-1.75 at 8000, so the approach-to-1.5
+flag is unreliable below ~500 cycles and the cycle count must be reported with the
+ratio. The >2.2 flag is safe at any length. §7's plausibility band is annotated as
+unable to catch a wrong-variant reading — it passed a 0.4431% `local` that was ~60%
+vibrato.
+
+---
 
 ### 14.5.1 — 29 July 2026 (same day, post-release)
 
