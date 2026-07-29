@@ -4,6 +4,7 @@
 **Compiled from:** EML PraatGen sandbox verification session, 29 July 2026
 **Praat version:** 6.6.30
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
+**Revised:** 29 July 2026 — §5: method selection is a PRE-FLIGHT discussion, **not** a `form:` optionmenu; the SNR figures are guidance to reason from, not thresholds to branch on. §4 spectral thresholding **parked**: untested on real material, withdrawn from distribution along with `@emlEggSpectralThreshold`; sub-10 dB signals are now refused outright. §5 method selection: the `T1 ≈ 40 dB` upper SNR gate on dEGG is withdrawn. dEGG is the default; in the 10–20 dB band dEGG and hybrid-at-0.43 are reported side by side with cycle-to-cycle SD rather than one being chosen silently. §3: `Derivative` is the default differentiator, `First central difference` offered where a protocol specifies it, with the 5000 Hz cutoff flagged as a chosen rather than validated value.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -118,7 +119,22 @@ Measured consequence on synthetic signals at graded SNR — GCI detection yield:
 | 15 | **0** | 268 |
 | 10 | 0 | 0 |
 
-`Derivative` extends usable GCI detection two SNR steps further. Prefer it for detection on anything not pristine; use `First central difference` when replicating a protocol that specifies it.
+**`Derivative` is the default. Offer `First central difference` when it is
+appropriate** — that is, when the task replicates a published protocol that
+specifies FCD, or when the user asks for it. Say which one ran, in the output.
+
+`Derivative` extends usable GCI detection two SNR steps further, and FCD's
+collapse to zero at SNR 20 is not a graceful degradation — it is a cliff, at an
+SNR that real recordings routinely sit at or below.
+
+**Caveat on the low-pass, and it is a real one.** `5000, 100, 0` is a *chosen*
+parameter set, not a validated optimum, and the 5000 Hz cutoff is doing the work
+that produces the advantage in the table above. The right cutoff depends on
+sampling rate, F0 and the sharpness of the closure peak: too low smears the GCI
+and biases CQ, too high forfeits the noise rejection. The comparison above was
+run at one cutoff on one synthetic waveform shape. Treat 5000 Hz as a sensible
+starting point that should be sanity-checked against the peak timing on real
+material, not as a settled value — and if a task turns on the choice, sweep it.
 
 ### The derivative is the binding constraint
 
@@ -131,87 +147,36 @@ Differentiation cost 8 dB. Ternström (2024) makes the same point — that no cu
 
 ---
 
-## 4. De-noising — when, and only when
+## 4. De-noising — PARKED, not distributed
 
-Ternström (2024) describes spectral thresholding plus static notch filtering as a **pragmatic** toolkit for signals with identifiable problems. It is applied to problematic signals. It is not a stage every recording passes through.
+**Spectral thresholding is withdrawn from this release. Do not use it, do not
+offer it, and do not reconstruct it.**
 
-### Do not de-noise clean signals
+A `@emlEggSpectralThreshold` procedure and a threshold-selection method were
+drafted during the July 2026 sandbox session and briefly shipped. They are
+**untested on real material** — every figure behind them came from synthetic
+signals with additive white Gaussian noise, which is the easy case and not what
+an EGG recording is noisy *like*. Hum, wandering side tones, electrode drift and
+movement artefact were never in the test set. The procedure has been removed
+from `eml-egg-procedures.txt` and from the registry.
 
-Measured on a clean synthetic:
+The withdrawn material is retrievable from git history if the work is resumed;
+it is not reproduced here, because a reader who finds a runnable listing will run
+it. See `PARITY_PASS_BACKLOG.md` for what validation would require.
 
-| | CQ error |
-|---|---|
-| raw | 0.00002 |
-| de-noised | 0.00015 (8× worse) |
+**Consequence for method selection.** There is no de-noising path. A signal below
+10 dB EGG SNR is refused (§5). Do not attempt a rescue.
 
-### Where it earns its place
+**Two Praat traps worth keeping**, independent of de-noising and authoritative in
+`COMMANDS_Spectrum.txt` — they bite anyone doing spectral work on an EGG signal:
 
-At SNR 20, 15, and 10 the raw signal yielded **zero** GCIs. After spectral thresholding all 297 cycles were recovered with CQ within 0.001 of truth. De-noising can move a signal up a tier. Offer it as a rescue for a recording that is otherwise unusable, and **tell the user**, because it changes their data.
-
-### Praat implementation
-
-4:1 downward dB expansion below threshold, phase preserved. Expansion rather than zeroing avoids transients as components cross the threshold.
-
-`emlEggSpectralThreshold` is a registered library procedure; its canonical source is `eml-egg-procedures.txt` (registry: EGG section). The listing below is illustrative — copy exactly from the source file (MP Rule 223).
-
-```praat
-procedure emlEggSpectralThreshold: .soundId, .thresholdBelowPeak, .lowPassHz
-    selectObject: .soundId
-    .spec = To Spectrum: "no"
-    selectObject: .spec
-    .magCopy = Copy: "mag"
-    selectObject: .magCopy
-    Formula: ~ sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-    .magMat = To Matrix
-    selectObject: .magMat
-    .rawPeak = Get maximum
-    removeObject: .magCopy, .magMat
-    .thrLin = .rawPeak * 10 ^ (- .thresholdBelowPeak / 20)
-    selectObject: .spec
-    Formula: ~ self * (if sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... < .thrLin then ((sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... + 1e-30) / .thrLin) ^ 3 else 1 fi)
-    selectObject: .spec
-    .denoised = To Sound
-    removeObject: .spec
-    if .lowPassHz > 0
-        selectObject: .denoised
-        .resultId = Filter (pass Hann band): 0, .lowPassHz, 100
-        removeObject: .denoised
-    else
-        .resultId = .denoised
-    endif
-endproc
-```
-
-**Two traps, both authoritative in `COMMANDS_Spectrum.txt`, repeated here because this is where they bite:**
-
-- `To Spectrum: "yes"` zero-pads to the next power of two and `To Sound` returns the padded length (88200 → 131072 samples). Every per-cycle measurement is then computed over a signal 49% too long, with no warning. Use `"no"`.
-- Ltas dB and raw Spectrum magnitude dB differ by ~91 dB. Anchoring the threshold to an Ltas peak expands away every harmonic and leaves a sinusoid. Because the mismatch exceeds any plausible sweep range, the symptom is that the threshold appears to have no effect at all.
-
-### Threshold selection
-
-The threshold has a real operating window and the wrong value fails silently. Measured (truth: QΔ 4.16, CQ 0.4798):
-
-| threshold | QΔ | CQ | verdict |
-|---|---|---|---|
-| 20 dB | 2.22 | 0.5035 | over-aggressive, harmonics stripped |
-| 30 dB | 3.38 | 0.4798 | usable |
-| 40 dB | 4.07 | 0.4801 | optimum |
-| 50 dB | 4.23 | 0.4802 | usable |
-| 50 dB @ SNR 10 | **5.61** | 0.4819 | QΔ inflated 35%, looks plausible |
-| 60 dB @ SNR 15 | — | — | noise back in, detection collapses |
-
-CQ is stable across 30–60 dB; QΔ is not. A self-calibrating selection is available: sweep the threshold, find the longest run over which CQ is stable within 0.005, take its centre. Validated:
-
-| signal | plateau | centre | CQ |
-|---|---|---|---|
-| clean | 30–60 dB | 45 | 0.4800 |
-| SNR 20 | 30–60 dB | 45 | 0.4803 |
-| SNR 10 | 30–50 dB | 40 | 0.4814 |
-| no phonation | **none** | — | refuse |
-
-Plateau width tracks accuracy monotonically and its absence is a refusal criterion. Validated on white Gaussian noise — the easy case. Hum and wandering side tones will narrow or fragment the plateau.
+- `To Spectrum: "yes"` zero-pads to the next power of two and `To Sound` returns
+  the padded length (88200 → 131072 samples). Every per-cycle measurement is then
+  computed over a signal 49% too long, with no warning. Use `"no"`.
+- Ltas dB and raw Spectrum magnitude dB differ by ~91 dB. Anchoring a threshold
+  to an Ltas peak expands away every harmonic and leaves a sinusoid. Because the
+  mismatch exceeds any plausible sweep range, the symptom is that the threshold
+  appears to have no effect at all.
 
 ---
 
@@ -219,13 +184,112 @@ Plateau width tracks accuracy monotonically and its absence is a refusal criteri
 
 Herbst et al. (2017) excluded sub-10 dB signals from **their analysis**. Whether a tool should refuse or flag is a design decision, not a published finding. Current EML position: refuse, on the grounds that a flagged number gets used anyway.
 
-| EGG SNR | method |
-|---|---|
-| ≥ T1 | dEGG |
-| 10 dB ≤ SNR < T1 | hybrid at 0.43 |
-| < 10 dB | offer de-noising; refuse if it does not lift the signal above 10 dB |
+**dEGG is the default method. There is no upper SNR gate on it.**
 
-**T1 is unresolved.** There is no published upper cutoff. Synthetic testing found the hybrid more stable than dEGG from SNR 40 downward — cycle-to-cycle SD 0.0029 vs 0.0104 at SNR 40; 0.0158 vs 0.0916 at SNR 15, where the dEGG mean also biased +0.011. That suggests T1 near 40 dB, but it rests on synthetic white noise and a single waveform shape. Pending a ruling, report the method used and do not treat T1 as settled.
+### The default is a conversation, not a dialog field (hard)
+
+**Do not put method selection in a `form:` or `beginPause:` optionmenu by
+default.** An option menu asks the user to arbitrate a methodological question
+before they have seen their own signal-to-noise figure, and it presents dEGG,
+hybrid and threshold as three equivalent choices, which they are not.
+
+The default is: **raise it in PRE-FLIGHT, in prose, and reach an agreement.**
+What to say, in substance:
+
+- Above roughly 20 dB EGG SNR, dEGG will most likely give the most accurate
+  measure, and it is the method with the best published correspondence to the
+  videokymographic closed quotient (Herbst et al. 2017).
+- As SNR approaches 10 dB, the **opening** landmark specifically becomes
+  unreliable. This is not general noise sensitivity — it is structural. The
+  derivative's de-contacting trough is broad and shallow next to its contacting
+  peak (§1b), so the GOI degrades well before the GCI does. The closure instant
+  stays trustworthy; the opening instant is what decays.
+- Where that leaves the answer genuinely ambiguous, the sensible move is to take
+  **both** measures on the same cycles and compare means and standard
+  deviations, rather than committing to one in advance.
+
+Then write the script to do what was agreed. Say in the output which method ran
+and why.
+
+**Why the hybrid is the right comparator, and not an unrelated second opinion.**
+The hybrid keeps dEGG's contacting instant *exactly* — same derivative, same
+positive peak — and replaces only the de-contacting instant with a waveform
+threshold crossing. It is dEGG with a more robust opening, so the two share the
+closure landmark and the period. That is what makes comparing them informative;
+a threshold-only measure (§1c) shares neither and is not the comparator here.
+
+**An option menu is appropriate when** the deliverable is a reusable tool the
+user will run repeatedly across varied material and they have asked for the
+choice to be exposed — or when the agreed answer is "let me decide per file."
+That is a UX decision the user makes, not a default PraatGen picks to avoid
+having the discussion.
+
+### Guidance for that conversation, not gates
+
+| EGG waveform SNR (§2) | what to advise |
+|---|---|
+| ≥ 20 dB | dEGG. Report it as the measurement. |
+| 10 dB ≤ SNR < 20 dB | Ambiguous. Advise taking dEGG **and** hybrid-at-0.43 on the same cycles, reported side by side with mean, cycle-to-cycle SD and cycle count. Do not silently substitute one for the other. |
+| < 10 dB | **Refuse.** There is no de-noising path in this release (§4). |
+
+**These are numbers to reason from, not thresholds to branch on.** The 20 dB
+boundary is lab judgement (see `PARITY_PASS_BACKLOG.md` §3b); 10 dB is Herbst's
+and is the only published figure here.
+
+Detection yield overrides all of it in both directions. Count GCIs against the
+expected cycle count for the duration and F0; a large shortfall means the
+derivative is unusable on that material whatever the waveform SNR says. This
+matters because what binds is the SNR *of the derivative*, which §3 measures at
+roughly 8 dB below the waveform figure and which varies with hardware and F0.
+
+### Reading the two measures when both were taken
+
+Report, for each method: CQ mean, cycle-to-cycle SD, and cycles used.
+
+**The two SDs are not directly comparable, and the presentation must say so.**
+A fixed-threshold criterion is insensitive by construction to the peak structure
+dEGG depends on, so the hybrid is *expected* to read smoother even where it is
+no more accurate — a naive "lower SD wins" would select the hybrid almost every
+time. What the comparison is good for is the **size** of the gap and how each
+method's SD compares to its own clean-signal behaviour:
+
+- Both SDs comparable, or dEGG only modestly higher → the derivative is holding
+  up. Prefer dEGG.
+- dEGG SD several times the hybrid's, and large in absolute terms → the
+  derivative is being driven by noise on that recording. The hybrid is the
+  better bet, reported as the hybrid.
+- Also compare cycle counts. dEGG yielding far fewer cycles than the hybrid is
+  the stronger signal, and a more interpretable one than any SD ratio.
+
+Report both numbers in the output regardless of which is preferred. Two CQ values
+from different methods are not interchangeable (§1 measures a 0.124 spread on
+identical data), so the method must travel with the number.
+
+**CORRECTION (29 July 2026) — the earlier `T1 ≈ 40 dB` recommendation was wrong
+and is withdrawn.** It rested on cycle-to-cycle SD being lower for the hybrid
+than for dEGG on synthetic white noise (0.0029 vs 0.0104 at SNR 40). That
+inference does not hold, for three reasons:
+
+1. **SD is dispersion, not error.** A fixed-threshold criterion is insensitive
+   by construction to the peak structure that carries the physiological
+   information, so it is *expected* to be smoother. Threshold and derivative
+   methods also have different expected values — that is the entire subject of
+   Herbst & Ternström (2006), and §1 of this file measures a 0.124 spread across
+   methods on identical data. Two estimators of different quantities cannot be
+   ranked for accuracy by comparing their variances.
+2. **It inverts the primary source.** Herbst et al. (2017) set the criterion at
+   10 dB and found dEGG-derived CQ to have the *best* correspondence with the
+   videokymographic closed quotient of the five algorithms compared. A 40 dB
+   floor would make the best-validated method effectively unreachable: real EGG
+   waveform SNR sits around 20–30 dB.
+3. **This file's own measurements contradict it.** §1 reports dEGG CQ = 0.4280
+   over 1874 cycles on a real recording at 27.1 dB. §3 reports full GCI yield
+   (297/297) at SNR 30 and 268/297 at SNR 15 using `Derivative`. Under a 40 dB
+   gate none of those measurements would have been permitted.
+
+The synthetic SD figures survive as an observation about smoothness, and they
+inform the side-by-side read above. They are not, on their own, a
+method-selection criterion.
 
 **In all cases, apply the plausibility bound to the output** (`COMMANDS_Electroglottogram.txt`, final section) regardless of which method ran. It is the only check that caught a differentiated signal presented as an EGG.
 
@@ -276,6 +340,64 @@ endfor
 
 **Bisect on [tPeak, tValley], not [tPeak, tNext].** The signal crosses the threshold twice per cycle — once descending (wanted) and once ascending before the next closure. Only [tPeak, tValley] brackets exactly one.
 
+### Side-by-side dEGG + hybrid
+
+Both methods share the same GCI and period — the derivative's positive peak —
+so one pass computes both. They diverge only in the GOI: dEGG takes the
+derivative's negative peak, the hybrid takes the 0.43 descending crossing on the
+undifferentiated waveform. Accumulate sum and sum-of-squares per method and
+report mean, SD and n for each.
+
+```praat
+nD = 0
+sD = 0
+ssD = 0
+nH = 0
+sH = 0
+ssH = 0
+
+for i from 1 to nGci - 1
+    selectObject: pp
+    tGci = Get time from index: i
+    tNext = Get time from index: i + 1
+    period = tNext - tGci
+    # ... plausibility checks on period, as above ...
+
+    # --- dEGG GOI: negative peak of the derivative within the cycle
+    selectObject: degg
+    tGoiD = Get time of minimum: tGci, tNext, "Sinc70"
+    cqD = (tGoiD - tGci) / period
+
+    # --- hybrid GOI: 0.43 descending crossing on the waveform
+    #     (bisection block from above, yields cqH)
+    # cqH = ...
+
+    if cqD > 0.15 and cqD < 0.85
+        nD = nD + 1
+        sD = sD + cqD
+        ssD = ssD + cqD * cqD
+    endif
+    if cqH > 0.15 and cqH < 0.85
+        nH = nH + 1
+        sH = sH + cqH
+        ssH = ssH + cqH * cqH
+    endif
+endfor
+
+meanD = sD / nD
+sdD = sqrt ((ssD - nD * meanD * meanD) / (nD - 1))
+meanH = sH / nH
+sdH = sqrt ((ssH - nH * meanH * meanH) / (nH - 1))
+```
+
+Report both rows. Guard `nD` and `nH` against 0 and 1 before dividing — a
+recording where the derivative fails entirely gives `nD = 0`, which is itself the
+answer (see §5, cycle counts). Apply the plausibility bound per cycle as shown
+*and* to each reported mean.
+
+**Do not average the two methods, and do not report whichever looks better
+without saying which it is.** They estimate different quantities (§1).
+
 ---
 
 ## 7. QΔ — optional descriptor, not a gate
@@ -304,9 +426,9 @@ Companion measure: Ternström (2019) also defines a normalised contact quotient 
 4. `To Sound` — keep this; it is the working object for every query.
 5. Measure EGG SNR (§2) on the Sound.
 6. Guard (`COMMANDS_Electroglottogram.txt`) before any call to `To TextGrid (closed glottis)` or `To AmplitudeTier (levels)`.
-7. Select method (§5). Compute CQ.
-8. Plausibility-bound the **output**. Refuse rather than report an impossible value.
-9. Report, in every output row: method, threshold criterion, EGG SNR, cycles used, and any de-noising applied.
+7. Method per the §5 agreement reached in PRE-FLIGHT — not a dialog field. dEGG by default; where the discussion concluded the answer was ambiguous, compute **both** dEGG and hybrid-at-0.43 on the same cycles and report them side by side with mean, cycle-to-cycle SD and cycle count.
+8. Plausibility-bound the **output** — every method reported, not just the preferred one. Refuse rather than report an impossible value.
+9. Report, in every output row: method (and differentiator — `Derivative` with its cutoff, or `First central difference`), threshold criterion, EGG SNR, cycles used, and cycle-to-cycle SD.
 
 Object hygiene: `High-pass filter`, `Derivative`, and `First central difference` each create a new object. `To AmplitudeTier (levels)` creates up to three. Track every ID and remove only what the script created (Rule 4B).
 

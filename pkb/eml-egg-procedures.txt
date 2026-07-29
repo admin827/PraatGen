@@ -5,14 +5,18 @@
 #         www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # License: GPL-3.0-or-later
-# Version: 1.0
+# Version: 1.1
 # Date: 29 July 2026
 # Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026
 #
-# Electroglottogram support procedures: the mandatory cycle guard that
-# blocks the To TextGrid (closed glottis) / To AmplitudeTier (levels)
-# segfault, and the spectral-threshold de-noiser used to rescue
-# low-SNR EGG recordings for contact-quotient measurement.
+# Electroglottogram support: the mandatory cycle guard that blocks the
+# To TextGrid (closed glottis) / To AmplitudeTier (levels) segfault.
+#
+# WITHDRAWN AT 1.1: @emlEggSpectralThreshold (spectral-threshold de-noiser).
+# Untested on real material — validated only against synthetic additive white
+# Gaussian noise, which is not what EGG noise looks like. Not distributed. Do
+# not reconstruct it from documentation or from memory; there is no de-noising
+# path in this release. See BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md §4.
 #
 # This file lives at: egg/eml-egg-procedures.praat
 # Include from wrapper scripts via: include ../egg/eml-egg-procedures.praat
@@ -25,8 +29,7 @@
 #   COMMANDS_Electroglottogram.txt
 #
 # Procedure index:
-#   @emlEggCycleGuard        — segfault guard; sets .safe (1 = analyzable)
-#   @emlEggSpectralThreshold — spectral-threshold de-noiser; returns .resultId
+#   @emlEggCycleGuard — segfault guard; sets .safe (1 = analyzable)
 # ============================================================================
 
 # ----------------------------------------------------------------------------
@@ -65,46 +68,6 @@ procedure emlEggCycleGuard: .eggId, .floor, .ceiling
         if .f0 < .floor
             .safe = 0
         endif
-    endif
-endproc
-
-# ----------------------------------------------------------------------------
-# @emlEggSpectralThreshold: .soundId, .thresholdBelowPeak, .lowPassHz
-#
-# 4:1 downward dB expansion below threshold, phase preserved. Expansion rather
-# than zeroing avoids transients as components cross the threshold. Returns
-# .resultId (a Sound). Offer as a rescue for a recording that is otherwise
-# unusable at low SNR, and TELL THE USER — it changes their data.
-#
-# Two traps (both authoritative in COMMANDS_Spectrum.txt, repeated where they
-# bite): use To Spectrum: "no" (padding inflates To Sound length); anchor the
-# threshold to raw Spectrum magnitude, never an Ltas peak (~91 dB mismatch).
-# ----------------------------------------------------------------------------
-procedure emlEggSpectralThreshold: .soundId, .thresholdBelowPeak, .lowPassHz
-    selectObject: .soundId
-    .spec = To Spectrum: "no"
-    selectObject: .spec
-    .magCopy = Copy: "mag"
-    selectObject: .magCopy
-    Formula: ~ sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-    .magMat = To Matrix
-    selectObject: .magMat
-    .rawPeak = Get maximum
-    removeObject: .magCopy, .magMat
-    .thrLin = .rawPeak * 10 ^ (- .thresholdBelowPeak / 20)
-    selectObject: .spec
-    Formula: ~ self * (if sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... < .thrLin then ((sqrt (self [1, col] ^ 2 + self [2, col] ^ 2)
-        ... + 1e-30) / .thrLin) ^ 3 else 1 fi)
-    selectObject: .spec
-    .denoised = To Sound
-    removeObject: .spec
-    if .lowPassHz > 0
-        selectObject: .denoised
-        .resultId = Filter (pass Hann band): 0, .lowPassHz, 100
-        removeObject: .denoised
-    else
-        .resultId = .denoised
     endif
 endproc
 

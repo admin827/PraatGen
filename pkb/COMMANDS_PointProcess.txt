@@ -27,14 +27,45 @@
   Create Poisson process: name$, start time, end time, density
 
   # Query — jitter (PointProcess only)
+  # ⚠️ VARIANT SELECTION IS NOT COSMETIC. Five jitter and six shimmer
+  #   variants exist and are not interchangeable; `local` measures vibrato
+  #   rather than stability on a modulated tone. Read APPENDIX_D §3D before
+  #   emitting any of these, and emit local + rap + the ratio by default.
+  #   `ddp` = 3 x `rap` and `dda` = 3 x `apq3` exactly (verified 6.6.30,
+  #   and stated in the Praat manual) — redundant, never report both.
+  # ⚠️ NOT COMPARABLE TO MDVP. Praat finds period boundaries by waveform
+  #   matching, MDVP by peak-picking, so MDVP's jitter absorbs additive
+  #   noise and Praat's does not: on a constant-period signal with 1%
+  #   white noise, Praat reads 0.02% and MDVP 0.6%. Published norms are
+  #   mostly MDVP-derived and applying them to a Praat value UNDER-calls
+  #   pathology. See APPENDIX_D §3D and
+  #   fon.hum.uva.nl/praat/manual/Voice_5__Comparison_with_other_programs.html
   Get jitter (local): from time, to time, shortest period, longest period, maximum period factor
   # Verified: Get jitter (local): 0, 0, 0.0001, 0.02, 1.3
+  Get jitter (local, absolute): from time, to time, shortest period, longest period, maximum period factor
+  # Verified: Get jitter (local, absolute): 0, 0, 0.0001, 0.02, 1.3
+  #   Returns SECONDS, not a ratio.
+  Get jitter (rap): from time, to time, shortest period, longest period, maximum period factor
+  # Verified: Get jitter (rap): 0, 0, 0.0001, 0.02, 1.3
+  Get jitter (ppq5): from time, to time, shortest period, longest period, maximum period factor
+  # Verified: Get jitter (ppq5): 0, 0, 0.0001, 0.02, 1.3
+  Get jitter (ddp): from time, to time, shortest period, longest period, maximum period factor
+  # Verified: Get jitter (ddp): 0, 0, 0.0001, 0.02, 1.3
 
   # Query — shimmer (requires PointProcess + Sound selected)
   Get shimmer (local): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
   # Verified: Get shimmer (local): 0, 0, 0.0001, 0.02, 1.3, 1.6
-    Get shimmer (local_dB): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
+  Get shimmer (local_dB): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
   # Verified: Get shimmer (local_dB): 0, 0, 0.0001, 0.02, 1.3, 1.6
+  #   Returns dB, not a percentage.
+  Get shimmer (apq3): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
+  # Verified: Get shimmer (apq3): 0, 0, 0.0001, 0.02, 1.3, 1.6
+  Get shimmer (apq5): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
+  # Verified: Get shimmer (apq5): 0, 0, 0.0001, 0.02, 1.3, 1.6
+  Get shimmer (apq11): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
+  # Verified: Get shimmer (apq11): 0, 0, 0.0001, 0.02, 1.3, 1.6
+  Get shimmer (dda): from time, to time, shortest period, longest period, maximum period factor, maximum amplitude factor
+  # Verified: Get shimmer (dda): 0, 0, 0.0001, 0.02, 1.3, 1.6
   # Provenance: Phonanium AVQI v02.06 script; Paste Commands 24 Feb 2026
   # DISAMBIGUATION NOTE:
   # To query a PointProcess point's time, use the UNIVERSAL command:
