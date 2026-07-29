@@ -10,13 +10,13 @@
 ### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
-Prompt 14.1.0**. These are two independent numbers and both are correct: the
+Prompt 14.6.1**. These are two independent numbers and both are correct: the
 release versions the whole package, the Master Prompt versions the instruction
 set inside it. Quote both in any bug report.
 
 What made it stable rather than beta: the PKB is reconciled against the EML
 plugin source instead of audited against itself; the procedure registry is
-generated from that source rather than maintained alongside it; every library
+updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
@@ -104,7 +104,7 @@ for whether something belongs in it.
 
 ### 14.5.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Rule 24C: container recycle and the display readiness
+**Rule 24C: container recycle and the display readiness
 probe.
 
 - **Container recycle (new 24C subsection).** Background processes usually survive
@@ -135,7 +135,7 @@ All claims re-verified in a live sandbox before adoption.
 
 ### 14.4.2 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Compaction survival and a way to skip the greeting.
+**Compaction survival and a way to skip the greeting.
 
 - **`CONTEXT COMPACTION` (new, hard).** Long sessions get summarized and a summary
   is lossy prose, not the work. The current script, test results and open items are
@@ -167,7 +167,7 @@ All claims re-verified in a live sandbox before adoption.
 
 ### 14.3.1 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** EGG method selection is a discussion, not a dialog
+**EGG method selection is a discussion, not a dialog
 field. `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §5 previously read as a behaviour
 table, which invited two wrong implementations: a runtime branch on an SNR
 threshold, and a `form:` optionmenu offering dEGG / hybrid / threshold as three
@@ -189,7 +189,7 @@ the user has asked for the choice to be exposed in a reusable tool.
 
 ### 14.3.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
+**Spectral thresholding parked. `@emlEggSpectralThreshold`
 and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
 are **withdrawn from distribution**. They were **never tested on real material** —
 every figure behind them (the 8× clean-signal penalty, the zero-to-297 GCI
@@ -215,7 +215,7 @@ validated and remains mandatory.
 
 ### 14.2.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Script delivery format made explicit. Phase 3C said
+**Script delivery format made explicit. Phase 3C said
 only "Output ONE COMPLETE SCRIPT" and specified no format, so on a chat surface
 it resolved to a code block by default. `present_files` had only ever appeared
 inside AUTO mode, and the standing rule "no partial code blocks" tacitly assumed
