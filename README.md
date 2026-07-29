@@ -111,7 +111,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 3. **Reply EXECUTE (or GO).** PraatGen generates a command plan, then scores its complexity. On 4.6/4.7 that is a gate: it tells you whether to keep Thinking on for code generation and waits for GO. On 4.8+ it is advisory — a one-line note on whether the plan looks complete enough that a lower effort setting may serve — and generation continues in the same turn.
 
-4. **Test in Praat.** Copy the script into Praat's script editor and run it. You can also ask PraatGen to present a downloadable `.praat` file in the chat. If it works, you're done.
+4. **Test in Praat.** PraatGen delivers the script as a downloadable `.praat` file rather than a code block — open it in Praat's script editor and run it. (The file matters: copying source out of a rendered code block can substitute curly quotes and en-dashes for the plain characters Praat needs.) If it works, you're done.
 
 5. **Report errors if any.** Paste the exact error message (with line number) and tell it you are debugging. PraatGen diagnoses before changing code — no guesswork fixes. You can also screenshot errors; Claude can read the images.
 
@@ -127,8 +127,24 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 - **DEBUGGING** — strict targeted-fix mode. Requires your approval for any change, declares the scope of each fix as a binding contract, and avoids elective refactoring. Use this for errors and refactors.
 - **SANDBOX** — installs the current stable Praat build in Claude's own environment so it can verify commands and test scripts empirically before delivery, instead of asking you to paste verification snippets. Requires `www.fon.hum.uva.nl` in your account's allowed network domains (Settings → Capabilities → Allowed domains); this must be set *before* starting the conversation. PraatGen will tell you if the domain is missing and offer a manual-upload fallback.
 - **AUTO** (Autonomous) — suppresses the approval gates and intermediate status reports for batch work: task lists, multi-file refactors, or known sequences of changes. PraatGen executes the whole list and delivers once at the end, with a handoff document. Reply STANDARD or GATES ON to restore normal gating.
+- **NOINTRO** — put this in your *first* message to skip the opening menu. PraatGen goes straight to PRE-FLIGHT if you have supplied the four items (task, starting state, inputs, outputs), and otherwise asks only for what is missing. It suppresses the greeting and nothing else — every rule still applies.
 
 **Composition examples:** `SANDBOX AUTO` (install Praat, work through a task list autonomously, test as it goes, deliver once), `SANDBOX DEBUGGING` (strict debugging with empirical verification on hand), `SCAFFOLD SANDBOX` (collaborative design with empirical checks). AUTO and DEBUGGING are mutually exclusive; if a bug surfaces mid-AUTO, PraatGen applies debugging discipline to that one item, then resumes.
+
+### If the conversation gets summarized: VERIFY YOUR STATE
+
+Long sessions get compacted — the earlier part of the conversation is replaced by a
+summary. A summary is lossy prose, and work rebuilt from one can quietly lose
+corrections you already made.
+
+**Say `VERIFY YOUR STATE`.** PraatGen re-reads what is actually saved in its output
+folder — the current script, notes, open items — and reports where that disagrees
+with its own recollection, before touching anything. The saved file wins: it
+reconciles by reading, and never regenerates delivered work from memory.
+
+The command is yours to give because PraatGen cannot reliably tell from the inside
+that a summary has happened. It writes the current script to its output folder as it
+goes, so there is always something to come back to.
 
 ### Tips for Best Results
 
@@ -149,6 +165,9 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 |------|---------|
 | `MASTER_PROMPT_CORE_v14_6_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.6.1. |
 | `README.md` | This file. |
+| `RELEASE_NOTES_1.0.0.md` | What changed in this release, and the upgrade notes. Read the upgrade notes before replacing an existing installation. |
+| `PARITY_PASS_BACKLOG.md` | Open items carried forward deliberately — known-unknowns, parameters awaiting validation, and structural work scoped but not done. Nothing in it is a defect in this release. |
+| `LICENSE` | GPL-3.0-or-later. |
 
 ### Project Knowledge Base (PKB)
 
