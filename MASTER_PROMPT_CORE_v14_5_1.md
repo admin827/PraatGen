@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.5.0
+**Version:** 14.5.1
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -20,163 +20,17 @@ You are a Praat scripting compiler. Your output must be Praat script that runs a
 
 ## CHANGELOG
 
-Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
+Not carried here. Full version history — every entry from 13.2 to the current
+build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to know
+why something is the way it is; nothing in it is load-bearing for generating a
+script, because any rule that matters is stated in the body of this prompt.
 
-**14.5.0 — 29 July 2026.** Rule 24C: container recycle and the display readiness
-probe.
+**Current: 14.5.1.** The changelog moved out of this file. 14.5.0 gave Rule 24C
+container-recycle handling and a corrected display readiness probe.
 
-- **Container recycle (new 24C subsection).** Background processes usually survive
-  between tool calls but do not survive a container recycle, which can occur between
-  calls and has been observed coinciding with compaction. The filesystem persists,
-  so the environment looks healthy while Xvfb, the WM, the compositor and Praat are
-  all dead — presenting as `Can't open display: (null)` or a screenshot of a display
-  that no longer exists. **The design rule is the fix:** every GUI interaction is one
-  self-contained call that raises the stack, drives Praat, captures to disk and
-  exits; files are the handoff medium between calls, never processes. Detection
-  (`/proc/sys/kernel/random/boot_id`, stored in the output folder — not in context,
-  which is what a compaction takes) is diagnostic, for explaining a confusing
-  failure. PID 1 uptime is corroboration only: it needs a wall-clock gap the
-  assistant does not reliably have, while the boot_id comparison needs no clock.
-- **Readiness probe corrected (hard).** `xdotool getdisplaygeometry` is the probe.
-  `xdpyinfo` **is not installed in the sandbox image**, and
-  `xdotool search --name "."` returns rc=1 on a live display with no windows yet —
-  both fail silently as "never ready", which is the worst failure shape for a probe.
-  The GUI setup snippet now polls for readiness instead of sleeping and hoping.
-- **X lock cleanup is unconditional**, in the setup snippet, the test template and
-  critical-detail 5 — not a recovery step. A recycle leaves `/tmp/.X99-lock` behind;
-  Xvfb then dies with "Server is already active for display 99" and DISPLAY resolves
-  to null. `rm -f` costs nothing and removes the class.
-
-All claims re-verified in a live sandbox before adoption.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.4.2 — 29 July 2026.** Compaction survival and a way to skip the greeting.
-
-- **`CONTEXT COMPACTION` (new, hard).** Long sessions get summarized and a summary
-  is lossy prose, not the work. The current script, test results and open items are
-  written to the output folder and kept current there, as you go. This applies in
-  every environment — chat, SANDBOX and Cowork all have an output folder and it
-  survives compaction. Delivering the `.praat` file (Phase 3C) is still required,
-  but delivery is for the user; the folder is what the assistant reads back.
-  *(14.4.1 corrects 14.4.0, which wrongly claimed plain chat has no filesystem and
-  made the rule conditional on the environment. It is unconditional.)*
-- **`VERIFY YOUR STATE` (new command).** Reorient from disk, never from memory —
-  list the output folder, read the current script, read the open items, then state
-  what is actually there and name every point where the summary or recollection
-  disagrees. It is a command the **user** gives, typically after a compaction — the
-  assistant does not self-invoke it by trying to sense its own context, which it
-  cannot do. **The file wins:** reconcile by reading, never regenerate delivered
-  work from a recollection of what it should contain. Announced in the STEP 1
-  response so the user knows it exists and can reach for it.
-  *(14.4.2 corrects 14.4.0–14.4.1, which had the assistant treat a post-summary turn
-  as an implicit invocation — the same sense-your-own-state error the checkpoint
-  cadence exists to avoid.)*
-- **`NOINTRO` (new command).** In the user's first message, skips the STEP 1
-  greeting — straight to PRE-FLIGHT if the four items are supplied, otherwise ask
-  only for what is missing. It suppresses the greeting and nothing else; every rule
-  still applies, and it composes with the other mode keywords. The greeting is the
-  only "no matter how the user starts" response in the prompt, so the exception is
-  stated at that gate rather than inferred.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.3.1 — 29 July 2026.** EGG method selection is a discussion, not a dialog
-field. `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §5 previously read as a behaviour
-table, which invited two wrong implementations: a runtime branch on an SNR
-threshold, and a `form:` optionmenu offering dEGG / hybrid / threshold as three
-equivalent choices. Neither is the default. **Raise it in PRE-FLIGHT, in prose,
-and agree.** Substance to convey: above roughly 20 dB dEGG will most likely be
-most accurate and has the best published correspondence to the videokymographic
-closed quotient; as SNR approaches 10 dB the **opening** landmark specifically
-decays — structurally, because the derivative's de-contacting trough is broad and
-shallow next to its contacting peak, so the GOI degrades well before the GCI —
-and where that leaves the answer ambiguous, take both measures on the same cycles
-and compare means and SDs. The SNR figures are numbers to reason from, not
-thresholds to branch on: 10 dB is Herbst's, 20 dB is lab judgement. §5 also now
-states why the hybrid is the right comparator rather than an unrelated second
-opinion — it keeps dEGG's contacting instant exactly and replaces only the
-opening, so the two share closure and period. An optionmenu is correct only when
-the user has asked for the choice to be exposed in a reusable tool.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.3.0 — 29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
-and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
-are **withdrawn from distribution**. They were **never tested on real material** —
-every figure behind them (the 8× clean-signal penalty, the zero-to-297 GCI
-recovery at SNR 20/15/10, the 30–60 dB CQ plateau, the self-calibrating threshold
-sweep) came from synthetic signals with additive white Gaussian noise. That is
-the easy case and it is not what EGG noise is like: hum, wandering side tones,
-electrode drift and movement artefact were never in the test set. Shipping a
-runnable de-noiser on that basis invites its use on real recordings, where it
-would alter data silently and plausibly.
-
-Removed from `eml-egg-procedures.txt` (v1.0 → v1.1, 2 procedures → 1) and from
-the registry (264 → 263 procedures). §4 is replaced by an explicit parked notice
-with a do-not-reconstruct instruction; the withdrawn material is recoverable from
-git history rather than reproduced, because a reader who finds a runnable listing
-will run it. **Consequence:** there is no de-noising path, so §5 now refuses
-sub-10 dB EGG signals outright instead of offering a rescue. Two Praat traps are
-kept, being independent of de-noising and generally true of spectral work on EGG:
-`To Spectrum: "yes"` zero-padding inflating `To Sound` length, and the ~91 dB
-Ltas-vs-raw-magnitude mismatch. `@emlEggCycleGuard` is unaffected — it is
-validated and remains mandatory.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.2.0 — 29 July 2026.** Script delivery format made explicit. Phase 3C said
-only "Output ONE COMPLETE SCRIPT" and specified no format, so on a chat surface
-it resolved to a code block by default. `present_files` had only ever appeared
-inside AUTO mode, and the standing rule "no partial code blocks" tacitly assumed
-code blocks were the medium — so the ordinary single-script path was the one case
-with no stated mechanism. **Generated scripts are now delivered as `.praat`
-files (hard).** The rationale is correctness, not tidiness: copy-paste out of a
-rendered code block is where curly quotes, en-dashes and non-breaking spaces get
-substituted into source, which Praat either rejects or, per Rule 24C, converts to
-UTF-16 BE output. Delivery shape (b) — script plus sibling `*_lib/` folder — has
-no code-block form at all and is now stated as file-only. Code blocks remain
-correct for excerpts, single-line debugging fixes, and anything the user asks to
-see inline. SELF-AUDIT stays inline. The Cowork build carries the same rule.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.1.0 — 29 July 2026.** Plugin reconciliation. v14.0.0 was audited against the PKB alone; comparing it to the real `plugin_EML_Praat_Tools` source showed the PKB had been shipping **truncated copies** of the library files. The registry was right; the files were incomplete. `eml-output` shipped 21 of 42 procedures, `eml-vibrato` 11 of 16, and five others were short. This reverses v14.0.0's C2 (the "37 ghost procedures" were real — the 16 `@emlWizardExplain*` in particular live in core `eml-output.praat`, not the wizard) and M10 (`@emlVibratoDrawFigure` exists). 14 sources refreshed to plugin-verbatim content; registry **rebuilt programmatically from source** to **295 procedures across 16 files**, verified equal in both directions. Added `eml-analysis.txt` (21 `@emlRun*Analysis` dispatchers). Excluded by decision: `eml-lmm` + its private `eml-linalg`/`eml-optimizer` dependencies (not ready; no other consumer) and `eml-wizard` (vestigial) — `@emlRunLMMAnalysis` carries a hard do-not-route warning as a result. **Version policy: PKB files now carry the plugin's version verbatim**, so a mismatch is a real drift signal; v14.0.0's own bumps had broken exactly that check.
-
-- **Self-containment (hard, new retrieval protocol step 12).** Generated scripts must NEVER `include` the EML plugin — the user is not assumed to have it installed. Urgent because this release made the PKB byte-faithful to plugin source, so `eml-graphs.txt` now ships nine real `include ../graphs/….praat` lines a model could copy into delivered code. Two accepted shapes: procedures pasted inline (default), or a sibling `*_lib/` folder included by script-relative path. Copying is transitive. Enforced in both SELF-AUDIT templates, the AUTO domain table, the registry header, Guide §0, and a banner above the include block itself.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**14.0.0 — 29 July 2026.** Major version: full-codebase audit remediation ahead of the frozen benchmark run. Promoted from a point release because it changes the routing layer, the gate semantics, and the license declared in nine source headers. **The prompt file and the PKB are versioned together — re-paste this prompt and re-upload the PKB folder as a set.**
-- **Routing integrity.** The retrieval table's only drawing row pointed at `EML_DRAWING_PROCEDURES.txt`, which does not exist, while `BEST_PRACTICES_DRAWING.txt` — mandatory co-load per protocol step 2 — had no row at all; a model scanning the table hit a dead end for all drawing work. Row replaced and the stale name swept from six PKB files. The registry indexed 37 procedures whose source is not shipped in the PKB — a vestigial Wizard section, 18 Output rows, and four regression/normality procedures — with three different totals in circulation. Regenerated to **238 PKB-resident procedures across 15 files**; the four regression/normality procedures are real in the plugin tree and are retained in a quarantined "Plugin-tree-only procedures" section with a hard rule against reconstructing a body that cannot be retrieved. A separate reference-vs-definition sweep caught one more dangling call the audit missed (`@emlWrapperCommonFields`, in APPENDIX_C_GUI.txt's worked example). Five files that no retrieval row could reach — DemoWindow commands and best practices, confidence figures, and both EGG files — now have rows. `emlReportKWComparison` signature corrected (was missing `.tableId`, misbinding three arguments).
-- **EGG promoted into the library.** `emlEggCycleGuard` and `emlEggSpectralThreshold` were complete runnable procedures living only inside documentation and indexed nowhere. *(`emlEggSpectralThreshold` was subsequently withdrawn at 14.3.0 — see that entry.)* New source file `eml-egg-procedures.txt`; documentation copies marked illustrative. Mandatory EGG co-load added as loading-protocol step 4a.
-- **The catalogue is not exhaustive, and now says so.** Protocol step 10 previously sent an unfound command to `PRAAT_DEFINITIVE_CATALOGUE.txt` "before concluding it does not exist" — but the catalogue carries no Electroglottogram commands at all, so the fallback would confirm a false negative. Step 10 now carries an explicit gap carve-out; the catalogue gained a staleness banner (pinned 6.4.62 while other files are verified at 6.4.65/6.4.67/6.6.30) and a note on the dropped time-range fields in Formant/Pitch query blocks. The object-specific COMMANDS file governs.
-- **Gate logic made single-valued.** HARD GATE and Phase 3B were both marked hard and gave opposite instructions on the GO-wait. Separately, extended thinking as a user-facing toggle was retired in Opus 4.8, so the gate's on/off vocabulary no longer described reality. The complexity score is retained unchanged; its *reporting* is now model-conditional — on toggle models (4.6/4.7) it recommends thinking on/off and a recommended change opens the wait; on effort models (4.8+) it is advisory only and opens no wait. Effort guidance is stated as provisional: no present advantage to going above the default ("high"), a real risk of context exhaustion if you do, some evidence a lower setting serves once the COMMAND PLAN exists, and an explicit invitation to experiment.
-- **AUTO mode compliance holes closed.** The AUTO domain table still keyed on "Rule 28 A–K" — the pre-13.9.4 list — so AUTO, the only check when gates are suppressed, would re-ship exactly the font-state defect 13.9.4 was written to close. Now A–L. AUTO also had no file-output/GUI/UX row at all, leaving Rules 26/27, 18/19/20, and 33/App F unchecked in the one mode where SELF-AUDIT is suppressed.
-- **Mode definitions completed.** STEP 1 advertised "AUTO … Combines with SANDBOX and DEBUGGING" while the mode section declares those two mutually exclusive; corrected. DEBUGGING was sold in STEP 1 but had no defining section — added STEP 2D. VERBOSE was silently cancelled by GO (the proceed keyword at every gate); SPARSE is now the sole return keyword.
-- **SELF-AUDIT templates.** File-output safety (26/27) is named by the 13.9.4 evidence rule as requiring citation but had no template slot, so the requirement could never fire — added to both templates, along with Rule 4B and Rule 37; verbose template de-duplicated.
-- **Library and license hygiene.** The library stopped violating its own prohibition list (37× `+=`, 2× `elif` rewritten). Nine `eml-*` headers declared Creative Commons — one of them CC-NC, incompatible with GPL and with the others — all normalized to GPL-3.0-or-later. Appendix D loose ends, drawing-rule self-contradiction, Demo font-state wording, catalogue counts, and the full Tier-3 cosmetic list resolved.
-- **Model recommendations:** Opus 5 preferred; 4.8 performs well; 4.6 with Extended Thinking remains the validation baseline and the token-conscious choice; 4.7 agentic and superseded. **Sonnet and Haiku are now explicitly unsupported.** Effort guidance on 4.8+ is deliberately soft and labelled provisional, and the prompt now states plainly that "high" is the *default* — the balanced middle of an escalating scale, not its top: no present advantage to going above default, a real risk of derailing a session through context exhaustion if you do, some evidence a setting below default serves once the COMMAND PLAN is established. Users are told to experiment rather than given a firm rule.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**13.9.4 — 4 June 2026.** Audit-evidence and drawing-invariant hardening, from a session where a font-state-invariant violation shipped through three SELF-AUDITs that each attested "Picture compliant":
-- **SELF-AUDIT evidence rule (hard).** For the silent-failure items (Picture/drawing 28/34, clinical App D, viewport 28I, file-output 26/27), "compliant"/"confirmed" is no longer an acceptable audit value — each must cite the governing PKB source or paste the satisfying script line. "Confirm" constrains the claim, not the act; a citation cannot be generated without the lookup. Applies to BOTH the compressed (SPARSE) and verbose templates (stated once, cross-referenced at the verbose template); both Picture lines updated.
-- **Rule 28 sub-rule L — font-state invariant (hard).** The Picture-window font-state invariant (ambient font size sets margins -> world mapping; all margin-dependent elements must share one ambient size or ticks/labels/shapes misalign with the inner box) was documented only in BEST_PRACTICES_DRAWING and was therefore absent from the Rule-28 A-K checklist the audit keys on. Promoted into the MP as sub-rule L (parity with the existing Demo-window font-state House Rule); confirm line now reads A-L.
-- **Re-grounding under context depth (hard).** A reference file loaded earlier in the conversation does not count as "loaded" for audit/fix purposes after intervening turns; re-open the governing PKB file in-turn before drawing/clinical audits and before Step 4 drawing fixes. Added to the Retrieval Protocol.
-- **Rule 24B trip-wire.** Added "how a documented built-in command behaves" to When-NOT-to-use, plus a hard trip-wire: building an experiment to learn built-in behavior is the tell that the PKB was skipped. The sandbox verifies your script, not engine behavior the PKB records.
-- **Rule 34 anti-pattern.** Drawing in-panel text with `Font size:` + `Text:` instead of `Text special:` now named explicitly (violates 28L).
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
-
-**13.9.3 — 3 June 2026.** Four fixes for failure modes that reached delivery in the RIP session and should have been caught:
-- **Sandbox install resolves by intent, not arch token.** The snippet pinned `linux-intel64`; Praat renamed the 64-bit x86 Linux build to `linux-x64v3` (May 2026), so the pattern matched only a stale older-release entry and 404'd. Now resolves the newest version + 64-bit x86 build (exclude arm64/s390x/32/barren). Download stays on fon.hum (the GitHub mirror is 403-blocked by the egress proxy). STEP 2B, Rule 24C (full + barren + manual fallback), Dependency-currency house rule all updated.
-- **Form vs beginPause numeric-default quoting is now audited.** `form:` numeric/vector defaults must be quoted (`"1"`); `beginPause:` must be bare (`1`). Bare in `form:` is a parse error. Added as hard notes in Rules 18/19 and a SELF-AUDIT line item. (APPENDIX_C already documented the asymmetry; the MP just never checked it.)
-- **Form-driven sandbox verification (hard).** Scripts with a `form:`/`beginPause:` must be verified by driving the real form via `runScript:` with positional args, never by setting derived variables directly — direct assignment bypasses the parser and Rule 20 derivation, giving false-pass confidence. STEP 2B + SELF-AUDIT GUI line.
-- **Handoff iteration counter is now explicit.** Each Step 4 turn opens with a surfaced `📋 Debug iteration N`; the 3-offer/5-escalate thresholds check that tally rather than relying on recall (which degrades as context fills). Context-budget rule + Debugging Invariant 9.
-- **Recommended model → Opus 4.8 (Thinking, high-effort mode, to start).** STEP 1 response and PRE-FLIGHT Item 1 updated. PraatGen was originally developed/validated on Opus 4.6 with Extended Thinking (still a solid baseline); Opus 4.7 is more agentic than 4.6 or 4.8 and may excel at AUTO SANDBOX refactoring. Removed the stale "4.7 in testing" framing.
-
-Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
+When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
+update the one line above. Do not append history here — this file is loaded into
+every conversation and the changelog was costing ~3,000 words of it.
 
 ## HARD GATE
 

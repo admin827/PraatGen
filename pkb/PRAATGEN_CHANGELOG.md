@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.5.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.5.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -21,28 +21,47 @@ file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
 
+### 14.5.1 — 29 July 2026 (same day, post-release)
+
+**Changelog removed from the Master Prompt.** The prompt carried a full in-file
+changelog — nine versions, ~2,950 words, 9.6% of the file — duplicating this file,
+which already held all of it plus history back to 12.1. That cost was paid on every
+conversation, in the one file that is always loaded. The prompt now carries a
+pointer, a one-line "current version" note, and an instruction not to append history
+there. Master Prompt down from 29,627 to 26,785 words. Nothing was lost: the five
+recent entries were the fuller versions, so they replaced their counterparts here
+before deletion. Nothing in a changelog entry was load-bearing for generation — any
+rule that matters is stated in the body of the prompt, which is the standing test
+for whether something belongs in it.
+
+---
+
 ### 14.5.0 — 29 July 2026 (same day, post-release)
 
-**Rule 24C: container recycle.** Background processes usually survive between tool
-calls but do not survive a container recycle, which can occur between calls and has
-been observed coinciding with compaction. The filesystem persists, so the
-environment looks healthy while Xvfb, the WM, the compositor and Praat are all dead
-— presenting as `Can't open display: (null)` or a screenshot of a display that no
-longer exists. The fix is a design rule: every GUI interaction is one self-contained
-call that raises the stack, drives Praat, captures to disk and exits; files are the
-handoff medium between calls, never processes. Detection via
-`/proc/sys/kernel/random/boot_id`, stored in the output folder rather than context,
-is diagnostic. PID 1 uptime corroborates but is not the test — it needs a wall-clock
-gap the assistant does not reliably have.
+29 July 2026.** Rule 24C: container recycle and the display readiness
+probe.
 
-**Readiness probe corrected (hard).** `xdotool getdisplaygeometry` is the probe.
-`xdpyinfo` is not installed in the sandbox image, and `xdotool search --name "."`
-returns rc=1 on a live display with no windows yet — both fail silently as "never
-ready". The GUI setup snippet polls instead of sleeping.
-
-**X lock cleanup is unconditional** in the setup snippet, the test template and
-critical-detail 5. A recycle leaves `/tmp/.X99-lock`; Xvfb then dies with "Server is
-already active for display 99" and DISPLAY resolves to null.
+- **Container recycle (new 24C subsection).** Background processes usually survive
+  between tool calls but do not survive a container recycle, which can occur between
+  calls and has been observed coinciding with compaction. The filesystem persists,
+  so the environment looks healthy while Xvfb, the WM, the compositor and Praat are
+  all dead — presenting as `Can't open display: (null)` or a screenshot of a display
+  that no longer exists. **The design rule is the fix:** every GUI interaction is one
+  self-contained call that raises the stack, drives Praat, captures to disk and
+  exits; files are the handoff medium between calls, never processes. Detection
+  (`/proc/sys/kernel/random/boot_id`, stored in the output folder — not in context,
+  which is what a compaction takes) is diagnostic, for explaining a confusing
+  failure. PID 1 uptime is corroboration only: it needs a wall-clock gap the
+  assistant does not reliably have, while the boot_id comparison needs no clock.
+- **Readiness probe corrected (hard).** `xdotool getdisplaygeometry` is the probe.
+  `xdpyinfo` **is not installed in the sandbox image**, and
+  `xdotool search --name "."` returns rc=1 on a live display with no windows yet —
+  both fail silently as "never ready", which is the worst failure shape for a probe.
+  The GUI setup snippet now polls for readiness instead of sleeping and hoping.
+- **X lock cleanup is unconditional**, in the setup snippet, the test template and
+  critical-detail 5 — not a recovery step. A recycle leaves `/tmp/.X99-lock` behind;
+  Xvfb then dies with "Server is already active for display 99" and DISPLAY resolves
+  to null. `rm -f` costs nothing and removes the class.
 
 All claims re-verified in a live sandbox before adoption.
 
@@ -50,81 +69,99 @@ All claims re-verified in a live sandbox before adoption.
 
 ### 14.4.2 — 29 July 2026 (same day, post-release)
 
-**Compaction survival.** New hard section `CONTEXT COMPACTION`. A summary is lossy
-prose, not the work. The current script, test results and open items are written to
-the output folder and kept current there, as you go — unconditionally, in every
-environment: chat, SANDBOX and Cowork all have an output folder and it survives
-compaction. Delivering the `.praat` file is still required, but delivery is for the
-user; the folder is what the assistant reads back.
+29 July 2026.** Compaction survival and a way to skip the greeting.
 
-**`VERIFY YOUR STATE` (new command).** Reorient from disk, never memory: list the
-output folder, read the current script and open items, then state what is actually
-there and name every disagreement with the summary. **The user gives this command**
-— the assistant does not self-invoke it by trying to sense compaction, which it
-cannot do. The file wins — reconcile by reading, never regenerate
-delivered work from recollection. Announced in the STEP 1 response.
-
-**`NOINTRO` (new command).** In the first message, skips the STEP 1 greeting —
-straight to PRE-FLIGHT if the four items are supplied, otherwise ask only for what
-is missing. Suppresses the greeting and nothing else; composes with the other mode
-keywords.
+- **`CONTEXT COMPACTION` (new, hard).** Long sessions get summarized and a summary
+  is lossy prose, not the work. The current script, test results and open items are
+  written to the output folder and kept current there, as you go. This applies in
+  every environment — chat, SANDBOX and Cowork all have an output folder and it
+  survives compaction. Delivering the `.praat` file (Phase 3C) is still required,
+  but delivery is for the user; the folder is what the assistant reads back.
+  *(14.4.1 corrects 14.4.0, which wrongly claimed plain chat has no filesystem and
+  made the rule conditional on the environment. It is unconditional.)*
+- **`VERIFY YOUR STATE` (new command).** Reorient from disk, never from memory —
+  list the output folder, read the current script, read the open items, then state
+  what is actually there and name every point where the summary or recollection
+  disagrees. It is a command the **user** gives, typically after a compaction — the
+  assistant does not self-invoke it by trying to sense its own context, which it
+  cannot do. **The file wins:** reconcile by reading, never regenerate delivered
+  work from a recollection of what it should contain. Announced in the STEP 1
+  response so the user knows it exists and can reach for it.
+  *(14.4.2 corrects 14.4.0–14.4.1, which had the assistant treat a post-summary turn
+  as an implicit invocation — the same sense-your-own-state error the checkpoint
+  cadence exists to avoid.)*
+- **`NOINTRO` (new command).** In the user's first message, skips the STEP 1
+  greeting — straight to PRE-FLIGHT if the four items are supplied, otherwise ask
+  only for what is missing. It suppresses the greeting and nothing else; every rule
+  still applies, and it composes with the other mode keywords. The greeting is the
+  only "no matter how the user starts" response in the prompt, so the exception is
+  stated at that gate rather than inferred.
 
 ---
 
 ### 14.3.1 — 29 July 2026 (same day, post-release)
 
-**EGG method selection is a discussion, not a dialog field.** §5 of
-`BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` read as a behaviour table and invited
-two wrong implementations: a runtime branch on an SNR threshold, and a `form:`
-optionmenu presenting dEGG / hybrid / threshold as equivalent choices. The
-default is now explicitly a PRE-FLIGHT conversation — dEGG most likely most
-accurate above ~20 dB; the **opening** landmark specifically decaying as SNR
-approaches 10 dB (the de-contacting trough is broad and shallow next to the
-contacting peak, so the GOI degrades before the GCI); both measures taken and
-compared where that leaves the answer ambiguous. SNR figures are guidance, not
-gates — 10 dB is Herbst's, 20 dB is lab judgement. Adds why the hybrid is the
-right comparator: it keeps dEGG's contacting instant exactly and replaces only
-the opening, so the two share closure and period. Optionmenu is correct only when
-the user asks for the choice to be exposed.
+29 July 2026.** EGG method selection is a discussion, not a dialog
+field. `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §5 previously read as a behaviour
+table, which invited two wrong implementations: a runtime branch on an SNR
+threshold, and a `form:` optionmenu offering dEGG / hybrid / threshold as three
+equivalent choices. Neither is the default. **Raise it in PRE-FLIGHT, in prose,
+and agree.** Substance to convey: above roughly 20 dB dEGG will most likely be
+most accurate and has the best published correspondence to the videokymographic
+closed quotient; as SNR approaches 10 dB the **opening** landmark specifically
+decays — structurally, because the derivative's de-contacting trough is broad and
+shallow next to its contacting peak, so the GOI degrades well before the GCI —
+and where that leaves the answer ambiguous, take both measures on the same cycles
+and compare means and SDs. The SNR figures are numbers to reason from, not
+thresholds to branch on: 10 dB is Herbst's, 20 dB is lab judgement. §5 also now
+states why the hybrid is the right comparator rather than an unrelated second
+opinion — it keeps dEGG's contacting instant exactly and replaces only the
+opening, so the two share closure and period. An optionmenu is correct only when
+the user has asked for the choice to be exposed in a reusable tool.
 
 ---
 
 ### 14.3.0 — 29 July 2026 (same day, post-release)
 
-**Spectral thresholding parked.** `@emlEggSpectralThreshold` and §4 of
-`BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` are withdrawn from distribution: never
-tested on real material. Every supporting figure came from synthetic additive
-white Gaussian noise — the easy case, and not what EGG noise looks like (hum,
-wandering side tones, electrode drift, movement artefact were never in the test
-set). A runnable de-noiser shipped on that basis would alter real data silently
-and plausibly.
+29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
+and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
+are **withdrawn from distribution**. They were **never tested on real material** —
+every figure behind them (the 8× clean-signal penalty, the zero-to-297 GCI
+recovery at SNR 20/15/10, the 30–60 dB CQ plateau, the self-calibrating threshold
+sweep) came from synthetic signals with additive white Gaussian noise. That is
+the easy case and it is not what EGG noise is like: hum, wandering side tones,
+electrode drift and movement artefact were never in the test set. Shipping a
+runnable de-noiser on that basis invites its use on real recordings, where it
+would alter data silently and plausibly.
 
-`eml-egg-procedures.txt` v1.0 → v1.1 (2 procedures → 1); registry 264 → 263. §4
-becomes a parked notice with a do-not-reconstruct instruction; the material is
-recoverable from git history rather than reprinted. **Consequence:** no
-de-noising path exists, so §5 refuses sub-10 dB signals outright rather than
-offering a rescue. Two Praat traps retained as independent of de-noising:
+Removed from `eml-egg-procedures.txt` (v1.0 → v1.1, 2 procedures → 1) and from
+the registry (264 → 263 procedures). §4 is replaced by an explicit parked notice
+with a do-not-reconstruct instruction; the withdrawn material is recoverable from
+git history rather than reproduced, because a reader who finds a runnable listing
+will run it. **Consequence:** there is no de-noising path, so §5 now refuses
+sub-10 dB EGG signals outright instead of offering a rescue. Two Praat traps are
+kept, being independent of de-noising and generally true of spectral work on EGG:
 `To Spectrum: "yes"` zero-padding inflating `To Sound` length, and the ~91 dB
-Ltas-vs-raw-magnitude mismatch. `@emlEggCycleGuard` unaffected — validated, still
-mandatory.
+Ltas-vs-raw-magnitude mismatch. `@emlEggCycleGuard` is unaffected — it is
+validated and remains mandatory.
 
 ---
 
 ### 14.2.0 — 29 July 2026 (same day, post-release)
 
-**Script delivery format made explicit.** Phase 3C said only "Output ONE
-COMPLETE SCRIPT" and named no format, so on a chat surface it resolved to a code
-block. `present_files` had only ever appeared inside AUTO mode, and the standing
-rule "no partial code blocks" tacitly assumed code blocks were the medium — the
-ordinary single-script path was the one case with no stated mechanism.
-
-Generated scripts are now delivered as `.praat` files (hard). Rationale is
-correctness: copy-paste out of a rendered code block substitutes curly quotes,
-en-dashes and non-breaking spaces into source, which Praat rejects or — per Rule
-24C — converts to UTF-16 BE on output. Delivery shape (b) has no code-block form
-and is stated as file-only. Code blocks remain correct for excerpts, single-line
-debugging fixes, and anything the user asks to see inline. SELF-AUDIT stays
-inline. The Cowork build carries the same rule.
+29 July 2026.** Script delivery format made explicit. Phase 3C said
+only "Output ONE COMPLETE SCRIPT" and specified no format, so on a chat surface
+it resolved to a code block by default. `present_files` had only ever appeared
+inside AUTO mode, and the standing rule "no partial code blocks" tacitly assumed
+code blocks were the medium — so the ordinary single-script path was the one case
+with no stated mechanism. **Generated scripts are now delivered as `.praat`
+files (hard).** The rationale is correctness, not tidiness: copy-paste out of a
+rendered code block is where curly quotes, en-dashes and non-breaking spaces get
+substituted into source, which Praat either rejects or, per Rule 24C, converts to
+UTF-16 BE output. Delivery shape (b) — script plus sibling `*_lib/` folder — has
+no code-block form at all and is now stated as file-only. Code blocks remain
+correct for excerpts, single-line debugging fixes, and anything the user asks to
+see inline. SELF-AUDIT stays inline. The Cowork build carries the same rule.
 
 ---
 

@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 29 July 2026
-**Master Prompt:** 14.5.0 (was 13.9.4)
+**Master Prompt:** 14.5.1 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.5.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.5.1) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -58,6 +58,17 @@ the plugin.
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
 (4.6/4.7) it recommends thinking on/off and waits on a recommended change, and on
 effort models (4.8+) it is advisory and does not gate the turn.
+
+---
+
+## Master Prompt slimmed (14.5.1)
+
+The prompt carried its own full changelog — nine versions, ~2,950 words, 9.6% of the
+file — duplicating `PRAATGEN_CHANGELOG.md`, which already held all of it plus
+history back to 12.1. That was being paid on every conversation, in the one file
+that is always loaded. The prompt now carries a pointer and a one-line current-version
+note. **29,627 → 26,785 words.** No history lost; the changelog file is where it
+lives.
 
 ---
 
@@ -313,7 +324,7 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.5.0** | 13.9.4 |
+| Master Prompt | **14.5.1** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
@@ -323,7 +334,7 @@ files.
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_5_0.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_5_1.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`
