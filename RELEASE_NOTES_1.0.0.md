@@ -168,33 +168,69 @@ the conversation starts.
 
 ## Known limitations
 
-**Parameter order and types are unverified.** Verification covered command
-existence and parameter counts. A command with the correct count and wrong order
-returns a wrong value without error.
+Each is stated with the evidence behind it.
 
-**The fallback catalogue under-specifies range-taking commands.** Its extraction
-drops Praat's paired range fields, so affected commands list fewer parameters
-than they take. The 22 object types with a curated `COMMANDS_*.txt` are
-unaffected — those files are correct. For the remaining 114 types the catalogue
-is the only source; verify the arity of any range-taking command before use.
-Roughly 100 commands are expected to be affected.
+**Parameter order and types are unverified.** Verification this cycle probed
+every documented command by invoking it with excess arguments and reading
+Praat's `Command requires only N arguments` reply. That establishes two things:
+the command exists on that object type, and its documented parameter *count* is
+right. It says nothing about whether the parameters are in the right *order* or
+have the right *types*, because a wrongly-ordered call of the correct arity is
+accepted without complaint.
 
-**Reference coverage is not exhaustive.** The `COMMANDS_*.txt` files cover
-commonly used object types thoroughly. Gaps are filled as they are found —
-report them.
+Demonstrated: swapping the 6th and 7th arguments of
+`To Pitch (raw cross-correlation)` — silence threshold and voicing threshold,
+both reals — on a signal with a quiet passage yields **441 voiced frames in
+canonical order and 295 swapped**, a 33% difference, with no error raised. On a
+clean sustained tone the two orders give identical output, so the defect is also
+invisible to casual testing. This is the failure class PraatGen exists to
+prevent and it currently has no automated coverage; the `COMMANDS_*.txt` files'
+parameter order rests on their original hand verification.
 
-**`APPENDIX_B_FUNCTIONS.txt`** was not re-verified this cycle.
-**`COMMANDS_Editor.txt`** carries its own verification at Praat 6.4.62/6.4.65
-and has not been re-confirmed at 6.6.30.
+**The fallback catalogue under-specifies range-taking commands.** Praat renders
+a range as two boxes on one row using the `left Xxx` / `right Xxx` label idiom.
+The catalogue's extraction counted each such pair as one field or as none, so
+affected commands list 1, 2 or 4 fewer parameters than they take —
+`Harmonicity Draw` is listed with zero parameters and takes four.
 
-**File-output encoding.** A single non-ASCII character in a written string
-causes Praat to write the entire file as UTF-16 BE, regardless of the `--utf8`
-flag. Keep written literals ASCII; downstream tools will not read UTF-16 CSV.
+Measured: 542 catalogue signatures probed against Praat 6.6.30 across 8 object
+types, 22 mismatches (4.1%), every one a dropped range pair. 22 of the
+catalogue's 136 object types have a curated `COMMANDS_*.txt`; those files are
+hand-written rather than extracted, so they do not inherit this defect, and all
+of them were arity-checked and corrected this release. The remaining 114 types
+carry 2,464 commands for which the catalogue is the only source — which is
+exactly the fallback case it exists to serve. At the measured rate, **roughly
+100 further commands are expected to be affected**. Verify the arity of any
+catalogue-sourced range-taking command before use.
+
+**Reference coverage is not exhaustive.** The `COMMANDS_*.txt` files cover 22 of
+the 136 object types Praat exposes, chosen as those used in voice and speech
+work, and cover them thoroughly. The rest fall back to the catalogue, with the
+caveat above. Gaps are filled as they are found — report them.
+
+**Two reference files carry older verification.**
+`APPENDIX_B_FUNCTIONS.txt` (375 entries) sources from the official Praat
+Functions manual and was not re-verified this cycle; the arity harness cannot
+reach it, since functions are not commands and produce no arity error.
+`COMMANDS_Editor.txt` carries its own three-phase empirical verification at
+Praat 6.4.62 desktop and 6.4.65 xvfb — more thorough than this release's arity
+sweep — but has not been re-confirmed at 6.6.30, because its 58 commands require
+an open editor window that the headless harness could not drive.
+
+**File-output encoding.** A single non-ASCII character anywhere in a written
+string causes Praat to write the entire file as UTF-16 BE, regardless of the
+`--utf8` flag, and subsequent `appendFileLine:` calls keep it UTF-16. Verified
+triggers include `—` `–` `…` `’` `“` `°` `µ` `±` `Δ` `é` `≥` — every character
+tested flipped the file. Keep written literals ASCII; `read.csv`, pandas, Excel
+import and `grep` will not read a UTF-16 CSV. Non-ASCII in Info-window output
+and in Picture-window text is unaffected.
 
 **No access to your environment.** Outside Sandbox Mode PraatGen does not
-execute scripts; in Sandbox Mode it runs Praat only in its own environment and
-never touches your files or installation. Test generated scripts on
-representative data before using them in research.
+execute scripts. In Sandbox Mode it installs and runs Praat only in its own
+environment and never touches your files or your installation. This is
+architectural, not a gap to be closed: verification happens on synthetic or
+supplied data, so generated scripts should still be tested on representative
+data before use in research.
 
 ---
 
