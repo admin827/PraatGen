@@ -1,6 +1,6 @@
 # PraatGen — Open Items for the Catalogue Parity Pass
 
-**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.1.0
+**Opened:** 29 July 2026, at the close of Release 1.0.0 / Master Prompt 14.2.0
 **Purpose:** carry forward the items that were identified but deliberately not
 resolved in this release, so the next dedicated session starts from a written
 scope rather than a rediscovery.
@@ -184,3 +184,37 @@ release and deliberately **not** shipped in the PraatGen repo, because it
 maintains the plugin, not the compiler. It belongs in
 `plugin_EML_Praat_Tools`. If it is wanted and no longer to hand, it is 39 lines
 and faster to rewrite than to find.
+
+---
+
+## 7. Open question — is the post-COMMAND-PLAN gate still wanted on effort models?
+
+**Current behaviour (14.1.0 onward, working as specified).** The Phase 3B gate
+table says *no wait, ever* on effort models (Opus 4.8+). On Opus 5, Turn 2 runs
+COMMAND PLAN → FUNCTION PLAN → advisory line → script → SELF-AUDIT in a single
+turn. Turn 1 remains PRE-FLIGHT-only and still requires EXECUTE/GO.
+
+**The assumption worth testing.** Both the HARD GATE section and the Phase 3B
+table justify this by asserting the Turn-2/Turn-3 split existed *only* to let the
+user act on a thinking-toggle recommendation, so with no toggle there is nothing
+to wait for. That is a design decision, not a fact. Historically the same gate
+also gave the user a chance to inspect the plan and correct a command choice
+*before* a few hundred lines were built on it. On an effort model that
+opportunity is now structurally absent — the plan and the code arrive together,
+so review is after the fact.
+
+**Counterweight.** The plan is still emitted in full immediately above the code,
+so nothing is hidden, and PRE-FLIGHT — where scope and approach are actually
+contested — still gates. If plan-stage interventions were rare, the gate was
+friction and removing it was right.
+
+**Resolve empirically, not by argument.** Run several real tasks on Opus 5 and
+note whether the missing pause ever costs something. If it does, the fix is one
+row in the Phase 3B table: effort models stop after the plans when the
+complexity score is ≥ 3, or unconditionally. That decouples "review the plan"
+from "change a setting" — two purposes that are currently conflated because they
+historically shared one gate.
+
+Whatever is decided, the Cowork build (`SKILL.md` §3) must match; it currently
+makes the post-plan gate conditional on the same criterion and would otherwise
+diverge.

@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.1.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.2.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.1.0**. These are two independent numbers and both are correct: the
@@ -20,6 +20,24 @@ generated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.2.0 — 29 July 2026 (same day, post-release)
+
+**Script delivery format made explicit.** Phase 3C said only "Output ONE
+COMPLETE SCRIPT" and named no format, so on a chat surface it resolved to a code
+block. `present_files` had only ever appeared inside AUTO mode, and the standing
+rule "no partial code blocks" tacitly assumed code blocks were the medium — the
+ordinary single-script path was the one case with no stated mechanism.
+
+Generated scripts are now delivered as `.praat` files (hard). Rationale is
+correctness: copy-paste out of a rendered code block substitutes curly quotes,
+en-dashes and non-breaking spaces into source, which Praat rejects or — per Rule
+24C — converts to UTF-16 BE on output. Delivery shape (b) has no code-block form
+and is stated as file-only. Code blocks remain correct for excerpts, single-line
+debugging fixes, and anything the user asks to see inline. SELF-AUDIT stays
+inline. The Cowork build carries the same rule.
+
+---
 
 ### 14.1.0 — 29 July 2026 (same day, post-plugin reconciliation)
 
