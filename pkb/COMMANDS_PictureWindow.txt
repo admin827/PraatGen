@@ -19,6 +19,12 @@
 #   that its documented PARAMETER COUNT is right. It does NOT verify parameter
 #   ORDER, parameter TYPES, default values, or semantic correctness. Those
 #   remain as previously sourced.
+#
+# CONVENTION — "# Verified:" lines are executable (hard).
+#   A "# Verified:" line must contain the command call and NOTHING else: no
+#   trailing prose, no line continuation. Those lines are executed against a
+#   live Praat as a regression test, and anything that breaks parsing removes
+#   that command from the test. Put explanation on the following comment line.
 
 ---
 
@@ -57,8 +63,7 @@
   # Positioned text
   Text special: x, horizontalAlignment$, y, verticalAlignment$,
       ... font$, size, rotation$, text$
-  # Verified: Text special: 3, "Right", 0, "Half", "Helvetica",
-  #   10, "45", "Group A"
+  # Verified: Text special: 3, "Right", 0, "Half", "Helvetica", 10, "45", "Group A"
   # NOTE: rotation is a STRING ("0", "45", "90"), not numeric.
   # NOTE: Does NOT change global Font size state — self-contained.
   # Provenance: Praat manual, 25 Mar 2026
@@ -86,6 +91,9 @@
   # Verified: Marks bottom: 5, "yes", "yes", "no"
   One mark left: position, draw number?, draw tick?, draw dotted line?, text$
   # Verified: One mark left: 0, "yes", "yes", "no", ""
+  #   NOTE: the position must lie inside the current Axes range — this example
+  #   assumes an axis that includes 0. "Position must be between X and Y" means
+  #   the mark value is outside the axes you set.
   One mark bottom: position, draw number?, draw tick?, draw dotted line?, text$
   # Verified: One mark bottom: 1, "no", "yes", "no", "Condition A"
   One mark right: position, draw number?, draw tick?, draw dotted line?, text$

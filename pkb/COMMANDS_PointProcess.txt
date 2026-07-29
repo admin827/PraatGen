@@ -13,6 +13,12 @@
 #   that its documented PARAMETER COUNT is right. It does NOT verify parameter
 #   ORDER, parameter TYPES, default values, or semantic correctness. Those
 #   remain as previously sourced.
+#
+# CONVENTION — "# Verified:" lines are executable (hard).
+#   A "# Verified:" line must contain the command call and NOTHING else: no
+#   trailing prose, no line continuation. Those lines are executed against a
+#   live Praat as a regression test, and anything that breaks parsing removes
+#   that command from the test. Put explanation on the following comment line.
 
 ---
 
@@ -42,8 +48,10 @@
   Get low index: time
   Get high index: time
   Get nearest index: time
-  # Verified: Get low index: 0.523 — returns index of last point at or before time
-  # Verified: Get high index: 0.523 — returns index of first point at or after time
+  # Verified: Get low index: 0.523
+  #   Returns index of the last point at or before the given time.
+  # Verified: Get high index: 0.523
+  #   Returns index of the first point at or after the given time.
   # Provenance: Vibrato analysis, 18 March 2026
   # NOTE: These are PointProcess commands. The forms `Get low index from time:`
   # and `Get high index from time:` belong to TimeTier-family objects (PitchTier,

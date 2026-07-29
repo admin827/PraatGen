@@ -96,9 +96,11 @@
   # These are inherited from the Vector/Sampled hierarchy.
   # No-argument forms return the global extremum across the entire object.
   Get minimum
-  # Verified: Get minimum (on Matrix created from Ltas and PowerCepstrum)
+  # Verified: Get minimum
+  #   Verified on a Matrix created from Ltas and from PowerCepstrum.
   Get maximum
-  # Verified: Get maximum (on Matrix created from Ltas and PowerCepstrum)
+  # Verified: Get maximum
+  #   Verified on a Matrix created from Ltas and from PowerCepstrum.
   # Provenance: A2 batch analyzer v2.3+ development, 25 Feb 2026
   #
 # NOTE: These no-argument forms differ from the parameterized forms

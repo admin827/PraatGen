@@ -134,7 +134,15 @@
   Quantile-quantile plot: x column name$, y column name$, number of quantiles, xmin, xmax, ymin, ymax, label size, label$, garnish?
   Quantile-quantile plot (between levels): data column name$, factor column name$, x level string$, y level string$, number of quantiles, xmin, xmax, ymin, ymax, label size, label$, garnish?
   Lag plot: data column name$, lag, from xy, to xy, label size, label$, garnish?
-  Bar plot: ymin, ymax, label column name$, distance from border, distance between groups, distance within group, angle, garnish?
+  Bar plot: vertical columns$#, left vertical range, right vertical range, column with labels$, distance of first bar from border, distance between bar groups, distance between bars within group, colours$#, label text angle, garnish?
+  # Verified: Bar plot: {"val"}, 0, 50, "lab", 1, 1, 0, {"blue"}, 0, "yes"
+  # NOTE (sandbox, 29 Jul 2026): both "Vertical columns" and "Colours" are
+  #   STRING ARRAYS — passing a number gives "should be a string array, not a
+  #   number". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) lists an 8-parameter form
+  #   with neither string array — an extraction artefact, NOT a version change:
+  #   the 10-parameter form is identical in 6.4.62 and 6.6.30, both verified by
+  #   execution. String-array fields are a catalogue blind spot alongside paired
+  #   ranges; see its header banner.
   Line graph: y column name$, ymin, ymax, x column name$, xmin, xmax, text$, text font size, angle, garnish?
   Distribution plot: data column name$, minimum value, maximum value, number of bins, minimum frequency, maximum frequency, garnish?
   Horizontal error bars plot: x column name$, xmin, xmax, y column name$, ymin, ymax, lower error column name$, upper error column name$, bar size mm, garnish?
@@ -143,7 +151,10 @@
   Report difference (Student t): column1$, column2$, one tailed unconfidence
   Report group mean (Student t): column$, group column$, group$, one tailed unconfidence
   Report group difference (Student t): column$, group column$, group1$, group2$, one tailed unconfidence
-  # Verified: Report group difference (Student t): "latency_ms", "peer", "A", "B"
+  # Verified: Report group difference (Student t): "latency_ms", "peer", "A", "B", 0.95
+  # CORRECTION (sandbox, Praat 6.6.30, 29 Jul 2026): 5 arguments, not 4. The
+  #   5th is "One-tailed unconfidence" (0.95). The 4-argument form fails with
+  #   "argument One-tailed unconfidence not given".
   # Provenance: Ping analysis v1.4, 10 Mar 2026
   Report group difference (Wilcoxon rank sum): column$, group column$, group1$, group2$
   # Verified: Report group difference (Wilcoxon rank sum): "latency_ms", "peer", "A", "B"

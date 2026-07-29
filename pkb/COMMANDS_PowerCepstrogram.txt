@@ -51,6 +51,17 @@
 # manually or use Get peak: which returns dB directly.
 
   # Query (session-verified)
+  # ⚠️ THESE QUERIES RUN ON A PowerCepstrum, NOT A PowerCepstrogram
+  #   (sandbox-verified, Praat 6.6.30, 29 Jul 2026). A Cepstrogram is a
+  #   time-by-quefrency matrix and exposes no peak queries; extract a slice
+  #   first:
+  #       selectObject: powerCepstrogramId
+  #       sliceId = To PowerCepstrum (slice): <time>
+  #       selectObject: sliceId
+  #       peak = Get peak: 60, 333.3, "parabolic"
+  #   Calling these on the Cepstrogram fails with
+  #   "Command Get peak: not available for current selection".
+  #   `Get CPPS` (above) IS a Cepstrogram command — that is the asymmetry.
   Get peak: pitch floor, pitch ceiling, interpolation$
   # Verified: Get peak: 60, 333.3, "parabolic"
   # Returns: peak dB value (already in dB scale)

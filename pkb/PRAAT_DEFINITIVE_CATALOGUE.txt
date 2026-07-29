@@ -10,7 +10,7 @@
 #
 #   version 3 — 8 April 2026
 #
-# ⚠️ STALENESS AND COMPLETENESS BANNER (read before using as a fallback)
+# ⚠️ VERSION PIN AND COMPLETENESS BANNER (read before using as a fallback)
 #
 #   This catalogue was extracted from Praat 6.4.62. Other PKB files have
 #   since been verified against later builds (6.4.65, 6.4.67, 6.6.30).
@@ -70,6 +70,17 @@
 #       files: the from-time/to-time fields on `Get mean`, `Get minimum`,
 #       and `Get quantile` are omitted in the Formant and Pitch blocks but
 #       correctly documented in COMMANDS_Formant.txt and COMMANDS_Pitch.txt.
+#     - STRING-ARRAY fields (`...$#`) are dropped the same way paired ranges
+#       are. `Table: Bar plot` is the confirmed case: the catalogue lists 8
+#       parameters with neither `vertical columns$#` nor `colours$#`; the
+#       real command takes 10. See COMMANDS_Table.txt.
+#
+#   NOT VERSION DRIFT. Where a COMMANDS file and this catalogue disagree on
+#   arity, the cause so far has always been the extraction, not a change in
+#   Praat. Both confirmed cases — `Formant: Formula` (5 parameters) and
+#   `Table: Bar plot` (10) — were executed against 6.4.62 AND 6.6.30 on
+#   29 July 2026 and are identical in both. Praat command signatures are
+#   stable; assume an extraction gap before assuming a signature change.
 #
 #   Therefore: a command or object NOT FOUND here is not proof of absence.
 #   An empty or missing result for a type that has its own COMMANDS file

@@ -23,6 +23,12 @@
 #   Specific ceiling required             To Formant (burg)
 #     (replication, protocol)?
 #   User explicitly requests fixed        To Formant (burg)
+#
+# CONVENTION — "# Verified:" lines are executable (hard).
+#   A "# Verified:" line must contain the command call and NOTHING else: no
+#   trailing prose, no line continuation. Those lines are executed against a
+#   live Praat as a regression test, and anything that breaks parsing removes
+#   that command from the test. Put explanation on the following comment line.
 #     ceiling?
 #
 # DEFAULT: Use FormantPath. It searches across a range of ceilings
@@ -116,7 +122,8 @@
 
   # Extract
   Extract Formant
-  # Verified: Extract Formant (on fresh FormantPath only)
+  # Verified: Extract Formant
+  #   Valid on a fresh FormantPath only — see the segfault note above.
   # Returns: Formant object ID
   #
   # ⚠️ BUG (Praat 6.4.60–6.4.62, confirmed macOS):
@@ -147,9 +154,7 @@
 
   # Draw
   Draw as grid: from time, to time, max frequency, left formant, right formant, show bandwidths$, colour f1 f3 f5$, colour f2 f4$, n rows, n cols, x space fraction, y space fraction, h line every, x cursor, y cursor, coefficients$, mark candidates$, mark colour$, show stress$, power, show estimated$, garnish$
-  # Verified: Draw as grid: 0, 0.5, 6200, 1, 5, "yes", "Red", "Purple",
-  #   0, 0, 0.1, 0.2, 1000, -0.1, -100, "3 3 3 3 3", "yes",
-  #   "{0.984, 0.984, 0.7}", "yes", 1.25, "yes", "yes"
+  # Verified: Draw as grid: 0, 0.5, 6200, 1, 5, "yes", "Red", "Purple", 0, 0, 0.1, 0.2, 1000, -0.1, -100, "3 3 3 3 3", "yes", "{0.984, 0.984, 0.7}", "yes", 1.25, "yes", "yes"
   # 22 parameters total.
   # Provenance: Session-verified 21 Mar 2026
 
@@ -207,7 +212,14 @@
   # Modify
   Formula (frequencies): formula$
   Formula (bandwidths): formula$
-  Formula: left formant range, right formant range, formula$
+  Formula: from time, to time, left formant range, right formant range, formula$
+  # Verified: Formula: 0, 0, 1, 5, "self"
+  # NOTE (sandbox, 29 Jul 2026): the leading TIME RANGE pair is easy to lose.
+  #   The 3-argument form fails with "Argument left Formant range should be a
+  #   number, not a string". PRAAT_DEFINITIVE_CATALOGUE.txt (6.4.62) lists only
+  #   3 — an extraction artefact, NOT a version change: the 5-parameter form is
+  #   identical in 6.4.62 and 6.6.30, both verified by execution. Paired range
+  #   fields are the catalogue's known blind spot; see its header banner.
   # Source: PRAAT_DEFINITIVE_CATALOGUE.txt — operates on Matrix representation
   # where odd rows = frequencies, even rows = bandwidths
 

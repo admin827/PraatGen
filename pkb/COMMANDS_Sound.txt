@@ -155,7 +155,8 @@
   Extract part for overlap: from time, to time, overlap
   # Combine (multiple objects selected)
   Concatenate
-  # Verified: Concatenate (with 2+ Sound objects selected)
+  # Verified: Concatenate
+  #   Requires 2+ Sound objects selected.
   # Provenance: Phonanium AVQI v02.06 script; Paste Commands 24 Feb 2026
 
   # Draw
@@ -177,13 +178,12 @@
   # Other
   Record Sound (fixed time): input source$, gain, balance, sampling frequency$, duration
   Multiply: multiplication factor
-  # Verified: Multiply: 0.5   (sandbox, Praat 6.6.30, 29 Jul 2026)
+  # Verified: Multiply: 0.5
   # CORRECTION (29 Jul 2026): previously documented with no arguments. The bare
   # form fails with "Command Multiply not available for current selection".
   Filter
   Filter (no scale)
   View & Edit
-  Multiply: scale to09?
   Play
   Voice report: from time, to time, from pitch, to pitch, maximum period factor, maximum amplitude factor, silence threshold, voicing threshold
   Save as Kay sound file: file name$
@@ -199,6 +199,7 @@
   Reverse
   Subtract mean
   Multiply: multiplication factor
+  # Verified: Multiply: 0.5
   Multiply by window: window shape$
   Scale peak: new absolute peak
   Scale intensity: new average intensity

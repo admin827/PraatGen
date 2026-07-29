@@ -172,7 +172,8 @@
 
   # On KlattGrid object:
   To Sound
-  # Verified: To Sound (no parameters, on KlattGrid)
+  # Verified: To Sound
+  #   No parameters. Runs on a KlattGrid, not the SpeechSynthesizer.
   # Returns: Sound ID.
   # Provenance: Showcase script, 21 Mar 2026
 
