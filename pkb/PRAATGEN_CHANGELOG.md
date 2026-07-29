@@ -7,6 +7,350 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### Release note — out of beta, 29 July 2026
+
+The package leaves beta at **14.1.0**. The release number now simply tracks the
+Master Prompt version; the old separate `0.9.x-beta` package track is retired
+(it had drifted to 0.9.3 in the README while the prompt was at 13.9.4, which
+helped nobody). No renumbering, no reset — 14.1.0 is 14.1.0, without the beta tag.
+
+What made it stable rather than beta: the PKB is reconciled against the EML
+plugin source instead of audited against itself; the procedure registry is
+generated from that source rather than maintained alongside it; every library
+file is syntax-checked against a real Praat 6.6.30 install; every PKB file
+carries the plugin's version verbatim so drift is detectable; and the clinical
+values a benchmark actually turns on were read off the live dialog.
+
+### 14.1.0 — 29 July 2026 (same day, post-plugin reconciliation)
+
+The v14.0.0 audit was run against the PKB alone. Reconciling it against the
+actual `plugin_EML_Praat_Tools` source reversed several of its conclusions.
+
+**The core finding: the PKB was shipping TRUNCATED copies of the plugin
+sources.** The registry was not indexing ghosts — it was describing the plugin
+correctly while the PKB shipped incomplete files. Measured, per file:
+
+| PKB file | had | plugin has | was missing |
+|---|---|---|---|
+| `eml-output` | 21 | 42 | `emlWrapperCommonFields`, `emlHandleCommonFields`, `emlWrapperInit`, `emlWrapperExportCSV`, 16× `emlWizardExplain*` |
+| `eml-inferential` | 25 | 27 | `emlLinearRegression`, `emlTheilSen` |
+| `eml-extract` | 13 | 16 | `emlGuessColumnRoles`, `eml_getGroupPairedData`, `eml_kwScan` |
+| `eml-annotation-procedures` | 23 | 25 | `emlReportRegressionAnalysis`, `emlReportNormalityAnalysis` |
+| `eml-core-descriptive` | 18 | 20 | `emlShapiroWilk`, `eml_swPoly` |
+| `eml-draw-procedures` | 14 | 15 | `emlDrawLMMForest` |
+| `eml-vibrato-procedures` | 11 | 16 | `emlVibratoDrawFigure` + 4 panel procedures |
+
+**Reversals of v14.0.0 decisions:**
+- **C2 was wrong in principle.** The 37 "ghost" procedures were real. Six were
+  quarantined mid-session on the maintainer's correction; the rest were deleted.
+  All are now restored by refreshing from source, and the quarantine section is
+  gone. The 16 `emlWizardExplain*` deserve specific mention: they live in
+  `stats/eml-output.praat`, a **core** file — deleting them as "wizard ghosts"
+  was a category error. The wizard script itself stays excluded (vestigial).
+- **M10 was wrong.** `@emlVibratoDrawFigure` was removed from the Guide as a
+  dead reference. It is real — it and four companion panel procedures were
+  simply absent from the truncated PKB vibrato copy. Restored.
+- **My own version bumps were wrong.** The v14.0.0 pass bumped five PKB files
+  past the plugin's real versions (PKB `eml-graphs` 3.1 vs plugin 3.0, etc.),
+  destroying the only signal that catches this drift. **New policy: the PKB
+  file carries the PLUGIN's version verbatim. PKB version == plugin version,
+  always; a mismatch means the PKB has drifted.** PKB-only edits (the license
+  header) are recorded in a separate provenance block, not by bumping.
+
+**Refresh performed.** 14 PKB sources replaced with plugin-verbatim content
+(license line normalized to GPL-3.0-or-later, provenance block added), plus a
+newly supplied `eml-vibrato-procedures` v2.0 with the drawing family. Registry
+**rebuilt programmatically from source**, not hand-edited: **295 procedures
+(287 public, 8 internal) across 16 files**, verified equal in both directions
+against the shipped sources — no registry row without source, no source
+procedure unlisted. All 295 carry a purpose string.
+
+**Removed:** `eml-demo-procedures.txt` (31 procedures). It was carried on the
+assumption that Demo-deck generation depended on it. It does not: the source of
+truth for driving the Demo window is `COMMANDS_DemoWindow.txt` (16 sections —
+the `demo` keyword, coordinate system, the font-metric contamination bug,
+`Text special` alignment, animation input handling, the Polygon bug, lifecycle,
+known bugs) plus `BEST_PRACTICES_DEMO_WINDOW.md`, and **neither references it**.
+It was a convenience wrapper around already-documented `demo` commands, dated
+April 2026, of uncertain current quality, whose source could not be reconciled
+because the plugin archive omitted the `tutorial/` folder. Registry: 295 → 264
+procedures across 15 files. The Demo window remains fully supported.
+
+**Added:** `eml-analysis.txt` (21 `@emlRun*Analysis` dispatchers) — the layer
+the plugin's menu wrappers call. Brings regression, normality, RM-ANOVA,
+Friedman and reliability into reach.
+
+**Deliberately excluded, and stated as such:** `eml-lmm.praat` (mixed models,
+not ready) and its private numerical dependencies `eml-linalg.praat` /
+`eml-optimizer.praat` (Cholesky, BOBYQA, Nelder-Mead — called by nothing else,
+so they have no consumer without LMM). Consequence handled rather than left to
+rot: `@emlRunLMMAnalysis` is the one dispatcher with unresolvable calls and now
+carries a hard do-not-route warning at its own definition. `eml-wizard.praat`
+also excluded (vestigial).
+
+**Style exception, deliberate.** PKB copies are byte-faithful to plugin source
+so Rule 223 ("copy exactly from source") is satisfiable. That reintroduces 39
+`+=` and 2 `elif` that v14.0.0 had rewritten. Rather than let the PKB diverge
+from source again, the fix goes upstream: `plugin_style_fix.sh` at repo root
+applies it to the plugin. The MP now names this as a known SOT exception so a
+model does not "correct" the library it is copying from.
+
+**Self-containment rule added (hard) — retrieval protocol step 12.** Generated
+scripts must never `include` the EML plugin. The end user is not assumed to
+have it installed, at any path, ever. This became urgent precisely because the
+refresh above made the PKB byte-faithful to plugin source: `eml-graphs.txt` now
+ships nine real `include ../graphs/….praat` lines, which a model copying from
+it could carry straight into delivered code, producing a script that dies with
+"Cannot open file" on any machine without the plugin.
+
+Two accepted delivery shapes: (a) procedure bodies pasted into the delivered
+script under a marked block — the default; (b) script plus a sibling `*_lib/`
+folder included by a script-relative path only. Never `../`, never
+`preferencesDirectory$`, never absolute. Copying is transitive: a copied
+procedure's own `@eml…` calls come with it, until every `@`-call in the
+delivery resolves inside the delivery.
+
+Enforced on all four surfaces a model can reach: retrieval protocol step 12
+(the rule), both SELF-AUDIT templates (a line item requiring the delivery shape
+be named and the closure confirmed), the AUTO pre-delivery domain table (AUTO
+suppresses SELF-AUDIT, so it needs its own row), the registry header, a new §0
+in EML_PROCEDURE_GUIDE.md, and a warning banner directly above the include
+block in `eml-graphs.txt` itself.
+
+**Verified:** all 16 refreshed sources parse in Praat 6.6.30 (the sole flag is
+`eml-graphs.txt`'s plugin-tree `include` paths — known, M11). Zero signature
+drift on shared procedures, confirming `emlReportKWComparison` was the only one.
+
+### 14.0.0 — 29 July 2026
+
+**Major version.** Full-codebase audit remediation ahead of the frozen benchmark
+run. Promoted from a point release because the pass changes the routing layer
+(retrieval table, registry contents and counts, a new source file), the gate
+semantics (Phase 3B is now model-conditional; a new mode section), and the
+license declared in nine source headers — all breaking-ish changes for anyone
+running an older PKB against the new prompt or vice versa. **The Master Prompt
+file is renamed `MASTER_PROMPT_CORE_v14_0_0.md`; re-paste it into your project
+instructions and re-upload the PKB folder together — the two are not
+independently versioned.** Fixes are
+keyed to the audit report's item IDs (C = critical, M = moderate, E = EGG
+addendum, T3 = tier-3 cosmetic).
+
+**Routing layer (the ghost-file class of defect):**
+- **C1 — `EML_DRAWING_PROCEDURES.txt` no longer exists anywhere.** The retrieval
+  table's only drawing row pointed at a file that does not exist, while
+  `BEST_PRACTICES_DRAWING.txt` (mandatory co-load per protocol step 2) had no
+  row at all. Row replaced; the stale name swept from all six PKB files
+  (APPENDIX_F ×2, DEVELOPER_MODE_ADDON, COMMANDS_DemoWindow ×2,
+  BEST_PRACTICES_CONFIDENCE_FIGURES ×5) and repointed to the real source files.
+- **C2 — registry regenerated against measured ground truth.** Header claimed
+  251/15, body carried 273 rows, MP claimed 255/14; actual is 236 procedures
+  whose source is present in the PKB, across 14 files. The registry had been
+  indexing procedures that exist in the **plugin tree** but whose source was
+  never copied into Project Knowledge — an important distinction, since MP
+  Rule 223 ("copy exactly from source") is unsatisfiable for them.
+  - Removed as not-shipped-and-not-needed: the Wizard section (15 procedures;
+    the wizard exists in the plugin tree but is vestigial), 18 Output rows
+    (`emlWrapperCommonFields`, `emlHandleCommonFields`, 16×
+    `emlWizardExplain*`).
+  - **Retained, but explicitly quarantined:** `emlLinearRegression`,
+    `emlTheilSen`, `emlReportRegressionAnalysis`, `emlReportNormalityAnalysis`.
+    These are real, implemented procedures in the plugin tree — the Guide's
+    "Regression: not yet implemented" refers to workflow *wiring*, not to
+    their existence — but their source is absent from `eml-inferential.txt`
+    v1.2 and `eml-annotation-procedures.txt` v3.15. New **"Plugin-tree-only
+    procedures"** section at the end of the registry lists them with accurate
+    signatures, a hard handling rule (do not invent a body; ask the user to
+    paste it, or route to an implemented alternative), and instructions for
+    closing the gap by copying the four bodies in and bumping the count to 242.
+  - With the two newly registered EGG procedures (E5), **238 procedures are
+    PKB-resident across 15 files**, plus the 4 quarantined. Counts describe
+    what the loading protocol can actually retrieve. MP retrieval row synced.
+- **NEW — dangling `@emlWrapperCommonFields` in APPENDIX_C_GUI.txt.** Not in the
+  original audit. The appendix's worked "shared wrapper fields" example called a
+  procedure that is not shipped in the PKB, so a reader following the example
+  would route to nothing. Rewritten as an explicit `@myCommonFields` placeholder
+  with a note on what happened. Found by a reference-vs-definition sweep run
+  after the registry rebuild; that sweep is now the check that would catch this
+  class of defect again.
+- **M4 / E1 / E2 — five missing retrieval rows added:** `COMMANDS_DemoWindow.txt`,
+  `BEST_PRACTICES_DEMO_WINDOW.md`, `BEST_PRACTICES_CONFIDENCE_FIGURES.txt`
+  (1,296 lines with zero inbound references), `COMMANDS_Electroglottogram.txt`,
+  and `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`. The Demo deck and EGG analysis
+  are both scored benchmark tasks that were previously unreachable by the
+  stated trigger mechanism.
+- **M9 — `emlReportKWComparison` signature corrected.** Registry listed 5
+  params; source takes 6 including `.tableId` in 4th position, so a
+  registry-faithful call misbound three arguments.
+- **M10 — Guide dead references removed.** `@emlVibratoDrawFigure` and
+  `vibrato-procedures-manual.md` exist nowhere; the vibrato library is
+  analysis-only. Repointed to the general drawing procedures.
+- **M11 — plugin-path vs flat-PKB mapping stated explicitly** at the top of the
+  registry. `**File:**` entries use the plugin tree (`graphs/….praat`); PKB
+  ships flattened `.txt`. Previously implicit and unstated.
+
+**EGG integration (E-series):**
+- **E5 — `emlEggCycleGuard` and `emlEggSpectralThreshold` promoted to registered
+  library procedures.** Both were complete runnable procedures living only
+  inside documentation (a `.txt` comment block and a `.md` fenced block),
+  indexed nowhere — a drift-generating state. New source file
+  `eml-egg-procedures.txt`; both documentation copies now marked illustrative
+  with a pointer to canonical source per Rule 223.
+- **E3 — mandatory EGG co-load** added as loading-protocol step 4a, sibling to
+  the APPENDIX_D clinical rule. An EGG task now auto-pulls both EGG files
+  rather than depending on a judgement call.
+- **E4 / M12 / M13 — catalogue "not found" is no longer read as "does not
+  exist."** Protocol step 10 rewritten with an explicit gap carve-out, and the
+  catalogue itself gained a staleness-and-completeness banner (pinned 6.4.62
+  while other files are verified at 6.4.65/6.4.67/6.6.30) plus a §2 note on the
+  dropped from-time/to-time fields in Formant and Pitch query blocks. Where they
+  disagree, the object-specific COMMANDS file governs.
+- New AUTO pre-delivery domain row for EGG (cycle guard + CQ plausibility bound).
+
+**Sandbox verification (Praat 6.6.30 installed and driven, 29 July 2026):**
+- **`elif` confirmed accepted.** Both `elif` and `elsif` parse and execute.
+  The eml-inferential normalization is style conformance with the MP's own
+  prohibition list, not a bug fix.
+- **Get CPPS dialog defaults observed directly.** §5B had said the Maryn set
+  differs from Praat's defaults on three values; a source-extraction reading
+  during this audit said five; the dialog shows **six**. The two missed are
+  the enum fields (Trend type = Exponential decay, Fit method = Robust slow) —
+  precisely the fields the catalogue exposes without their default values.
+  §5B is now a field-by-field table with a sandbox stamp, the Praat-default
+  call is recorded in COMMANDS_PowerCepstrogram.txt for contrast, and the
+  lesson is stated in-file: treat catalogue enum defaults as unknown, not
+  absent.
+- **Rule 19 overclaimed the form/beginPause quoting asymmetry.** 13.9.3 stated
+  that `beginPause:` numeric defaults "must be bare," and added a SELF-AUDIT
+  item enforcing it. Verified: the asymmetry is ONE-DIRECTIONAL. Bare in
+  `form:` is a hard parse error (`Only "choice", "optionmenu" and "boolean"
+  fields can take a number`); quoted in `beginPause:` parses, renders and
+  binds correctly. Bare in beginPause is a house convention. As written the
+  audit item would have flagged compliant code — including this library's own
+  `eml-batch-process.txt`. Corrected in Rule 19, both SELF-AUDIT templates,
+  the AUTO domain table, and APPENDIX_C.
+- **Black-screenshot failure mode diagnosed and fixed.** `import -window <id>`
+  under Xvfb returned all-black or partly-black frames. Cause: plain X11 has
+  no compositing, so pixels of an occluded window region are not stored
+  anywhere and the capture reads empty framebuffer. Verified that `Xvfb +bs`
+  does NOT help (the client must request backing store; GTK3 does not), that
+  `xcompmgr` fixes it completely, and that raise-then-capture or root+crop
+  work as fallbacks. A 100%-black frame means nothing was mapped — usually a
+  dead application — and must never be reported as evidence. Full behaviour
+  matrix, the fix, the validation check, and two related traps (`windowactivate`
+  needs a WM; `--run` cannot show dialogs) documented in Rule 24C under
+  "Screenshot capture under Xvfb"; openbox/xcompmgr/xdotool/imagemagick added
+  to the STEP 2B install step.
+
+**Gate logic (contradictions that made gate-compliance scoring ill-defined):**
+- **C3 — AUTO domain table said "Rule 28 A–K."** The whole point of 13.9.4 was
+  promoting the font-state invariant to sub-rule L; the AUTO check — the *only*
+  compliance check when gates are suppressed — still keyed on the pre-fix list,
+  so AUTO would re-ship exactly the defect 13.9.4 closed. Now A–L.
+- **C4 + extended-thinking retirement — Phase 3B reworked as model-conditional.**
+  HARD GATE said "continue in the same turn if no thinking change is
+  recommended"; Phase 3B said "wait for GO — this is a hard gate." Both were
+  marked hard and could not both be obeyed. Compounding this, extended thinking
+  as a user-facing toggle was retired in Opus 4.8, so the gate's on/off
+  vocabulary no longer described reality. Resolution: the complexity score is
+  retained unchanged, but its *reporting* is now model-conditional — on toggle
+  models (4.6/4.7) it recommends thinking on/off and a recommended **change**
+  opens the wait; on effort models (4.8+) it is an advisory reasoning-effort
+  recommendation and opens **no wait**. Gate-behavior table added; HARD GATE,
+  Rule 31 thinking-gates block, and both SELF-AUDIT templates synced.
+- **C5 — the STEP 1 menu offered a forbidden combination.** It advertised "AUTO
+  … Combines with SANDBOX and DEBUGGING" while MP:638 declares AUTO and
+  DEBUGGING mutually exclusive. A user replying "AUTO DEBUGGING" per the menu
+  invoked an undefined state. Menu corrected with the reason stated inline.
+- **M1 — DEBUGGING mode had no defining section.** STEP 1 sold it, STEP 2A/2B/2C
+  defined SCAFFOLD/SANDBOX/AUTO, and nothing handled "user replies DEBUGGING"
+  (STEP 4 triggers on an error report, not the keyword, and never states the
+  approval-for-any-changes property). Added **STEP 2D** with the five behaviors
+  the STEP 1 text promises.
+- **M2 — VERBOSE was silently cancelled by GO.** GO is the proceed keyword at
+  every gate, so a VERBOSE user replying GO at the thinking gate reverted to
+  SPARSE unintentionally. GO/EXECUTE no longer change compression mode; SPARSE
+  is the sole return keyword.
+- **M5 — AUTO domain table had no file-output/GUI/UX row.** With SELF-AUDIT
+  suppressed in AUTO, Rules 26/27 (file safety), 18/19/20 (GUI derivation), and
+  33/App F had no compliance check at all — an AUTO batch script could hardcode
+  paths and overwrite files with nothing firing. Row added.
+- **M6 — dangling "I know the following commands:"** in the mandated verbatim
+  STEP 1 response now reads "I understand the following mode keywords:".
+
+**SELF-AUDIT templates (M3):**
+- Added `File output (26,27)` line items to **both** templates. The 13.9.4
+  evidence rule names file-output safety as a silent-failure item requiring
+  citation, but neither template had a slot, so the requirement could never
+  fire. Also added Rule 4B (object preservation) and Rule 37 to the compressed
+  template, added 5E to the compressed Syntax line, and de-duplicated the
+  twice-listed "No unverified commitments" item in the verbose template.
+
+**Source-of-truth hygiene:**
+- **M7 —** `BEST_PRACTICES_DRAWING.txt` said "NEVER use `Marks left:`/`Marks
+  bottom:`" and its very next "# CORRECT:" example used both. Example rewritten
+  with the `@emlDrawAlignedMarks*` nice-number calls.
+- **M8 —** Demo font-state House Rule ("set `demo Font size:` exactly once at
+  initialization") flagged the mandatory three-line per-frame reset required by
+  COMMANDS_DemoWindow and BEST_PRACTICES_DEMO_WINDOW as a violation. Reworded to
+  "one fixed value, re-asserted via the three-line reset; never a different value."
+- **M15 —** the library stopped violating its own prohibition list: 37×
+  `+=` in `eml-vibrato-procedures.txt` rewritten to `x = x + n`; 2× `elif` in
+  `eml-inferential.txt` normalized to `elsif` (the other 154 branches already
+  used `elsif`). These files are pasted into model context as exemplars.
+- **M16 —** Appendix D: §9's dangling `HANDOFF_A2_Batch_Analyzer.md §4` pointer
+  repointed to §10 (which exists to replace it); §5B's "differs on three values"
+  corrected to five (time averaging 0.01 vs 0.02 and quefrency averaging 0.001
+  vs 0.0005 were missing); `"Parabolic"` normalized to verified `"parabolic"`.
+- Catalogue §3 footer count corrected 369 → 365 (matches its own header and the
+  actual entry count).
+
+**Publication hygiene:**
+- **M14 — license incoherence resolved.** Eight `eml-*` headers declared
+  "Creative Commons Share-Alike" and one declared "Creative Commons
+  Non-Commercial with Attribution" — CC-NC is incompatible with GPL and with the
+  other files. All normalized to GPL-3.0-or-later, matching the repo and MP.
+- **M17 —** `praatgen_references_complete.md` no longer stamps v13.5; MP routes
+  script header attribution through this file, so generated scripts were
+  self-citing a stale version. Now version-agnostic. Praat source repo cite
+  corrected (`praat/praat`, with the website repo listed separately).
+- **T3 —** `changlog` typo + filename; jammed Table/Strings retrieval rows split;
+  duplicated STEP 2 heading removed; stale "(Turn 2 only)" labels reconciled with
+  the Turn-2/3 split; VERBOSE scope wording aligned (58 vs 123); duplicate 13.6
+  changelog entry disambiguated as 13.6b; command-count claims reconciled across
+  README/MP/catalogue (3,300+ registered; 365 Formula functions); PKB snapshot
+  date synced; `pub/tmp` placeholder deleted; last `[NEEDS PASTE]` placeholder
+  replaced with an explicit not-verified warning; duplicated Formant "Draw tracks
+  vs. Speckle" note collapsed to a pointer; doubled CONFIDENCE_FIGURES footer
+  deduped and its TODO-049/050 residue marked closed; legacy "EML Praat
+  Assistant" branding replaced in HANDOFF_TEMPLATE, DEVELOPER_MODE_ADDON, and
+  eml-batch-process; `BEST_PRACTICES_DEMO_WINDOW.txt` → `.md` references fixed.
+- **Duplicate source file resolved:** `eml-annotation-procedures.praat` and
+  `eml-annotation-procedures.praat.txt` were byte-identical. Consolidated to
+  `eml-annotation-procedures.txt`, matching every sibling.
+
+**Model recommendations updated:** Opus 5 preferred; Opus 4.8 performs well;
+Opus 4.6 with Extended Thinking remains the original validation baseline and the
+token-conscious choice; Opus 4.7 noted as agentic and superseded. **Sonnet and
+Haiku are now explicitly unsupported** rather than "may work for simple scripts."
+The "PraatGen will tell you when you can safely turn thinking off" promise is
+retained only for toggle models, where it is still true.
+
+**Effort guidance is deliberately soft, and labelled provisional.** On effort
+models the prompt states only what is currently supportable: there does not
+appear to be an advantage to setting effort higher than the default ("high");
+setting it higher can actually derail a project, largely through context
+exhaustion; there is some evidence that effort may be set lower once the
+COMMAND PLAN is established; users should experiment and find what works for
+their own workflows. Phase 3B's line is explicitly not to be presented as a
+settled recommendation, and the Rule 31 phase-value table carries a note that
+it is not a licence to raise effort. Revisit when there is better evidence.
+
+**Carried forward, not fixed:** C6 (PulseAudio startup was commented out in both
+the SANDBOX install step and the Rule 24C test template — now uncommented) and
+C7 (UTF-16BE `eml-batch-process.txt`) were both resolved; C7 at source before
+this pass. Standing caution on C7: any editor round-trip can silently restore
+UTF-16/BOM — re-check with `file` after manual edits.
+
 ### 13.9.4 — 4 June 2026
 
 **MP edits (this pass):**
@@ -128,6 +472,8 @@
 - NOTE: 13.9.2 (3 Jun 2026) is not logged in this file — the entry jumps from
   13.9.1 to 13.9.3. 13.9.2 introduced the fetch-time install resolver and the
   initial 4.8 STEP-1 wording; backfill its entry if a complete record matters.
+- NOTE: there is likewise no 13.9.0 entry. 13.9.1 is the first 13.9.x entry
+  logged here. Both gaps are known and deliberate-by-omission, not data loss.
 
 ### 13.9.1 — 17 May 2026
 
@@ -428,7 +774,7 @@ be cleaned up. Starting state is a contract.
 - **README.md:** Version 0.9.2-beta.14, Opus 4.6 requirement (not
   4.7 — context tracking failures), PKB snapshot date updated.
 
-### 13.6 — 22 April 2026
+### 13.6b — 22 April 2026 (same-day second pass)
 - **Model language softened:** "Required model" → "Recommended model."
   Opus 4.6 ET remains the validated choice. Sonnet and Opus 4.7 acknowledged
   as potentially viable for simple projects with caveat that advanced

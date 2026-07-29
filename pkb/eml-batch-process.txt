@@ -10,7 +10,7 @@
 # Version: 1.1
 #
 # ATTRIBUTION
-# Framework: EML Praat Assistant by Ian Howell
+# Framework: EML PraatGen by Ian Howell
 #            Embodied Music Lab — www.embodiedmusiclab.com
 # Code generation: Claude (Anthropic)
 # Script author: [Your name here] — created and verified by this individual
@@ -31,6 +31,11 @@
 # ============================================================================
 # Procedures
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/scripts/eml-batch-process.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
 procedure emlBuildDateStamp
     .vec# = date# ()
@@ -105,9 +110,11 @@ repeat
         folder: "TextGrid folder", textGrid_folder$
         natural: "Tier number", string$ (tier_number)
         word: "Target label", target_label$
+        comment: ""
+        boolean: "Clear Info window", 0
     clicked = endPause: "Quit", "Standard", "Run", 3, 0
     if clicked = 1
-        exitScript: "User quit."
+        exitScript
     elsif clicked = 2
         # Reset analysis parameters to canonical defaults
         mean_F0 = 1
@@ -178,7 +185,7 @@ beginPause: "Batch range"
 clicked = endPause: "Quit", "Run", 2, 0
 if clicked = 1
     removeObject: fileListId
-    exitScript: "User quit."
+    exitScript
 endif
 
 # ============================================================================
@@ -248,7 +255,11 @@ sentinelPath$ = sound_folder$ + "/STOP.txt"
 # Info window header
 # ============================================================================
 
-writeInfoLine: "Batch Voice Analysis"
+if clear_Info_window
+    writeInfoLine: ""
+endif
+
+appendInfoLine: "Batch Voice Analysis"
 line$ = "Sound folder: " + sound_folder$
 appendInfoLine: line$
 if use_TextGrids
@@ -415,7 +426,7 @@ for iFile from start_from_file to end_at_file
         if needsPointProcess
             selectObject: segId
             plusObject: rccPitchId
-            ppId = To PointProcess (cc)
+            ppId = noprogress To PointProcess (cc)
         endif
 
         # --- Jitter (APPENDIX_D S3B) ---
@@ -435,7 +446,7 @@ for iFile from start_from_file to end_at_file
         # --- Mean intensity (APPENDIX_D S6) ---
         if mean_intensity
             selectObject: segId
-            intId = To Intensity: 100, 0.0, "yes"
+            intId = noprogress To Intensity: 100, 0.0, "yes"
             selectObject: intId
             intVal = Get mean: 0, 0, "dB"
         endif
@@ -456,7 +467,7 @@ for iFile from start_from_file to end_at_file
                 ... 5000, 50
             selectObject: cepId
             cppsVal = Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05,
-                ... "parabolic", 0.001, 0.05, "Straight",
+                ... "parabolic", 0.001, 0, "Straight",
                 ... "Robust"
         endif
 
@@ -518,6 +529,19 @@ for iFile from start_from_file to end_at_file
                     line$ = "  WARNING: CPPS = "
                         ... + fixed$ (cppsVal, 2)
                         ... + " dB — outside range (0 to 25)."
+                    appendInfoLine: line$
+                    nWarnings = nWarnings + 1
+                endif
+            endif
+        endif
+
+        # --- Mean intensity plausibility (APPENDIX_D S7: 20-120 dB) (M6) ---
+        if mean_intensity
+            if intVal <> undefined
+                if intVal < 20 or intVal > 120
+                    line$ = "  WARNING: Mean intensity = "
+                        ... + fixed$ (intVal, 2)
+                        ... + " dB — outside range (20 to 120)."
                     appendInfoLine: line$
                     nWarnings = nWarnings + 1
                 endif
@@ -631,6 +655,7 @@ appendInfoLine: line$
 appendInfoLine: sep$
 appendInfoLine: ""
 appendInfoLine: "Results Table retained in Objects window."
+appendInfoLine: "Run stats or draw graphs from the EML Tools menu."
 
 # Reset sentinel for next run
 @emlInitSentinel: sentinelPath$
@@ -638,4 +663,3 @@ appendInfoLine: "Results Table retained in Objects window."
 # Clean up file list, keep results table
 removeObject: fileListId
 selectObject: resultsId
- 

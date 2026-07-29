@@ -7,6 +7,7 @@
 ---
 
 ## C.1 FORM BLOCKS
+# Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — form:/beginPause numeric-default quoting asymmetry retested; beginPause accepts both forms
 
 Structure:
 
@@ -136,9 +137,16 @@ that was incorrect and has been removed.
 FIRST WORD of a numeric field's label: they place two boxes on one row,
 sharing the remainder of the label. This is the idiom for a range
 (time range, frequency range). Works identically in form: and
-beginPause: — only the default-quoting differs (quoted in form:,
-bare in beginPause:). Verified empirically (parse, render, and variable
-binding), Praat 6.4.67.
+beginPause: — only the default-quoting convention differs (quoted in form:,
+bare by convention in beginPause:). Verified empirically (parse, render, and
+variable binding), Praat 6.4.67.
+
+⚠️ Correction, sandbox-verified Praat 6.6.30, 29 July 2026: the asymmetry is
+ONE-DIRECTIONAL. In `form:`, a bare numeric default is a hard parse error
+(`Only "choice", "optionmenu" and "boolean" fields can take a number`). In
+`beginPause:`, BOTH forms work — a quoted numeric default parses, renders and
+binds correctly. Bare in beginPause: is a house convention, not a requirement,
+and quoted must not be treated as a defect.
 
 form:
 
@@ -266,12 +274,20 @@ available in the calling scope after endPause returns.
 
     beginPause: "Compare k Groups"
         # ... wrapper-specific fields ...
-        @emlWrapperCommonFields
+        @myCommonFields
     clicked = endPause: "Quit", "Run", 2, 0
 
 The procedure body must contain only commands valid inside a beginPause
 block (field declarations, comment:). Nested beginPause inside the
 procedure will error.
+
+⚠️ `@myCommonFields` above is a **placeholder illustrating the pattern**. Earlier
+revisions named `@emlWrapperCommonFields`, which is not shipped in the PKB — so
+a reader could not retrieve it. It may well exist in the EML plugin tree
+(alongside `@emlHandleCommonFields`); this appendix simply cannot vouch for it.
+If you have it locally, use it; otherwise substitute your own shared-field
+procedure. **Unresolved — recheck when the plugin tree and the PKB are next
+reconciled.** See EML_PROCEDURE_REGISTRY.md for what the PKB actually ships.
 
 ---
 

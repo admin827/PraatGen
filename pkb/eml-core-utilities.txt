@@ -8,7 +8,7 @@
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 # Development: Claude (Anthropic)
-# License: Creative Commons Share-Alike
+# License: GPL-3.0-or-later
 #
 # Provides: @emlRankVector, @emlCountIf, @emlSubset, @emlUniqueValues,
 #   @emlFrequency, @emlCumulativeSum, @emlDiff, @emlLag, @emlBinData,
@@ -37,6 +37,11 @@
 #   .sortedValues# — sorted values (ascending)
 #   .sortedIndices# — indices permuted to match sorted order
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-core-utilities.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
 procedure eml_sortPairsByValue: .inputValues#, .inputIndices#
     .n = size (.inputValues#)

@@ -1,4 +1,4 @@
-BEST_PRACTICES_DEMO_WINDOW.txt
+BEST_PRACTICES_DEMO_WINDOW.md
 # Canonical patterns for Demo window applications
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
@@ -744,5 +744,5 @@ BEST_PRACTICES_DEMO_WINDOW.txt
 # pre-computation from beachball to acceptable).
 
 # ============================================================================
-# END OF BEST_PRACTICES_DEMO_WINDOW.txt
+# END OF BEST_PRACTICES_DEMO_WINDOW.md
 # ============================================================================

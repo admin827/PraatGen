@@ -6,12 +6,14 @@
 # explicitly specifies alternatives. If the user specifies alternatives,
 # note the deviation in the SELF-AUDIT.
 #
-# Version: 2.0
+# Version: 2.1
 # Date: 25 February 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — §5B CPPS-vs-dialog-default difference corrected from three to SIX, sandbox-verified against the live dialog (a source-extraction reading had said five; it missed both enum fields); §9 dangling `HANDOFF_A2_Batch_Analyzer.md §4` pointer repointed to §10; `"Parabolic"` normalized to verified `"parabolic"`
 # Source: Praat GUI dialog defaults (verified via screenshots, 25 Feb 2026)
 
 # ============================================================================
 # CRITICAL PRINCIPLES
+# Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — §5B Praat dialog defaults for Get CPPS observed directly in the GUI
 # ============================================================================
 #
 # 1. Parameter names differ between Pitch algorithm variants.
@@ -523,9 +525,37 @@ Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "parabolic", 0.001, 0, "Straight", "
 #   fit method = "Robust"
 #
 # NOTE: These parameters differ from the Praat dialog defaults on
-# three values: Praat defaults use subtract tilt = "yes", quefrency
-# ceiling = 0.05, and fit method = "Robust slow". The Maryn values
-# above are what the clinical CPPS literature consistently uses.
+# SIX values. Praat dialog defaults, SANDBOX-VERIFIED against the actual
+# "PowerCepstrogram: Get CPPS" dialog, Praat 6.6.30 (Linux x64v3),
+# 29 July 2026:
+#
+#   field                            Praat default      Maryn
+#   -------------------------------  -----------------  --------------
+#   subtract trend before smoothing  yes (checked)      no
+#   time averaging window (s)        0.02               0.01
+#   quefrency averaging window (s)   0.0005             0.001
+#   peak search pitch floor (Hz)     60.0               60      (same)
+#   peak search pitch ceiling (Hz)   330.0              330     (same)
+#   tolerance (0-1)                  0.05               0.05    (same)
+#   interpolation                    parabolic          parabolic (same)
+#   trend line quefrency floor (s)   0.001              0.001   (same)
+#   trend line quefrency ceiling (s) 0.05               0 (= no upper bound)
+#   trend type                       Exponential decay  Straight
+#   fit method                       Robust slow        Robust
+#
+# As a Praat-default call that would be (do NOT use for clinical work):
+#   Get CPPS: "yes", 0.02, 0.0005, 60, 330, 0.05, "parabolic",
+#       ... 0.001, 0.05, "Exponential decay", "Robust slow"
+#
+# History of this note: it originally said "three values", was corrected
+# to five during the v14.0.0 audit from a source-extraction reading, and
+# is now six on direct observation of the dialog. The two the extraction
+# missed were the enum fields (trend type, fit method) — the catalogue
+# exposes those fields but not their default values. Treat catalogue enum
+# defaults as unknown, not absent.
+#
+# The Maryn values above are what the clinical CPPS literature
+# consistently uses.
 #
 # ERRATUM (21 April 2026): Prior version of this section had the
 # Praat dialog defaults labeled as "Maryn et al." parameters. Corrected
@@ -626,8 +656,9 @@ To Intensity: 100, 0.0, "yes"
 # those were Praat dialog defaults, not Maryn's clinical parameters.
 # Corrected 21 April 2026.
 #
-# For the complete AVQI parameter specification, see the Script A2
-# handoff document (HANDOFF_A2_Batch_Analyzer.md §4).
+# For the complete AVQI parameter specification, see Section 10 below
+# (AVQI COMPLETE SPECIFICATION), extracted directly from the canonical
+# Phonanium script.
 
 ---
 
@@ -698,7 +729,7 @@ To Intensity: 100, 0.0, "yes"
 #   maximum frequency = 5000 Hz (same as clinical)
 #   pre-emphasis from = 50 Hz  (same as clinical)
 
-# Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "Parabolic", 0.001, 0, "Straight", "Robust"
+# Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "parabolic", 0.001, 0, "Straight", "Robust"
 #
 #   subtract tilt before smoothing = "no"
 #   time averaging window = 0.01 s
@@ -706,7 +737,7 @@ To Intensity: 100, 0.0, "yes"
 #   pitch floor = 60 Hz
 #   pitch ceiling = 330 Hz
 #   tolerance = 0.05
-#   interpolation = "Parabolic"
+#   interpolation = "parabolic"
 #   tilt line quefrency range floor = 0.001
 #   tilt line quefrency range ceiling = 0
 #   line type = "Straight"

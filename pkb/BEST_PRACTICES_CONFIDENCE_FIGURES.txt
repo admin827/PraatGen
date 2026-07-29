@@ -5,8 +5,9 @@
 #
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
-# Version: 2.0
+# Version: 2.1
 # Date: 25 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — stale `EML_DRAWING_PROCEDURES*` references repointed to `eml-graph-procedures.txt`; doubled end-of-file footer deduplicated; TODO-049/050 residue marked closed
 # Provenance: Patterns extracted from CAPE-V Auto-Segmenter v2.3 and
 #   validated on real data (5 Mar 2026).
 #
@@ -29,7 +30,7 @@
 #
 # v1.1 changes (from v1.0):
 #   - All EML procedure references updated to @eml namespace
-#     (matches EML_DRAWING_PROCEDURES_v2_4.txt and plugin file)
+#     (matches eml-graph-procedures.txt and plugin file)
 #   - §1B erratum marked RESOLVED (Ltas path corrected in v2.3/v2.4)
 #   - §9 procedure list updated to @eml names
 # ============================================================================
@@ -150,7 +151,7 @@
 # The Ltas object stores values in dB natively, so its Matrix
 # conversion yields dB values that match what Spectrum Draw: expects.
 #
-# ERRATUM (RESOLVED): EML_DRAWING_PROCEDURES v2.3 (KB, 5 Mar 2026)
+# ERRATUM (RESOLVED): EML drawing procedures v2.3 (KB, 5 Mar 2026)
 # originally had a direct Matrix path for Spectrum that returned raw
 # power instead of dB. This was corrected in the KB v2.3 update
 # (5 Mar 2026) and carried forward to v2.4. The Ltas path shown
@@ -312,12 +313,12 @@
 #
 # v2.3: Legend text drawn directly over data area; collides with
 #   contour, gridlines, or reference lines.
-# v2.4: Identified but not fixed (TODO-049/050).
+# v2.4: Identified but not fixed at the time (TODO-049/050 — since closed).
 # v2.6: @emlDrawLegend in eml-graph-procedures.praat v2.4 provides
 #   filled background rectangle with border. Procedure uses global
 #   arrays (legendN, legendColor$[], legendLabel$[]) and is called
-#   with axis bounds and corner position. See EML_DRAWING_PROCEDURES
-#   v2.4 for signature and documentation.
+#   with axis bounds and corner position. See eml-graph-procedures.txt
+#   (registry: Graphs: Core) for signature and documentation.
 ```
 #
 # Per-measure instantiations of this template: §10.3–§10.6.
@@ -332,7 +333,7 @@
 # apply a 10% buffer beyond data extremes, rounded to a human-friendly
 # step size.
 #
-# Algorithm (@emlComputeAxisRange from EML_DRAWING_PROCEDURES_v2_4.txt):
+# Algorithm (@emlComputeAxisRange from eml-graph-procedures.txt):
 #
 #   @emlComputeAxisRange: .dataMin, .dataMax, .roundTo, 0
 #   .yLo = emlComputeAxisRange.axisMin
@@ -371,7 +372,7 @@
 # must be sanitized before passing to Text top:, Text left:, Text:,
 # or One mark: commands.
 #
-# Use @emlSanitizeLabel from EML_DRAWING_PROCEDURES_v2_4.txt:
+# Use @emlSanitizeLabel from eml-graph-procedures.txt:
 #
 #   @emlSanitizeLabel: .base$ + " " + .token$
 #   .title$ = emlSanitizeLabel.result$ + " — F0"
@@ -1286,10 +1287,6 @@
 #
 # This ensures v2.2-identical behaviour when the flag is OFF.
 
-
-# ============================================================================
-# END OF BEST_PRACTICES_CONFIDENCE_FIGURES.txt
-# ============================================================================
 
 # ============================================================================
 # END OF BEST_PRACTICES_CONFIDENCE_FIGURES.txt

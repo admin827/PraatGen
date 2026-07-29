@@ -1,6 +1,7 @@
 # EML Procedure Guide
-# Version: 1.2
+# Version: 1.3
 # Date: 8 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — dead `@emlVibratoDrawFigure` / `vibrato-procedures-manual.md` references removed; "Regression: not yet implemented" clarified as workflow wiring, with a pointer to the registry quarantine section
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 #
@@ -16,26 +17,58 @@
 #
 # VERSIONING
 # This guide reflects the following source file versions:
-#   eml-graph-procedures.praat      v3.20
-#   eml-draw-procedures.praat       v1.16
-#   eml-annotation-procedures.praat v3.15
+#   eml-graph-procedures.praat      v3.21
+#   eml-draw-procedures.praat       v1.18
+#   eml-annotation-procedures.praat v3.17
 #   eml-core-utilities.praat        v1.0
-#   eml-core-descriptive.praat      v1.0
-#   eml-extract.praat               v1.2
-#   eml-output.praat                v1.3
+#   eml-core-descriptive.praat      v1.1
+#   eml-extract.praat               v1.4
+#   eml-output.praat                v1.7
 #   eml-inferential.praat           v1.2
-#   eml-vibrato-procedures.praat    v2.0
-#   eml-demo-procedures.praat       v1.2
+#   eml-analysis.praat              (new to PKB, 29 Jul 2026)
+#   eml-vibrato-procedures.praat    v2.0  (16 procs incl. drawing)
 #   eml-batch-process.praat         v1.1
 #   eml-test-helpers.praat          v1.0
-#   eml-wizard.praat                v1.4
+#   eml-egg-procedures.praat        v1.0
 #   eml-graphs.praat                v3.0
-#   eml-graphs-form.praat           v1.4
+#   eml-graphs-form.praat           v1.9
+#
+#   These are the PLUGIN's version numbers, carried verbatim in each PKB
+#   file header. A mismatch between the two means the PKB has drifted.
+#
+#   NOT shipped in the PKB: eml-lmm.praat (mixed models, not ready) with
+#   its private numerical dependencies eml-linalg.praat and
+#   eml-optimizer.praat; and eml-wizard.praat (vestigial). Note that the
+#   @emlWizardExplain* helpers ARE shipped — they live in eml-output.praat,
+#   a core file, not in the wizard script.
 #
 # When a source file is updated, bump its version here. A mismatch
 # between this table and the source file header signals the guide
 # needs review.
 
+# ====================================================================
+# 0. DELIVERY RULE — SELF-CONTAINED SCRIPTS ONLY (hard)
+# ====================================================================
+#
+# Never assume the user has the EML plugin installed. Generated scripts
+# must run on a bare Praat installation.
+#
+# When a script uses a library procedure, COPY THE PROCEDURE BODY into
+# the delivered artifact — either pasted at the bottom of the script
+# itself (default), or in a folder shipped alongside it and included by
+# a script-relative path. Copy transitively: whatever the copied
+# procedure calls comes too, until every @-call resolves inside the
+# delivery.
+#
+# NEVER emit an `include` line pointing at the plugin tree
+# (`include ../graphs/eml-graph-procedures.praat` and friends). Those
+# lines exist inside the plugin sources and are plugin-internal; copying
+# one into generated code produces a script that fails with
+# "Cannot open file" on any machine without the plugin installed.
+#
+# See Master Prompt retrieval protocol step 12 for the two accepted
+# delivery shapes and the SELF-AUDIT requirement.
+#
 # ====================================================================
 # 1. DRAWING METHODOLOGY
 # ====================================================================
@@ -215,7 +248,11 @@
 #       ├── Both continuous
 #       │   ├── Linear, normal → @emlPearsonCorrelation
 #       │   └── Monotonic or non-normal → @emlSpearmanCorrelation
-#       └── (Regression: not yet implemented)
+#       ├── Linear, OLS      → @emlLinearRegression
+#       │                        (report via @emlReportRegressionAnalysis)
+#       └── Robust / outliers → @emlTheilSen
+#           For a regression line drawn on a scatter plot,
+#           @emlBridgeCorrelation + @emlDrawRegressionLine still apply.
 #
 # 2.2 PARAMETRIC VS. NONPARAMETRIC
 #
@@ -611,8 +648,10 @@
 # "Analyze vibrato"
 #   → Vibrato family — full pipeline from @emlVibratoPitchSetup
 #     through @emlVibratoSummary
-#   → Drawing: @emlVibratoDrawFigure for complete 8-panel output
-#   → See vibrato-procedures-manual.md for step-by-step guide
+#   → Drawing: @emlVibratoDrawFigure for complete 8-panel output.
+#     Component panels: @emlVibratoDrawPitchIntensity,
+#     @emlVibratoDrawCoV, @emlVibratoDrawDualScatter,
+#     @emlVibratoDrawSummaryTable.
 #
 # 5.7 TESTING TASKS
 #
@@ -626,11 +665,17 @@
 #
 # "Build a tutorial / interactive Demo window display"
 #   → Demo Window family
-#   → @emlResetSans + @emlClearPage to initialize
+#   → Demo window: drive it directly from COMMANDS_DemoWindow.txt (syntax,
+#     the font-metric contamination bug, Text special alignment, animation
+#     input, lifecycle) and BEST_PRACTICES_DEMO_WINDOW.md (canonical
+#     patterns). There is no EML layout-helper library in the PKB — write
+#     layout from the documented demo commands.
 #   → @emlPlace* procedures for typographic layout
-#   → @emlDrawNav for navigation bar
-#   → @emlWrapText for paragraph text
-#   → @emlPlaceCodeLine for monospace code examples
+#   → Demo window: drive it directly from COMMANDS_DemoWindow.txt (syntax,
+#     the font-metric contamination bug, Text special alignment, animation
+#     input, lifecycle) and BEST_PRACTICES_DEMO_WINDOW.md (canonical
+#     patterns). There is no EML layout-helper library in the PKB — write
+#     layout from the documented demo commands.
 
 # ====================================================================
 # 6. SCRIPT GENERATION MODEL

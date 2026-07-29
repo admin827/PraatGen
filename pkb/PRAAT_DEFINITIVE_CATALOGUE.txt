@@ -10,6 +10,28 @@
 #
 #   version 3 — 8 April 2026
 #
+# ⚠️ STALENESS AND COMPLETENESS BANNER (read before using as a fallback)
+#
+#   This catalogue was extracted from Praat 6.4.62. Other PKB files have
+#   since been verified against later builds (6.4.65, 6.4.67, 6.6.30).
+#   Where they disagree, the object-specific COMMANDS_*.txt file governs —
+#   it carries the newer sandbox verification stamp.
+#
+#   This catalogue is NOT exhaustive. Known gaps:
+#     - Some object types appear only in the §1 class hierarchy and expose
+#       no commands in §2. Electroglottogram is the clear case: the tree
+#       line "Electroglottogram -> Sound -> Vector -> Matrix" is present,
+#       but the command dispatcher exposes no actions here. See
+#       COMMANDS_Electroglottogram.txt.
+#     - Some query commands are under-specified relative to the COMMANDS
+#       files: the from-time/to-time fields on `Get mean`, `Get minimum`,
+#       and `Get quantile` are omitted in the Formant and Pitch blocks but
+#       correctly documented in COMMANDS_Formant.txt and COMMANDS_Pitch.txt.
+#
+#   Therefore: a command or object NOT FOUND here is not proof of absence.
+#   An empty or missing result for a type that has its own COMMANDS file
+#   means "check the COMMANDS file," not "the capability does not exist."
+#
 # Command names in §2 are SCRIPTING names — the exact strings that
 # Praat's interpreter matches when reading a script. These come from
 # the registration layer (praat_addAction calls), NOT from FORM dialog
@@ -89,6 +111,20 @@ DTW -> Matrix
 #
 # [alias] = legacy name that still works but is not the current name.
 # Defaults are Praat source code defaults, not clinical recommendations.
+#
+# ⚠️ KNOWN EXTRACTION GAP — time-range fields on query commands.
+#   The parameter extractor did not capture the from-time/to-time REAL
+#   fields on several interval-query commands. Affected blocks include
+#   Formant `Get mean`, `Get minimum`, `Get maximum`, `Get quantile`,
+#   `Get standard deviation` and the corresponding Pitch queries: each
+#   actually takes a time range (commonly "Time range (s) = 0.0" to
+#   "0.0 (= all)") in addition to the fields listed here.
+#
+#   Writing one of these calls from the arity shown below will drop the
+#   time-range arguments and produce a runtime error or a whole-object
+#   measurement where an interval was intended. COMMANDS_Formant.txt and
+#   COMMANDS_Pitch.txt carry the correct, sandbox-verified signatures —
+#   use them for any query command that has a COMMANDS file entry.
 ################################################################################
 
 ======================================================================
@@ -13494,7 +13530,7 @@ Total parameter fields: 5440
 # §3 FORMULA ENGINE FUNCTIONS
 # Source: sys/Formula.cpp (Praat 6.4.62)
 # Cross-referenced with APPENDIX_B_FUNCTIONS.txt v2 (8 April 2026)
-# Total: 369 unique function names
+# Total: 365 unique function names
 #
 # Functions are callable inside Formula: expressions (prefixed with ~)
 # and in script-level expressions. Items marked [attr] are Formula-context

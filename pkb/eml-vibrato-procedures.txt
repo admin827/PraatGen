@@ -4,12 +4,13 @@
 # Author: Ian Howell & Theodora Nestorova, Embodied Music Lab
 #         www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# License: Creative Commons Non-Commercial with Attribution
+# License: GPL-3.0-or-later
 # Version: 2.0
 # Date: 18 March 2026
 #
 # Vibrato analysis procedures for rate, half-extent, smoothing (Nestorova
-# et al. 2024), coefficient of variation time series, and vibrato jitter.
+# et al. 2024), coefficient of variation time series, vibrato jitter,
+# and 8-panel publication figure drawing.
 #
 # This file lives at: vibrato/eml-vibrato-procedures.praat
 # Include from wrapper scripts via: include ../vibrato/eml-vibrato-procedures.praat
@@ -22,14 +23,24 @@
 #   @emlVibratoSelectIntervals   — checkbox dialog for interval selection
 #   @emlVibratoAxisRange         — compute nice-number axis bounds
 #   @emlVibratoAutoFilename      — timestamped filename generation
-#   @emlVibratoPitchSetup        — pitch extraction + smoothing + PointProcess
-#   @emlVibratoDetectCycles      — peak/trough detection from PointProcess
+#   @emlVibratoPitchSetup        — pitch extraction + smoothing + audio PointProcess
+#   @emlVibratoDetectCycles      — hybrid: frame-walk timing + audio PP Hz
 #   @emlVibratoInsertHalfCycles  — expand table with half-cycle rows
 #   @emlVibratoSmooth            — pairwise averaging + rolling window
 #   @emlVibratoFilter            — threshold-based include/exclude split
 #   @emlVibratoJitter            — vibrato regularity from peak-time PP
 #   @emlVibratoSummary           — aggregate statistics
+#   @emlVibratoDrawDualScatter   — reusable dual-axis scatter panel
+#   @emlVibratoDrawCoV           — coefficient of variation time series
+#   @emlVibratoDrawPitchIntensity — dual-axis pitch + intensity + cycle overlay
+#   @emlVibratoDrawSummaryTable  — rendered statistics table
+#   @emlVibratoDrawFigure        — master: full 8-panel figure
 # ============================================================================
+# PKB copy: flattened from plugin vibrato/eml-vibrato-procedures.praat (supplied separately, 29 Jul 2026)
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
 
 # ----------------------------------------------------------------------------
@@ -635,7 +646,9 @@ endproc
 
 # ----------------------------------------------------------------------------
 # @emlVibratoPitchSetup
-# From a mono Sound, create Pitch, smoothed Pitch, and PointProcesses.
+# From a mono Sound, create Pitch, smoothed Pitch, and audio PointProcess.
+# The smoothed Pitch is used for peak/trough timing detection.
+# The audio PointProcess is used for precise Hz measurement at detected times.
 #
 # Arguments:
 #   .soundId      — Sound object ID (must be mono)
@@ -645,9 +658,8 @@ endproc
 #
 # Outputs:
 #   .pitchId        — raw Pitch (filtered autocorrelation)
-#   .pitchSmoothId  — smoothed Pitch (optionally interpolated first)
-#   .ppSmoothId     — PointProcess from smoothed Pitch
-#   .ppAudioId      — PointProcess (periodic, peaks) from Sound
+#   .pitchSmoothId  — smoothed Pitch (for timing detection and drawing)
+#   .ppAudioId      — PointProcess (periodic, peaks) from Sound for Hz measurement
 #   .lowerPitchST   — floor of minimum pitch in semitones re 440 Hz
 #   .higherPitchST  — ceiling of maximum pitch in semitones re 440 Hz
 # ----------------------------------------------------------------------------
@@ -679,12 +691,7 @@ procedure emlVibratoPitchSetup: .soundId, .lowPitch, .highPitch, .interpolate
         .pitchSmoothId = selected ()
     endif
 
-    # PointProcess from smoothed pitch (for cycle timing)
-    selectObject: .pitchSmoothId
-    To PointProcess
-    .ppSmoothId = selected ()
-
-    # PointProcess from audio (for precise Hz measurement via periods)
+    # PointProcess from audio waveform (for precise Hz measurement)
     selectObject: .soundId
     To PointProcess (periodic, peaks): .lowPitch, .highPitchDoubled,
     ... "yes", "no"
@@ -694,12 +701,13 @@ endproc
 
 # ----------------------------------------------------------------------------
 # @emlVibratoDetectCycles
-# Walk smoothed PointProcess intervals, detect peaks and troughs via
-# 3-neighbor frequency comparison, measure Hz from audio PointProcess.
+# Detect vibrato peaks and troughs using a hybrid approach:
+#   Timing: frame-walk on smoothed Pitch with parabolic interpolation
+#   Hz: 3-period average from audio PointProcess (bypasses Pitch windowing)
 #
 # Arguments:
-#   .ppSmoothId     — smoothed pitch PointProcess
-#   .ppAudioId      — audio PointProcess (for Hz measurement)
+#   .pitchSmoothId  — smoothed Pitch (for timing: where are the peaks?)
+#   .ppAudioId      — audio PointProcess (for Hz: what is the true frequency?)
 #   .intensityId    — Intensity object
 #   .avgIntensity   — mean intensity (dB)
 #   .silThreshold   — dB below mean to gate out
@@ -708,19 +716,19 @@ endproc
 #   .tableId        — Table with full column schema
 #   .nCycles        — number of detected full cycles (peak-trough pairs)
 # ----------------------------------------------------------------------------
-procedure emlVibratoDetectCycles: .ppSmoothId, .ppAudioId, .intensityId,
+procedure emlVibratoDetectCycles: .pitchSmoothId, .ppAudioId, .intensityId,
     ... .avgIntensity, .silThreshold
 
-    # Compute interval frequencies from smoothed PointProcess
-    selectObject: .ppSmoothId
-    .numPoints = Get number of points
+    # Get frame grid from smoothed Pitch
+    selectObject: .pitchSmoothId
+    .nFrames = Get number of frames
+    .timeStep = Get time step
 
-    for .i to .numPoints - 1
-        selectObject: .ppSmoothId
-        .tStart[.i] = Get time from index: .i
-        .tEnd = Get time from index: .i + 1
-        .iDur[.i] = .tEnd - .tStart[.i]
-        .iFreq[.i] = 1 / .iDur[.i]
+    # Build F0 array from smoothed Pitch (for direction tracking)
+    for .i to .nFrames
+        selectObject: .pitchSmoothId
+        .frameTime[.i] = Get time from frame number: .i
+        .frameF0[.i] = Get value in frame: .i, "Hertz"
     endfor
 
     # Create output table with full column schema
@@ -740,81 +748,145 @@ procedure emlVibratoDetectCycles: .ppSmoothId, .ppAudioId, .intensityId,
     .tableId = selected ()
     .nCycles = 0
 
-    .peakCounter = 0
-    .troughCounter = 0
+    # Direction tracking state
+    # .dir: 0 = unknown, 1 = rising, -1 = falling
+    .dir = 0
+    .prevDefinedF0 = 0
+    .prevDefinedFrame = 0
 
-    # Scan for peaks and troughs using 3-neighbor comparison
-    for .i to .numPoints - 3
-        selectObject: .intensityId
-        .intCheck = Get value at time: .tStart[.i], "cubic"
+    # Walk frames, detect direction changes
+    for .i from 2 to .nFrames
+        .f0 = .frameF0[.i]
 
-        if .intCheck > .avgIntensity - .silThreshold
-            # Peak detection: freq[i+1] is local maximum
-            if .iFreq[.i + 1] > .iFreq[.i] and .iFreq[.i + 1] > .iFreq[.i + 2]
-                .peakCounter += 1
-                .peakTime = .tStart[.i + 1]
-
-                # Measure Hz from 3-period average of audio PointProcess
-                selectObject: .ppAudioId
-                .lowIdx = Get low index: .peakTime
-                .highIdx = Get high index: .peakTime
-
-                .lt1 = Get time from index: .lowIdx - 1
-                .ht1 = Get time from index: .highIdx - 1
-                .lt2 = Get time from index: .lowIdx
-                .ht2 = Get time from index: .highIdx
-                .lt3 = Get time from index: .lowIdx + 1
-                .ht3 = Get time from index: .highIdx + 1
-
-                .peakHz = 1 / (((.ht1 - .lt1) + (.ht2 - .lt2)
-                ... + (.ht3 - .lt3)) / 3)
-
-                # Get intensity at peak
-                selectObject: .intensityId
-                .peakInt = Get value at time: .peakTime, "cubic"
-
-                # Write peak row to table
-                selectObject: .tableId
-                Append row
-                .nRows = Get number of rows
-                Set numeric value: .nRows, "Cycle#", .nRows
-                Set numeric value: .nRows, "Intensity(dB)", .peakInt
-                Set numeric value: .nRows, "Peak(Hz)", .peakHz
-                Set numeric value: .nRows, "PeakRe440(cents)",
-                ... 1200 * log2 (.peakHz / 440)
-                Set numeric value: .nRows, "PeakTime(s)", .peakTime
-            endif
-
-            # Trough detection: freq[i+1] is local minimum
-            if .iFreq[.i + 1] < .iFreq[.i] and .iFreq[.i + 1] < .iFreq[.i + 2]
-                .troughCounter += 1
-                .troughTime = .tStart[.i + 1]
-
-                # Measure Hz from 3-period average of audio PointProcess
-                selectObject: .ppAudioId
-                .lowIdx = Get low index: .troughTime
-                .highIdx = Get high index: .troughTime
-
-                .lt1 = Get time from index: .lowIdx - 1
-                .ht1 = Get time from index: .highIdx - 1
-                .lt2 = Get time from index: .lowIdx
-                .ht2 = Get time from index: .highIdx
-                .lt3 = Get time from index: .lowIdx + 1
-                .ht3 = Get time from index: .highIdx + 1
-
-                .troughHz = 1 / (((.ht1 - .lt1) + (.ht2 - .lt2)
-                ... + (.ht3 - .lt3)) / 3)
-
-                # Attach trough to current peak row
-                selectObject: .tableId
-                .nRows = Get number of rows
-                if .nRows > 0
-                    Set numeric value: .nRows, "Trough(Hz)", .troughHz
-                    Set numeric value: .nRows, "TroughRe440(cents)",
-                    ... 1200 * log2 (.troughHz / 440)
-                    Set numeric value: .nRows, "TroughTime(s)", .troughTime
+        # Skip undefined frames — reset direction on gap
+        if .f0 = undefined
+            .dir = 0
+            .prevDefinedF0 = 0
+            .prevDefinedFrame = 0
+        else
+            if .prevDefinedF0 > 0
+                if .f0 > .prevDefinedF0
+                    .newDir = 1
+                elsif .f0 < .prevDefinedF0
+                    .newDir = -1
+                else
+                    .newDir = .dir
                 endif
+
+                # --- Peak: was rising, now falling ---
+                if .dir = 1 and .newDir = -1
+                    # Window around the direction change for parabolic
+                    # interpolation on smoothed Pitch
+                    .winStart = .frameTime[.prevDefinedFrame]
+                    if .i < .nFrames
+                        .winEnd = .frameTime[.i + 1]
+                    else
+                        .winEnd = .frameTime[.i]
+                    endif
+
+                    # Get precise peak time from smoothed Pitch
+                    selectObject: .pitchSmoothId
+                    .peakTime = Get time of maximum: .winStart,
+                    ... .winEnd, "Hertz", "parabolic"
+
+                    if .peakTime <> undefined
+                        # Intensity gate
+                        selectObject: .intensityId
+                        .intVal = Get value at time: .peakTime, "cubic"
+
+                        if .intVal > .avgIntensity - .silThreshold
+                            # Measure Hz from audio PointProcess
+                            # (3-period average, bypasses Pitch windowing)
+                            selectObject: .ppAudioId
+                            .lowIdx = Get low index: .peakTime
+                            .highIdx = Get high index: .peakTime
+
+                            .lt1 = Get time from index: .lowIdx - 1
+                            .ht1 = Get time from index: .highIdx - 1
+                            .lt2 = Get time from index: .lowIdx
+                            .ht2 = Get time from index: .highIdx
+                            .lt3 = Get time from index: .lowIdx + 1
+                            .ht3 = Get time from index: .highIdx + 1
+
+                            .peakHz = 1 / (((.ht1 - .lt1) + (.ht2 - .lt2)
+                            ... + (.ht3 - .lt3)) / 3)
+
+                            # Get intensity at peak
+                            selectObject: .intensityId
+                            .peakInt = Get value at time: .peakTime, "cubic"
+
+                            # Write peak row to table
+                            selectObject: .tableId
+                            Append row
+                            .nRows = Get number of rows
+                            Set numeric value: .nRows, "Cycle#", .nRows
+                            Set numeric value: .nRows, "Intensity(dB)",
+                            ... .peakInt
+                            Set numeric value: .nRows, "Peak(Hz)", .peakHz
+                            Set numeric value: .nRows, "PeakRe440(cents)",
+                            ... 1200 * log2 (.peakHz / 440)
+                            Set numeric value: .nRows, "PeakTime(s)",
+                            ... .peakTime
+                        endif
+                    endif
+                endif
+
+                # --- Trough: was falling, now rising ---
+                if .dir = -1 and .newDir = 1
+                    .winStart = .frameTime[.prevDefinedFrame]
+                    if .i < .nFrames
+                        .winEnd = .frameTime[.i + 1]
+                    else
+                        .winEnd = .frameTime[.i]
+                    endif
+
+                    # Get precise trough time from smoothed Pitch
+                    selectObject: .pitchSmoothId
+                    .troughTime = Get time of minimum: .winStart,
+                    ... .winEnd, "Hertz", "parabolic"
+
+                    if .troughTime <> undefined
+                        # Intensity gate
+                        selectObject: .intensityId
+                        .intVal = Get value at time: .troughTime, "cubic"
+
+                        if .intVal > .avgIntensity - .silThreshold
+                            # Measure Hz from audio PointProcess
+                            selectObject: .ppAudioId
+                            .lowIdx = Get low index: .troughTime
+                            .highIdx = Get high index: .troughTime
+
+                            .lt1 = Get time from index: .lowIdx - 1
+                            .ht1 = Get time from index: .highIdx - 1
+                            .lt2 = Get time from index: .lowIdx
+                            .ht2 = Get time from index: .highIdx
+                            .lt3 = Get time from index: .lowIdx + 1
+                            .ht3 = Get time from index: .highIdx + 1
+
+                            .troughHz = 1 / (((.ht1 - .lt1) + (.ht2 - .lt2)
+                            ... + (.ht3 - .lt3)) / 3)
+
+                            # Attach trough to current peak row
+                            selectObject: .tableId
+                            .nRows = Get number of rows
+                            if .nRows > 0
+                                Set numeric value: .nRows, "Trough(Hz)",
+                                ... .troughHz
+                                Set numeric value: .nRows,
+                                ... "TroughRe440(cents)",
+                                ... 1200 * log2 (.troughHz / 440)
+                                Set numeric value: .nRows,
+                                ... "TroughTime(s)", .troughTime
+                            endif
+                        endif
+                    endif
+                endif
+
+                .dir = .newDir
             endif
+
+            .prevDefinedF0 = .f0
+            .prevDefinedFrame = .i
         endif
     endfor
 
@@ -1324,6 +1396,854 @@ endproc
 
 
 # ============================================================================
-# END OF ANALYSIS PROCEDURES
-# Drawing procedures will be added in Phase 2.
+# DRAWING PROCEDURES (Phase 2)
+# ============================================================================
+# Dependencies: ../graphs/eml-graph-procedures.praat v2.9+
+#   Required procedures: @emlSetColorPalette, @emlSanitizeLabel,
+#   @emlDrawGridlines, @emlDrawAlignedMarksLeft, @emlDrawAlignedMarksRight,
+#   @emlComputeNiceStep, @emlAssertFullViewport
+#
+# Preconditions for @emlVibratoDrawFigure:
+#   - Call @emlVibratoSummary before drawing (outputs read directly)
+#   - Call @emlVibratoJitter before drawing (outputs read directly)
+#   - emlVibratoPitchSetup.lowerPitchST / .higherPitchST must be set
+#
+# Procedure index (drawing):
+#   @emlVibratoDrawDualScatter    — reusable dual-axis scatter panel
+#   @emlVibratoDrawCoV            — coefficient of variation time series
+#   @emlVibratoDrawPitchIntensity — dual-axis pitch + intensity + cycle overlay
+#   @emlVibratoDrawSummaryTable   — rendered statistics table
+#   @emlVibratoDrawFigure         — master: full 8-panel figure
+# ============================================================================
+
+
+# ----------------------------------------------------------------------------
+# @emlVibratoDrawDualScatter
+# Draws a dual-axis scatter panel: left Y data + right Y data in one viewport.
+# Caller must select outer viewport before calling.
+#
+# Arguments:
+#   .includeId, .excludeId  — Table IDs (include drawn on top of grey exclude)
+#   .xCol$                  — X column name
+#   .xMin, .xMax            — X axis range
+#   .leftYCol$              — left Y column name (drawn as filled dot)
+#   .leftYMin, .leftYMax    — left Y axis range
+#   .rightYCol$             — right Y column name (drawn as open circle)
+#   .rightYMin, .rightYMax  — right Y axis range
+#   .title$, .subtitle$     — panel title (bold) and subtitle
+#   .leftLabel$, .rightLabel$ — left and right Y axis labels
+#   .xLabel$                — X axis label
+#   .showGrey               — 1 to draw excluded data in grey
+#   .showBottom              — 1 to draw numbered bottom ticks + label
+# ----------------------------------------------------------------------------
+procedure emlVibratoDrawDualScatter: .includeId, .excludeId,
+    ... .xCol$, .xMin, .xMax,
+    ... .leftYCol$, .leftYMin, .leftYMax,
+    ... .rightYCol$, .rightYMin, .rightYMax,
+    ... .title$, .subtitle$,
+    ... .leftLabel$, .rightLabel$, .xLabel$,
+    ... .showGrey, .showBottom
+
+    .rateColor$ = emlSetColorPalette.line$[1]
+    .extentColor$ = emlSetColorPalette.line$[6]
+    .greyColor$ = "{0.78, 0.78, 0.78}"
+    .axisColor$ = "{0.3, 0.3, 0.3}"
+    .markerSize = 1.8
+    .greyMarkerSize = 1.2
+    .targetY = 5
+    .targetX = 7
+
+    # --- Gridlines (left Y coordinate system) ---
+    Axes: .xMin, .xMax, .leftYMin, .leftYMax
+    @emlDrawGridlines: .xMin, .xMax, .leftYMin, .leftYMax,
+    ... .targetX, .targetY, 0
+
+    # --- Grey excludes first (background layer) ---
+    if .showGrey
+        Colour: .greyColor$
+        selectObject: .excludeId
+        Scatter plot (mark): .xCol$, .xMin, .xMax,
+        ... .leftYCol$, .leftYMin, .leftYMax,
+        ... .greyMarkerSize, "no", "."
+        Axes: .xMin, .xMax, .leftYMin, .leftYMax
+
+        Axes: .xMin, .xMax, .rightYMin, .rightYMax
+        selectObject: .excludeId
+        Scatter plot (mark): .xCol$, .xMin, .xMax,
+        ... .rightYCol$, .rightYMin, .rightYMax,
+        ... .greyMarkerSize, "no", "o"
+        Axes: .xMin, .xMax, .rightYMin, .rightYMax
+    endif
+
+    # --- Left Y data (Rate — filled dot) ---
+    Axes: .xMin, .xMax, .leftYMin, .leftYMax
+    Colour: .rateColor$
+    selectObject: .includeId
+    Scatter plot (mark): .xCol$, .xMin, .xMax,
+    ... .leftYCol$, .leftYMin, .leftYMax,
+    ... .markerSize, "no", "."
+    Axes: .xMin, .xMax, .leftYMin, .leftYMax
+
+    # --- Right Y data (Extent — open circle) ---
+    Axes: .xMin, .xMax, .rightYMin, .rightYMax
+    Colour: .extentColor$
+    selectObject: .includeId
+    Scatter plot (mark): .xCol$, .xMin, .xMax,
+    ... .rightYCol$, .rightYMin, .rightYMax,
+    ... .markerSize, "no", "o"
+    Axes: .xMin, .xMax, .rightYMin, .rightYMax
+
+    # --- Inner box ---
+    Colour: .axisColor$
+    Line width: 1
+    Draw inner box
+
+    # --- Left Y ticks ---
+    Axes: .xMin, .xMax, .leftYMin, .leftYMax
+    @emlDrawAlignedMarksLeft: .leftYMin, .leftYMax, .targetY, 0
+
+    # --- Right Y ticks ---
+    Axes: .xMin, .xMax, .rightYMin, .rightYMax
+    @emlDrawAlignedMarksRight: .rightYMin, .rightYMax, .targetY, 0
+
+    # --- Bottom ticks ---
+    @emlComputeNiceStep: .xMax - .xMin, .targetX
+    .xStep = emlComputeNiceStep.step
+    .xTol = .xStep * 0.01
+    .xPos = ceiling (.xMin / .xStep) * .xStep
+    while .xPos <= .xMax + .xTol
+        if .xPos >= .xMin - .xTol
+            if abs (.xPos) < .xTol
+                .xPos = 0
+            endif
+            if .showBottom
+                One mark bottom: .xPos, "yes", "yes", "no", ""
+            else
+                One mark bottom: .xPos, "no", "yes", "no", ""
+            endif
+        endif
+        .xPos = .xPos + .xStep
+    endwhile
+
+    # --- Labels ---
+    Colour: "{0.1, 0.1, 0.1}"
+    Font size: 8
+    @emlSanitizeLabel: .leftLabel$
+    Text left: "yes", emlSanitizeLabel.result$
+    @emlSanitizeLabel: .rightLabel$
+    Text right: "yes", emlSanitizeLabel.result$
+    if .showBottom
+        @emlSanitizeLabel: .xLabel$
+        Text bottom: "yes", emlSanitizeLabel.result$
+    endif
+
+    # --- Title ---
+    Font size: 10
+    @emlSanitizeLabel: .title$
+    Text top: "yes", "##" + emlSanitizeLabel.result$ + "#"
+    @emlSanitizeLabel: .subtitle$
+    Text top: "no", emlSanitizeLabel.result$
+
+    # --- Restore state ---
+    Colour: "Black"
+    Solid line
+    Line width: 1
+    Font size: 10
+endproc
+
+
+# ----------------------------------------------------------------------------
+# @emlVibratoDrawCoV
+# Draws the Coefficient of Variation time-series panel. Two line series:
+# Rate CoV (dashed, palette[1]) and HalfExtent CoV (solid, palette[6]).
+# Caller must select outer viewport before calling.
+#
+# Arguments:
+#   .tableId    — smoothed Table (from @emlVibratoSmooth)
+#   .startTime  — time domain start
+#   .endTime    — time domain end
+# ----------------------------------------------------------------------------
+procedure emlVibratoDrawCoV: .tableId, .startTime, .endTime
+    .rateColor$ = emlSetColorPalette.line$[1]
+    .extentColor$ = emlSetColorPalette.line$[6]
+    .axisColor$ = "{0.3, 0.3, 0.3}"
+    .yMin = 0
+    .yMax = 100
+    .targetX = 7
+    .targetY = 4
+
+    Axes: .startTime, .endTime, .yMin, .yMax
+    @emlDrawGridlines: .startTime, .endTime, .yMin, .yMax,
+    ... .targetX, .targetY, 0
+
+    selectObject: .tableId
+    .nRows = Get number of rows
+
+    # Draw two line series: k=1 for HalfExtent (solid), k=2 for Rate (dashed)
+    for .k to 2
+        selectObject: .tableId
+        if .k = 1
+            Colour: .extentColor$
+            Solid line
+            .includeCol$ = "IncludeAveragePairHalfExtent"
+            .covCol$ = "CoVTimeSeriesHalfExtent(cents)"
+        else
+            Colour: .rateColor$
+            Dashed line
+            .includeCol$ = "IncludeAveragePairRate"
+            .covCol$ = "CoVTimeSeriesRate(Hz)"
+        endif
+        Line width: 1
+
+        for .i to .nRows - 1
+            selectObject: .tableId
+            .inc1$ = Get value: .i, .includeCol$
+            .inc2$ = Get value: .i + 1, .includeCol$
+
+            if .inc1$ <> "X" and .inc2$ <> "X"
+                .mid1 = Get value: .i, "MidTime(s)"
+                .mid2 = Get value: .i + 1, "MidTime(s)"
+                .cov1 = Get value: .i, .covCol$
+                .cov2 = Get value: .i + 1, .covCol$
+
+                if .cov1 <> undefined and .cov2 <> undefined
+                    if .cov1 <= 100 and .cov2 <= 100
+                        Draw line: .mid1, .cov1, .mid2, .cov2
+                    endif
+                endif
+            endif
+        endfor
+    endfor
+
+    # --- Axes ---
+    Axes: .startTime, .endTime, .yMin, .yMax
+    Colour: .axisColor$
+    Line width: 1
+    Solid line
+    Draw inner box
+    @emlDrawAlignedMarksLeft: .yMin, .yMax, .targetY, 0
+
+    # Bottom ticks (no numbers — not bottom row)
+    @emlComputeNiceStep: .endTime - .startTime, .targetX
+    .xStep = emlComputeNiceStep.step
+    .xTol = .xStep * 0.01
+    .xPos = ceiling (.startTime / .xStep) * .xStep
+    while .xPos <= .endTime + .xTol
+        if .xPos >= .startTime - .xTol
+            if abs (.xPos) < .xTol
+                .xPos = 0
+            endif
+            One mark bottom: .xPos, "no", "yes", "no", ""
+        endif
+        .xPos = .xPos + .xStep
+    endwhile
+
+    # --- Labels ---
+    Colour: "{0.1, 0.1, 0.1}"
+    Font size: 8
+    Text left: "yes", "Coefficient of Variability (\% )"
+
+    Font size: 10
+    Text top: "yes", "##Average Coefficient of Variability vs Time#"
+    Text top: "no", "Rate (dashed) / Half extent (solid); 3 cycle average, half cycle step"
+
+    Font size: 7
+    Text bottom: "yes",
+    ... "Coefficient of Variability methods and metrics per Nestorova et al., 2024"
+
+    # --- Restore state ---
+    Colour: "Black"
+    Solid line
+    Line width: 1
+    Font size: 10
+endproc
+
+
+# ----------------------------------------------------------------------------
+# @emlVibratoDrawPitchIntensity
+# Draws dual-axis pitch contour + intensity curve with cycle overlay markers.
+# Caller must select outer viewport before calling.
+#
+# Arguments:
+#   .pitchSmoothId  — smoothed Pitch object
+#   .intensityId    — Intensity object
+#   .includeId      — included Table (for cycle marker times)
+#   .startTime, .endTime — time domain
+#   .pitchSTMin, .pitchSTMax — pitch range in semitones re 440
+#   .intMin, .intMax — intensity range in dB
+# ----------------------------------------------------------------------------
+procedure emlVibratoDrawPitchIntensity: .pitchSmoothId, .intensityId,
+    ... .includeId, .startTime, .endTime,
+    ... .pitchSTMin, .pitchSTMax, .intMin, .intMax
+    .rateColor$ = emlSetColorPalette.line$[1]
+    .intColor$ = emlSetColorPalette.line$[2]
+    .axisColor$ = "{0.3, 0.3, 0.3}"
+    .targetX = 7
+    .targetY = 5
+
+    # --- Pitch contour (left axis) ---
+    Axes: .startTime, .endTime, .pitchSTMin, .pitchSTMax
+    @emlDrawGridlines: .startTime, .endTime, .pitchSTMin, .pitchSTMax,
+    ... .targetX, .targetY, 0
+
+    Colour: "Black"
+    selectObject: .pitchSmoothId
+    Draw semitones (re 440 Hz): 0, 0, .pitchSTMin, .pitchSTMax, "no"
+
+    # --- Intensity curve (right axis) ---
+    Axes: .startTime, .endTime, .intMin, .intMax
+    Colour: .intColor$
+    Dotted line
+    Line width: 2
+    selectObject: .intensityId
+    Draw: 0, 0, .intMin, .intMax, "no"
+    Line width: 1
+    Solid line
+
+    # --- Cycle overlay markers ---
+    selectObject: .includeId
+    .nRows = Get number of rows
+    for .i to .nRows
+        selectObject: .includeId
+        .peakT = Get value: .i, "PeakTime(s)"
+        .troughT = Get value: .i, "TroughTime(s)"
+
+        Axes: .startTime, .endTime, 0, 1
+        Colour: "{0.70, 0.70, 0.70}"
+        Dashed line
+        if .peakT > 0
+            Draw line: .peakT, 0, .peakT, 1
+        endif
+        Colour: "{0.85, 0.85, 0.85}"
+        if .troughT > 0
+            Draw line: .troughT, 0, .troughT, 1
+        endif
+    endfor
+
+    # --- Axes ---
+    Solid line
+    Colour: .axisColor$
+    Line width: 1
+    Draw inner box
+
+    # Left ticks (pitch)
+    Axes: .startTime, .endTime, .pitchSTMin, .pitchSTMax
+    @emlDrawAlignedMarksLeft: .pitchSTMin, .pitchSTMax, .targetY, 0
+
+    # Right ticks (intensity)
+    Axes: .startTime, .endTime, .intMin, .intMax
+    @emlDrawAlignedMarksRight: .intMin, .intMax, .targetY, 0
+
+    # Bottom ticks (with numbers — this is the bottom row of left column)
+    @emlComputeNiceStep: .endTime - .startTime, .targetX
+    .xStep = emlComputeNiceStep.step
+    .xTol = .xStep * 0.01
+    .xPos = ceiling (.startTime / .xStep) * .xStep
+    while .xPos <= .endTime + .xTol
+        if .xPos >= .startTime - .xTol
+            if abs (.xPos) < .xTol
+                .xPos = 0
+            endif
+            One mark bottom: .xPos, "yes", "yes", "no", ""
+        endif
+        .xPos = .xPos + .xStep
+    endwhile
+
+    # --- Labels ---
+    Colour: "{0.1, 0.1, 0.1}"
+    Font size: 8
+    Text left: "yes", "Pitch in Semitones (re 440 Hz)"
+    Text right: "yes", "Intensity (dB) (dotted)"
+    Text bottom: "yes", "Time (s)"
+
+    Font size: 10
+    Text top: "yes", "##Pitch and Intensity vs Time#"
+    Text top: "no", "Credible vibrato cycles indicated"
+
+    # --- Restore state ---
+    Colour: "Black"
+    Solid line
+    Line width: 1
+    Font size: 10
+endproc
+
+
+# ----------------------------------------------------------------------------
+# @emlVibratoDrawSummaryTable
+# Renders the averaged measures summary table in the Picture window.
+# Caller must select the appropriate viewport before calling.
+#
+# Preconditions: @emlVibratoSummary and @emlVibratoJitter must have been
+# called — their output variables are read directly.
+#
+# Arguments:
+#   .vpLeft, .vpRight, .vpTop, .vpBottom — viewport bounds
+# ----------------------------------------------------------------------------
+procedure emlVibratoDrawSummaryTable: .vpLeft, .vpRight, .vpTop, .vpBottom
+
+    # Direct port of v1.1 layout (lines 1687–1838)
+    # v1.1 used absolute coords: inner 0,6.5,9.7,12 and outer -0.25,6.9,...
+    # Here we compute equivalent offsets from the arguments.
+
+    .oL = .vpLeft - 0.25
+    .oR = .vpRight + 0.4
+
+    # --- Background fill ---
+    Select inner viewport: .vpLeft, .vpRight, .vpTop, .vpBottom
+    Font size: 10
+    Axes: 0, 1, 0, 1
+    Paint rectangle: 0.9, 0, 1, 0, 1
+    Black
+    10
+
+    # --- Title ---
+    Select outer viewport: .oL, .oR, .vpTop - 0.2, .vpTop + 0.55
+    Axes: 0, 1, 0, 1
+    Solid line
+    Line width: 1
+    Text: 0.5, "centre", 0.5, "half",
+    ... "##Averaged Measures (Excluding Non-Credible Values)#"
+
+    # --- Column headers ---
+    Font size: 8
+    Select outer viewport: .oL, .oR, .vpTop + 0.05, .vpTop + 0.95
+    Axes: 0, 1, 0, 1
+    Solid line
+    Draw line: 0, 0, 1, 0
+    Line width: 1
+
+    .c1 = 0.01
+    .c2 = 0.21
+    .c3 = 0.42
+    .c4 = 0.59
+    .c5 = 0.77
+    .cOff = 0.01
+
+    Text: .cOff, "left", 0.7, "half", "##Smoothed Data#"
+    Text: .cOff, "left", 0.3, "half", "##(Hz)#"
+
+    Text: .c2, "left", 0.7, "half", "##Unsmoothed Data#"
+    Text: .c2, "left", 0.3, "half", "##(Hz)#"
+
+    Text: .c3, "left", 0.7, "half", "##Vibrato Jitter#"
+    Text: .c3, "left", 0.3, "half", "##Unsmoothed (\% )#"
+
+    Text: .c4, "left", 0.7, "half", "##Coefficient of#"
+    Text: .c4, "left", 0.3, "half", "##Variability (\% )#"
+
+    Text: .c5, "left", 0.5, "half", "##Other Data#"
+
+    # --- Outer box and column dividers ---
+    Select outer viewport: .oL, .oR, .vpTop - 0.05, .vpBottom
+    Solid line
+    Draw inner box
+    Axes: 0, 1, 0, 1
+    Black
+
+    Draw line: .c2 - .cOff, 0, .c2 - .cOff, 1
+    Draw line: .c3 - .cOff, 0, .c3 - .cOff, 1
+    Draw line: .c4 - .cOff, .cOff, .c4 - .cOff, 1
+    Draw line: .c5 - .cOff, 0, .c5 - .cOff, 1
+    Colour: "{0,0,0}"
+
+    # --- Data rows ---
+    Font size: 7.5
+
+    Select outer viewport: .oL, .oR, .vpTop + 0.5, .vpBottom
+
+    .vSp = 0.14
+    .r1 = 1 - .vSp * 1
+    .r2 = 1 - .vSp * 2
+    .r3 = 1 - .vSp * 3
+    .r4 = 1 - .vSp * 4
+    .r5 = 1 - .vSp * 5
+
+    # Column 1 — Smoothed data
+    Text: .cOff, "left", 1, "half",
+    ... "Mean Rate " + fixed$ (emlVibratoSummary.meanRateSmooth, 2)
+    Text: .cOff, "left", .r1, "half",
+    ... "StD Rate " + fixed$ (emlVibratoSummary.stDevRateSmooth, 2)
+    Text: .cOff, "left", .r2, "half",
+    ... "Median Rate " + fixed$ (emlVibratoSummary.medianRateSmooth, 2)
+    Text: .cOff, "left", .r3, "half",
+    ... "Mean H. Extent " + fixed$ (emlVibratoSummary.meanExtentSmooth, 2)
+    Text: .cOff, "left", .r4, "half",
+    ... "StD H. Extent " + fixed$ (emlVibratoSummary.stDevExtentSmooth, 2)
+    Text: .cOff, "left", .r5, "half",
+    ... "Median H. Extent " + fixed$ (emlVibratoSummary.medianExtentSmooth, 2)
+
+    # Column 2 — Unsmoothed data
+    Text: .c2, "left", 1, "half",
+    ... "Mean Rate " + fixed$ (emlVibratoSummary.meanRate, 2)
+    Text: .c2, "left", .r1, "half",
+    ... "St Dev Rate " + fixed$ (emlVibratoSummary.stDevRate, 2)
+    Text: .c2, "left", .r2, "half",
+    ... "Median Rate " + fixed$ (emlVibratoSummary.medianRate, 2)
+    Text: .c2, "left", .r3, "half",
+    ... "Mean H. Extent " + fixed$ (emlVibratoSummary.meanExtent, 2)
+    Text: .c2, "left", .r4, "half",
+    ... "StD H. Extent " + fixed$ (emlVibratoSummary.stDevExtent, 2)
+    Text: .c2, "left", .r5, "half",
+    ... "Median H. Extent " + fixed$ (emlVibratoSummary.medianExtent, 2)
+
+    # Column 3 — Vibrato jitter
+    Text: .c3, "left", 1, "half",
+    ... "Local " + fixed$ (emlVibratoJitter.local * 100, 2) + "\% "
+    Text: .c3, "left", .r1, "half",
+    ... "Local Absolute " + fixed$ (emlVibratoJitter.localAbs * 100, 2) + "\% "
+    Text: .c3, "left", .r2, "half",
+    ... "Rap " + fixed$ (emlVibratoJitter.rap * 100, 2) + "\% "
+    Text: .c3, "left", .r3, "half",
+    ... "Ddp " + fixed$ (emlVibratoJitter.ddp * 100, 2) + "\% "
+    Text: .c3, "left", .r4, "half",
+    ... "Ppq5 " + fixed$ (emlVibratoJitter.ppq5 * 100, 2) + "\% "
+
+    # Column 4 — Coefficient of variation
+    Text: .c4, "left", 1, "half",
+    ... "Rate " + fixed$ (emlVibratoSummary.cvRate, 2) + "\% "
+    Text: .c4, "left", .r1, "half",
+    ... "H. Extent " + fixed$ (emlVibratoSummary.cvExtent, 2) + "\% "
+    Text: .c4, "left", .r2, "half",
+    ... "Sm. Rate " + fixed$ (emlVibratoSummary.cvRateSmooth, 2) + "\% "
+    Text: .c4, "left", .r3, "half",
+    ... "Sm. H. Extent " + fixed$ (emlVibratoSummary.cvExtentSmooth, 2) + "\% "
+
+    # Column 5 — Other data
+    Text: .c5, "left", 1, "half",
+    ... "Mean %f_o (Hz) " + fixed$ (emlVibratoSummary.meanFo, 2)
+    Text: .c5, "left", .r1, "half",
+    ... "Min %f_o (Hz) " + fixed$ (emlVibratoSummary.minFo, 2)
+    Text: .c5, "left", .r2, "half",
+    ... "Max %f_o (Hz) " + fixed$ (emlVibratoSummary.maxFo, 2)
+    Text: .c5, "left", .r3, "half",
+    ... "Mean Intensity (dB) " + fixed$ (emlVibratoSummary.meanIntensity, 2)
+    Text: .c5, "left", .r4, "half",
+    ... "Min Intensity (dB) " + fixed$ (emlVibratoSummary.minIntensity, 2)
+    Text: .c5, "left", .r5, "half",
+    ... "Max Intensity (dB) " + fixed$ (emlVibratoSummary.maxIntensity, 2)
+
+    # --- Restore state ---
+    Colour: "Black"
+    Font size: 10
+endproc
+
+
+# ----------------------------------------------------------------------------
+# @emlVibratoDrawFigure
+# Master procedure: draws the full 8-panel vibrato figure.
+#
+# Preconditions:
+#   - @emlVibratoPitchSetup must have been called (.lowerPitchST, .higherPitchST)
+#   - @emlVibratoSummary must have been called (all summary outputs)
+#   - @emlVibratoJitter must have been called (all jitter outputs)
+#
+# Arguments:
+#   .smoothedTableId                   — from @emlVibratoSmooth
+#   .includeId, .excludeId             — from @emlVibratoFilter (raw)
+#   .smoothIncludeId, .smoothExcludeId — from @emlVibratoFilter (smoothed)
+#   .pitchSmoothId                     — from @emlVibratoPitchSetup
+#   .intensityId                       — Intensity object for drawing
+#   .title$                            — figure title (user-supplied)
+#   .avgCycles                         — smoothing window (for subtitle)
+#   .lowRate, .highRate                — credible rate bounds (Hz)
+#   .lowExtent, .highExtent            — credible half-extent bounds (cents)
+#   .showGrey                          — 1 to show excluded data in grey
+#
+# Outputs:
+#   Draws complete figure in Picture window. Does not save — caller handles.
+# ----------------------------------------------------------------------------
+procedure emlVibratoDrawFigure: .smoothedTableId, .includeId, .excludeId,
+    ... .smoothIncludeId, .smoothExcludeId,
+    ... .pitchSmoothId, .intensityId,
+    ... .title$, .avgCycles,
+    ... .lowRate, .highRate, .lowExtent, .highExtent,
+    ... .showGrey
+
+    # === Setup ===
+    Erase all
+    Helvetica
+    Font size: 10
+    @emlSetColorPalette: "color"
+
+    # Figure dimensions
+    .totalW = 10.5
+    .totalH = 12
+    .leftW = 6.5
+    .rightL = 6.5
+    .rightR = 10.5
+
+    # Panel vertical bounds
+    .l1T = 0.5
+    .l1B = 3.0
+    .l2T = 3.0
+    .l2B = 5.5
+    .l3T = 5.5
+    .l3B = 7.45
+    .l4T = 7.45
+    .l4B = 9.7
+    .l5T = 9.7
+    .l5B = 12.0
+    .r1T = 0.5
+    .r1B = 4.5
+    .r2T = 4.5
+    .r2B = 8.5
+    .r3T = 8.5
+    .r3B = 12.0
+
+    # === Time domain ===
+    selectObject: .pitchSmoothId
+    .startTime = Get start time
+    .endTime = Get end time
+    .pitchSTLo = emlVibratoPitchSetup.lowerPitchST - 1
+    .pitchSTHi = emlVibratoPitchSetup.higherPitchST + 1
+
+    # === Axis ranges from data ===
+
+    # Raw rate range
+    selectObject: .includeId
+    Extract rows where: ~self["Rate(Hz)"] > 0
+    .tmpTable = selected ()
+    .minRate = Get minimum: "Rate(Hz)"
+    .maxRate = Get maximum: "Rate(Hz)"
+    .medRate = Get quantile: "Rate(Hz)", 0.5
+    removeObject: .tmpTable
+
+    # Raw extent range
+    selectObject: .includeId
+    Extract rows where: ~self["HalfExtent(cents)"] > 0
+    .tmpTable = selected ()
+    .minExtent = Get minimum: "HalfExtent(cents)"
+    .maxExtent = Get maximum: "HalfExtent(cents)"
+    .medExtent = Get quantile: "HalfExtent(cents)", 0.5
+    removeObject: .tmpTable
+
+    # Smoothed rate range
+    selectObject: .smoothIncludeId
+    Extract rows where: ~self["AverageRate(Hz)"] > 0
+    .tmpTable = selected ()
+    .minSRate = Get minimum: "AverageRate(Hz)"
+    .maxSRate = Get maximum: "AverageRate(Hz)"
+    .medSRate = Get quantile: "AverageRate(Hz)", 0.5
+    removeObject: .tmpTable
+
+    # Smoothed extent range
+    selectObject: .smoothIncludeId
+    Extract rows where: ~self["AverageHalfExtent(cents)"] > 0
+    .tmpTable = selected ()
+    .minSExtent = Get minimum: "AverageHalfExtent(cents)"
+    .maxSExtent = Get maximum: "AverageHalfExtent(cents)"
+    .medSExtent = Get quantile: "AverageHalfExtent(cents)", 0.5
+    removeObject: .tmpTable
+
+    # Pitch range (for right-column X axis)
+    selectObject: .pitchSmoothId
+    .minPitch = Get minimum: 0.0, 0.0, "semitones re 440 Hz", "parabolic"
+    .maxPitch = Get maximum: 0.0, 0.0, "semitones re 440 Hz", "parabolic"
+    .medPitch = Get quantile: 0.0, 0.0, 0.5, "semitones re 440 Hz"
+
+    # Intensity range
+    selectObject: .intensityId
+    .minInt = Get minimum: 0, 0, "parabolic"
+    .maxInt = Get maximum: 0, 0, "parabolic"
+    .medInt = (.minInt + .maxInt) / 2
+
+    # Compute nice axis ranges
+    @emlVibratoAxisRange: .minRate, .maxRate, .medRate, 6, 0, 0
+    .rateYLo = emlVibratoAxisRange.axisMin
+    .rateYHi = emlVibratoAxisRange.axisMax
+
+    @emlVibratoAxisRange: .minExtent, .maxExtent, .medExtent, 6, 0, 1
+    .extentYLo = emlVibratoAxisRange.axisMin
+    .extentYHi = emlVibratoAxisRange.axisMax
+
+    @emlVibratoAxisRange: .minSRate, .maxSRate, .medSRate, 6, 0, 0
+    .sRateYLo = emlVibratoAxisRange.axisMin
+    .sRateYHi = emlVibratoAxisRange.axisMax
+
+    @emlVibratoAxisRange: .minSExtent, .maxSExtent, .medSExtent, 6, 0, 1
+    .sExtentYLo = emlVibratoAxisRange.axisMin
+    .sExtentYHi = emlVibratoAxisRange.axisMax
+
+    @emlVibratoAxisRange: .minPitch, .maxPitch, .medPitch, 6, 1, 0
+    .pitchXLo = emlVibratoAxisRange.axisMin
+    .pitchXHi = emlVibratoAxisRange.axisMax
+
+    @emlVibratoAxisRange: .minInt, .maxInt, .medInt, 6, 1, 0
+    .intYLo = emlVibratoAxisRange.axisMin
+    .intYHi = emlVibratoAxisRange.axisMax
+
+    .avgStr$ = string$ (.avgCycles)
+    .smoothSub$ = "Smoothed by " + .avgStr$ + " vibrato cycles, half cycle step"
+
+    # === Title bar ===
+    Select outer viewport: 0, .totalW, 0, 0.7
+    Font size: 14
+    Colour: "Black"
+    @emlSanitizeLabel: .title$
+    Text top: "yes", "##EML Vibrato Tool: " + emlSanitizeLabel.result$ + "#"
+    Font size: 10
+
+    # ================================================================
+    # LEFT COLUMN — Time domain panels
+    # ================================================================
+
+    # --- L1: Smoothed Rate & Extent vs Time ---
+    Select outer viewport: 0, .leftW, .l1T, .l1B
+    selectObject: .pitchSmoothId
+    Colour: "{0.80, 0.80, 0.80}"
+    Draw semitones (re 440 Hz): 0, 0, .pitchSTLo, .pitchSTHi, "no"
+
+    @emlVibratoDrawDualScatter: .smoothIncludeId, .smoothExcludeId,
+    ... "MidTime(s)", .startTime, .endTime,
+    ... "AverageRate(Hz)", .sRateYLo, .sRateYHi,
+    ... "AverageHalfExtent(cents)", .sExtentYLo, .sExtentYHi,
+    ... "Smoothed Rate (Hz) and Extent (cents) vs Time",
+    ... .smoothSub$,
+    ... "Smoothed Rate (Hz)", "Smoothed Half Extent (cents)",
+    ... "Time (s)", .showGrey, 0
+
+    # --- L2: Raw Rate & Extent vs Time ---
+    Select outer viewport: 0, .leftW, .l2T, .l2B
+    selectObject: .pitchSmoothId
+    Colour: "{0.80, 0.80, 0.80}"
+    Draw semitones (re 440 Hz): 0, 0, .pitchSTLo, .pitchSTHi, "no"
+
+    @emlVibratoDrawDualScatter: .includeId, .excludeId,
+    ... "MidTime(s)", .startTime, .endTime,
+    ... "Rate(Hz)", .rateYLo, .rateYHi,
+    ... "HalfExtent(cents)", .extentYLo, .extentYHi,
+    ... "Rate (Hz) and Extent (cents) vs Time",
+    ... "Raw data per half cycle",
+    ... "Rate (Hz)", "Half Extent (cents)",
+    ... "Time (s)", .showGrey, 0
+
+    # --- L3: CoV vs Time ---
+    Select outer viewport: 0, .leftW, .l3T, .l3B
+    selectObject: .pitchSmoothId
+    Colour: "{0.80, 0.80, 0.80}"
+    Draw semitones (re 440 Hz): 0, 0, .pitchSTLo, .pitchSTHi, "no"
+
+    @emlVibratoDrawCoV: .smoothedTableId, .startTime, .endTime
+
+    # --- L4: Pitch + Intensity vs Time ---
+    Select outer viewport: 0, .leftW, .l4T, .l4B
+    @emlVibratoDrawPitchIntensity: .pitchSmoothId, .intensityId,
+    ... .includeId, .startTime, .endTime,
+    ... .pitchSTLo, .pitchSTHi, .intYLo, .intYHi
+
+    # --- L5: Summary Table ---
+    @emlVibratoDrawSummaryTable: 0, .leftW, .l5T, .l5B
+
+    # ================================================================
+    # RIGHT COLUMN — Pitch domain panels
+    # ================================================================
+
+    # --- R1: Smoothed Rate & Extent vs Pitch ---
+    Select outer viewport: .rightL, .rightR, .r1T, .r1B
+    @emlVibratoDrawDualScatter: .smoothIncludeId, .smoothExcludeId,
+    ... "CenterPitchRe440(halfsteps)", .pitchXLo, .pitchXHi,
+    ... "AverageRate(Hz)", .sRateYLo, .sRateYHi,
+    ... "AverageHalfExtent(cents)", .sExtentYLo, .sExtentYHi,
+    ... "Smoothed Rate (Hz) and Extent (cents) vs Pitch",
+    ... .smoothSub$,
+    ... "Smoothed Rate (Hz)", "Smoothed Half Extent (cents)",
+    ... "Pitch in Semitones (re 440 Hz)", .showGrey, 1
+
+    # --- R2: Raw Rate & Extent vs Pitch ---
+    Select outer viewport: .rightL, .rightR, .r2T, .r2B
+    @emlVibratoDrawDualScatter: .includeId, .excludeId,
+    ... "CenterPitchRe440(halfsteps)", .pitchXLo, .pitchXHi,
+    ... "Rate(Hz)", .rateYLo, .rateYHi,
+    ... "HalfExtent(cents)", .extentYLo, .extentYHi,
+    ... "Rate (Hz) and Extent (cents) vs Pitch",
+    ... "Raw data per half cycle",
+    ... "Rate (Hz)", "Half Extent (cents)",
+    ... "Pitch in Semitones (re 440 Hz)", .showGrey, 1
+
+    # --- R3: Smoothed Rate vs Smoothed Extent ---
+    Select outer viewport: .rightL, .rightR, .r3T, .r3B
+
+    Axes: .sExtentYLo, .sExtentYHi, .sRateYLo, .sRateYHi
+    @emlDrawGridlines: .sExtentYLo, .sExtentYHi, .sRateYLo, .sRateYHi,
+    ... 5, 5, 0
+
+    if .showGrey
+        Colour: "{0.78, 0.78, 0.78}"
+        selectObject: .smoothExcludeId
+        Scatter plot (mark): "AverageHalfExtent(cents)",
+        ... .sExtentYLo, .sExtentYHi,
+        ... "AverageRate(Hz)", .sRateYLo, .sRateYHi,
+        ... 1.2, "no", "."
+        Axes: .sExtentYLo, .sExtentYHi, .sRateYLo, .sRateYHi
+    endif
+
+    Colour: emlSetColorPalette.line$[1]
+    selectObject: .smoothIncludeId
+    Scatter plot (mark): "AverageHalfExtent(cents)",
+    ... .sExtentYLo, .sExtentYHi,
+    ... "AverageRate(Hz)", .sRateYLo, .sRateYHi,
+    ... 1.8, "no", "."
+    Axes: .sExtentYLo, .sExtentYHi, .sRateYLo, .sRateYHi
+
+    # Axes for R3
+    Colour: "{0.3, 0.3, 0.3}"
+    Line width: 1
+    Draw inner box
+    @emlDrawAlignedMarksLeft: .sRateYLo, .sRateYHi, 5, 0
+
+    @emlComputeNiceStep: .sExtentYHi - .sExtentYLo, 5
+    .xStep = emlComputeNiceStep.step
+    .xTol = .xStep * 0.01
+    .xPos = ceiling (.sExtentYLo / .xStep) * .xStep
+    while .xPos <= .sExtentYHi + .xTol
+        if .xPos >= .sExtentYLo - .xTol
+            if abs (.xPos) < .xTol
+                .xPos = 0
+            endif
+            One mark bottom: .xPos, "yes", "yes", "no", ""
+        endif
+        .xPos = .xPos + .xStep
+    endwhile
+
+    Colour: "{0.1, 0.1, 0.1}"
+    Font size: 8
+    Text left: "yes", "Smoothed Rate (Hz)"
+    Text bottom: "yes", "Smoothed Half Extent (cents)"
+    Font size: 10
+    Text top: "yes", "##Smoothed Rate (Hz) vs Smoothed Extent (cents)#"
+    Text top: "no", .smoothSub$
+
+    # ================================================================
+    # OUTER BOXES (drawn over panel joins for clean edges)
+    # ================================================================
+    Colour: "Black"
+    Line width: 0.5
+
+    Select inner viewport: 0, .leftW, .l1T, .l1B
+    Draw inner box
+    Select inner viewport: 0, .leftW, .l2T, .l2B
+    Draw inner box
+    Select inner viewport: 0, .leftW, .l3T, .l3B
+    Draw inner box
+    Select inner viewport: 0, .leftW, .l4T, .l4B
+    Draw inner box
+    Select inner viewport: .rightL, .rightR, .r1T, .r1B
+    Draw inner box
+    Select inner viewport: .rightL, .rightR, .r2T, .r2B
+    Draw inner box
+    Select inner viewport: .rightL, .rightR, .r3T, .r3B
+    Draw inner box
+
+    Line width: 1
+    Mouse selects outer viewport
+
+    # --- Restore ---
+    Colour: "Black"
+    Solid line
+    Font size: 10
+endproc
+
+
+# ============================================================================
+# END OF PROCEDURES
 # ============================================================================

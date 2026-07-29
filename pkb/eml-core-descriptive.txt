@@ -2,18 +2,23 @@
 # EML Stats : Core Descriptive Statistics
 # ============================================================================
 # Module: eml-core-descriptive.praat
-# Version: 1.0
-# Date: 20 February 2026
+# Version: 1.1
+# Date: 12 April 2026
+#
+# v1.1: Added @emlShapiroWilk (Royston 1995, AS R94) and helper
+#        @eml_swPoly. Shapiro-Wilk W test for normality, n = 3–5000.
+#        Verified against scipy.stats.shapiro and R shapiro.test.
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 # Development: Claude (Anthropic)
-# License: Creative Commons Share-Alike
+# License: GPL-3.0-or-later
 #
 # Provides: @emlMean, @emlMedian, @emlMode, @emlPercentile, @emlQuartiles,
 #   @emlVariance, @emlSD, @emlSEM, @emlSkewness, @emlKurtosis,
 #   @emlGeometricMean, @emlHarmonicMean, @emlTrimmedMean,
-#   @emlWinsorizedMean, @emlMAD, @emlRange, @emlCI, @emlDescribe
+#   @emlWinsorizedMean, @emlMAD, @emlRange, @emlCI, @emlDescribe,
+#   @emlShapiroWilk, @eml_swPoly
 #
 # All procedures use the "eml" prefix (EML Stats) to avoid
 # namespace collisions with user scripts.
@@ -32,6 +37,11 @@
 # Input:  data# — numeric vector
 # Output: .result — arithmetic mean (undefined if empty)
 # ----------------------------------------------------------------------------
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-core-descriptive.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 procedure emlMean: .data#
     .n = size (.data#)
     if .n = 0
@@ -564,7 +574,218 @@ procedure emlDescribe: .data#
         .summary$ = .summary$ + "  Q3:         " + fixed$ (.q3, 4) + newline$
         .summary$ = .summary$ + "  IQR:        " + fixed$ (.iqr, 4) + newline$
         .summary$ = .summary$ + "  Skewness:   " + fixed$ (.skewness, 4) + newline$
-        .summary$ = .summary$ + "  Kurtosis:   " + fixed$ (.kurtosis, 4) + newline$
+        .summary$ = .summary$ + "  Kurtosis (excess): " + fixed$ (.kurtosis, 4) + newline$
         .summary$ = .summary$ + "  95% CI:     [" + fixed$ (.ci95Lower, 4) + ", " + fixed$ (.ci95Upper, 4) + "]"
+    endif
+endproc
+
+
+# ----------------------------------------------------------------------------
+# @eml_swPoly
+# Evaluate polynomial by Horner's method (internal helper for Shapiro-Wilk).
+# Input:  c# — coefficient vector {c1, c2, ..., cn} (1-indexed)
+#              representing c1 + c2*x + c3*x^2 + ... + cn*x^(n-1)
+#         x  — evaluation point
+# Output: .result — polynomial value
+# ----------------------------------------------------------------------------
+procedure eml_swPoly: .c#, .x
+    .nord = size (.c#)
+    .result = .c#[.nord]
+    for .k from 1 to .nord - 1
+        .idx = .nord - .k
+        .result = .result * .x + .c#[.idx]
+    endfor
+endproc
+
+
+# ============================================================================
+# @emlShapiroWilk
+# ============================================================================
+# Shapiro-Wilk test for normality (Royston 1995, AS R94).
+#
+# Tests the null hypothesis that data come from a normal distribution.
+# The W statistic ranges from 0 to 1, with values close to 1 indicating
+# normality. Small p-values provide evidence against normality.
+#
+# Algorithm: Royston P (1995) "Remark AS R94: A Remark on Algorithm
+# AS 181: The W-test for Normality", Applied Statistics 44(4), 547-551.
+#
+#   1. Sort data, compute Blom normal order statistics via invGaussQ
+#   2. Compute pair-weight coefficients with polynomial corrections:
+#      - Outermost pair: m[n]/ssumm2 + poly(c1, 1/sqrt(n))
+#      - Second pair (n>=7): m[n-1]/ssumm2 + poly(c2, 1/sqrt(n))
+#      - Middle pairs: proportional to m, scaled so sum(a^2) = 0.5
+#   3. W = (sum a[i] * (x[n+1-i] - x[i]))^2 / SS
+#   4. P-value transformation:
+#      - n = 3: exact via arcsin
+#      - n = 4-11: gamma transform, poly(c3/c4, n)
+#      - n >= 12: log-normal, poly(c5/c6, ln(n))
+#
+# Arguments:
+#   .data# — numeric vector (3 <= n <= 5000)
+#
+# Output:
+#   .w      — W test statistic (0 to 1; 1 = perfect normality)
+#   .p      — p-value (small = evidence against normality)
+#   .n      — sample size
+#   .error$ — error message, or "" if valid
+#
+# Praat functions used: sort#, invGaussQ, gaussQ, ln, exp, arcsin, sqrt
+# All verified in APPENDIX_B_FUNCTIONS.txt.
+#
+# Reference values verified against scipy.stats.shapiro() and R
+# shapiro.test() for n = 3, 4, 5, 10, 20, 30, 100 with normal,
+# uniform, and exponential data (Rule 32 computational verification).
+#
+# Dependencies: @eml_swPoly (internal, defined above)
+# ============================================================================
+
+procedure emlShapiroWilk: .data#
+    .w = undefined
+    .p = undefined
+    .n = size (.data#)
+    .error$ = ""
+
+    # --- Input validation ---
+
+    if .n < 3
+        .error$ = "Shapiro-Wilk requires n >= 3, got " + string$ (.n)
+    elsif .n > 5000
+        .error$ = "Shapiro-Wilk requires n <= 5000, got " + string$ (.n)
+    endif
+
+    if .error$ = ""
+        .sorted# = sort# (.data#)
+        .dataRange = .sorted#[.n] - .sorted#[1]
+        if .dataRange = 0
+            .error$ = "All values identical (zero range)"
+        endif
+    endif
+
+    if .error$ = ""
+        .n2 = floor (.n / 2)
+
+        # --- Polynomial coefficients (AS R94, Royston 1995) ---
+        # Coefficient computation (c1, c2)
+        .c1# = {0.0, 0.221157, -0.147981, -2.07119, 4.434685, -2.706056}
+        .c2# = {0.0, 0.042981, -0.293762, -1.752461, 5.682633, -3.582633}
+        # P-value transformation, n = 4-11 (c3 = mean, c4 = log sigma)
+        .c3# = {0.544, -0.39978, 0.025054, -6.714e-4}
+        .c4# = {1.3822, -0.77857, 0.062767, -0.0020322}
+        # P-value transformation, n >= 12 (c5 = mean, c6 = log sigma)
+        .c5# = {-1.5861, -0.31082, -0.083751, 0.0038915}
+        .c6# = {-0.4803, -0.082676, 0.0030302}
+        # Gamma function for n <= 11
+        .swG# = {-2.273, 0.459}
+
+        # --- Normal order statistics (Blom approximation) ---
+        # m_i = Phi^-1((i - 0.375) / (n + 0.25))
+        # invGaussQ(q) returns z such that P(Z > z) = q, so
+        # invGaussQ(1 - p) = Phi^-1(p)
+
+        .m# = zero# (.n)
+        for .i from 1 to .n
+            .pBlom = (.i - 0.375) / (.n + 0.25)
+            .m#[.i] = invGaussQ (1 - .pBlom)
+        endfor
+        .summ2 = inner (.m#, .m#)
+        .ssumm2 = sqrt (.summ2)
+
+        # --- Pair-weight coefficients a[1..n2] ---
+        # a[1] pairs with (x[n] - x[1]), a[2] with (x[n-1] - x[2]), etc.
+        # sum(a[i]^2) = 0.5 by construction
+
+        .a# = zero# (.n2)
+
+        if .n = 3
+            .a#[1] = 1 / sqrt (2)
+        else
+            .swU = 1 / sqrt (.n)
+
+            # Outermost coefficient: normalized m + polynomial correction
+            @eml_swPoly: .c1#, .swU
+            .a#[1] = .m#[.n] / .ssumm2 + eml_swPoly.result
+
+            if .n >= 7
+                # Second outermost coefficient
+                @eml_swPoly: .c2#, .swU
+                .a#[2] = .m#[.n - 1] / .ssumm2 + eml_swPoly.result
+                .startFill = 3
+                .swTarget = 0.5 - .a#[1] * .a#[1] - .a#[2] * .a#[2]
+            else
+                # n = 4, 5, or 6: only outermost from polynomial
+                .startFill = 2
+                .swTarget = 0.5 - .a#[1] * .a#[1]
+            endif
+
+            # Middle coefficients proportional to m, scaled for
+            # sum(a^2) = 0.5
+            .sumfa = 0
+            for .i from .startFill to .n2
+                .mVal = .m#[.n + 1 - .i]
+                .sumfa = .sumfa + .mVal * .mVal
+            endfor
+            .fac = sqrt (.sumfa / .swTarget)
+            for .i from .startFill to .n2
+                .a#[.i] = .m#[.n + 1 - .i] / .fac
+            endfor
+        endif
+
+        # --- W statistic ---
+        # W = (sum a[i] * (x[n+1-i] - x[i]))^2 / SS
+
+        .xbar = mean (.sorted#)
+        .centered# = .sorted# - .xbar
+        .ss = inner (.centered#, .centered#)
+
+        .wSum = 0
+        for .i from 1 to .n2
+            .wSum = .wSum + .a#[.i]
+            ... * (.sorted#[.n + 1 - .i] - .sorted#[.i])
+        endfor
+        .w = (.wSum * .wSum) / .ss
+
+        # --- P-value ---
+
+        if .n = 3
+            # Exact: arcsin transformation
+            .swPi6 = 6 / pi
+            .stqr = arcsin (sqrt (0.75))
+            .p = .swPi6 * (arcsin (sqrt (.w)) - .stqr)
+            if .p < 0
+                .p = 0
+            endif
+        elsif .w >= 1
+            # Guard: W = 1 exactly (would cause ln(0))
+            .p = 1
+        else
+            .swY = ln (1 - .w)
+
+            if .n <= 11
+                # Royston (1992) gamma approximation
+                @eml_swPoly: .swG#, .n
+                .gamma = eml_swPoly.result
+                if .swY >= .gamma
+                    .p = 1e-19
+                else
+                    .swY = -ln (.gamma - .swY)
+                    @eml_swPoly: .c3#, .n
+                    .mu = eml_swPoly.result
+                    @eml_swPoly: .c4#, .n
+                    .sigma = exp (eml_swPoly.result)
+                    .swZ = (.swY - .mu) / .sigma
+                    .p = gaussQ (.swZ)
+                endif
+            else
+                # Royston (1995) log-normal approximation
+                .xx = ln (.n)
+                @eml_swPoly: .c5#, .xx
+                .mu = eml_swPoly.result
+                @eml_swPoly: .c6#, .xx
+                .sigma = exp (eml_swPoly.result)
+                .swZ = (.swY - .mu) / .sigma
+                .p = gaussQ (.swZ)
+            endif
+        endif
     endif
 endproc

@@ -4,7 +4,7 @@
 # EML Graphs Plugin
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# License: Creative Commons Share-Alike
+# License: GPL-3.0-or-later
 # Version: 3.0
 # Date: 4 April 2026
 #
@@ -21,7 +21,19 @@
 #         See HANDOFF_CONVERGENCE_STEPS5-6_04_APR_2026.md for design.
 # v2.44: Line Chart CI toggle, Pitch Contour rename, dead code cleanup.
 # ============================================================================
+# PKB copy: flattened from plugin_EML_Praat_Tools/scripts/eml-graphs.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 
+
+# ⚠️ THE include LINES BELOW ARE PLUGIN-INTERNAL — NEVER COPY THEM INTO
+#    GENERATED CODE. They resolve only inside an installed EML plugin tree.
+#    A delivered script must be self-contained: paste the procedure bodies
+#    in, or ship them in a sibling folder next to the script. See Master
+#    Prompt retrieval protocol step 12. Emitting one of these lines produces
+#    a script that fails on any machine without the plugin.
 include ../graphs/eml-graph-procedures.praat
 include ../stats/eml-core-utilities.praat
 include ../stats/eml-core-descriptive.praat

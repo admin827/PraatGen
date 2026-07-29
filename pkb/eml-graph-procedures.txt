@@ -3,10 +3,17 @@
 # ============================================================================
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
-# License: Creative Commons Share-Alike
-# Version: 3.20
+# License: GPL-3.0-or-later
+# Version: 3.21
 # Date: 6 April 2026
 #
+# v3.21: Graph correctness fixes. (1) Box/violin quartiles now use the
+#        shared R-7 interpolated @emlQuartiles instead of nearest-rank
+#        floor(n*p), which biased the median low and collapsed it onto the
+#        minimum at small n (figure now agrees with the describe table).
+#        (2) Bar auto-range tracks a data minimum (emlBarData_visibleMin) so
+#        all-negative means are no longer clipped at 0. (3) B/W palette now
+#        recomputes sprite$ greys so alpha dots/overlap match the fill/line.
 # v3.20: Group sort unification — @emlExtractUniqueValues and
 #         @emlMeasureBarData now call @emlCountGroups instead of inline
 #         discovery. All group ordering flows through single source.
@@ -31,6 +38,11 @@
 #         aggregation and draw procedure aggregation.
 # v3.15: Independent per-axis control — emlShowTicks/emlShowAxisValues
 #         split to emlShowTicksX/Y and emlShowAxisValuesX/Y. New
+# PKB copy: flattened from plugin_EML_Praat_Tools/graphs/eml-graph-procedures.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #         emlShowAxisNameX/Y globals gate axis label drawing. New
 #         @emlExpandAxisControls procedure: 3 dropdown indices → 6
 #         per-axis booleans. All 3 aligned mark procedures,
@@ -482,8 +494,8 @@ procedure emlSetColorPalette: .mode$
         .sprite$[8] = "black"
         .sprite$[9] = "blue"
         .sprite$[10] = "orange"
-        # Cycle 8 Okabe-Ito hues for groups beyond 10
-        for .i from 11 to 30
+        # Cycle 8 Okabe-Ito hues for any number of groups
+        for .i from 11 to 100
             .cycleIdx = ((.i - 1) mod 8) + 1
             .line$[.i] = .line$[.cycleIdx]
             .fill$[.i] = .fill$[.cycleIdx]
@@ -540,7 +552,7 @@ procedure emlSetColorPalette: .mode$
         .sprite$[9] = "bw10"
         .sprite$[10] = "bw01"
         # Cycle BW sprites for groups beyond 10
-        for .i from 11 to 30
+        for .i from 11 to 100
             .cycleIdx = ((.i - 1) mod 8) + 1
             .line$[.i] = .line$[.cycleIdx]
             .fill$[.i] = .fill$[.cycleIdx]
@@ -1454,8 +1466,9 @@ procedure emlDrawViolin: .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, 
     .evalMin = .dataMin - .bandwidth
     .evalMax = .dataMax + .bandwidth
 
-    # High resolution for smooth fill
-    .nEvalFill = 200
+    # High resolution for smooth fill (500 slices eliminates visible banding
+    # at typical viewport sizes; each slice < 1 device pixel)
+    .nEvalFill = 500
     .evalStepFill = (.evalMax - .evalMin) / (.nEvalFill - 1)
 
     # Find max density for scaling
@@ -1478,6 +1491,10 @@ procedure emlDrawViolin: .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, 
     .scaleFactor = .violinWidth / .maxDensity
 
     # === FILL (clipped to axis bounds) ===
+    # Sub-pixel overlap (0.5 step) between adjacent slices prevents
+    # gap artifacts from coordinate rounding. Fill is opaque, so
+    # overlap is invisible — eliminates banding.
+    .overlapMargin = .evalStepFill * 0.5
     for .e from 1 to .nEvalFill - 1
         .y1 = .evalMin + (.e - 1) * .evalStepFill
         .y2 = .evalMin + .e * .evalStepFill
@@ -1490,9 +1507,9 @@ procedure emlDrawViolin: .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, 
         endfor
         .d = .d / (.n * .bandwidth * sqrt (2 * pi)) * .scaleFactor
 
-        # Clamp fill rectangle to axis bounds
-        .drawY1 = max (.y1, .axisYMin)
-        .drawY2 = min (.y2, .axisYMax)
+        # Clamp fill rectangle to axis bounds with sub-pixel overlap
+        .drawY1 = max (.y1 - .overlapMargin, .axisYMin)
+        .drawY2 = min (.y2 + .overlapMargin, .axisYMax)
         if .drawY1 < .drawY2
             Paint rectangle: .fillColor$, .xCenter - .d, .xCenter + .d, .drawY1, .drawY2
         endif
@@ -1558,9 +1575,13 @@ procedure emlDrawViolin: .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, 
         endfor
     endfor
 
-    .q1 = .sorted#[max (1, floor (.n * 0.25))]
-    .median = .sorted#[max (1, floor (.n * 0.5))]
-    .q3 = .sorted#[max (1, floor (.n * 0.75))]
+    # Quartiles via the shared R-7 interpolated procedure (matches the
+    # numeric describe layer). The old nearest-rank floor(n*p) biased the
+    # median low and collapsed it onto the minimum at small n.
+    @emlQuartiles: .data#
+    .q1 = emlQuartiles.q1
+    .median = emlQuartiles.q2
+    .q3 = emlQuartiles.q3
 
     # Clamp quartile box to axis bounds
     .drawQ1 = max (.q1, .axisYMin)
@@ -1634,10 +1655,13 @@ procedure emlDrawBox: .xCenter, .data#, .fillColor$, .lineColor$, .axisYMin, .ax
         endfor
     endfor
 
-    # Five-number summary
-    .q1 = .sorted#[max (1, floor (.n * 0.25))]
-    .median = .sorted#[max (1, floor (.n * 0.5))]
-    .q3 = .sorted#[max (1, floor (.n * 0.75))]
+    # Five-number summary — quartiles via the shared R-7 interpolated
+    # procedure (matches the numeric describe layer). The old nearest-rank
+    # floor(n*p) biased Q1/median/Q3 low, which also shifted the Tukey fences.
+    @emlQuartiles: .data#
+    .q1 = emlQuartiles.q1
+    .median = emlQuartiles.q2
+    .q3 = emlQuartiles.q3
     .iqr = .q3 - .q1
 
     # Tukey fences
@@ -2079,7 +2103,7 @@ procedure emlInitAlphaSprites
     .dir$ = ""
 
     # Strategy 1: installed plugin in preferences directory
-    .tryPath$ = preferencesDirectory$ + "/plugin_EMLTools/sprites/"
+    .tryPath$ = preferencesDirectory$ + "/plugin_EML_Praat_Tools/sprites/"
     .testFile$ = .tryPath$ + "dot_blue_a50_40.png"
     if fileReadable (.testFile$)
         .dir$ = .tryPath$
@@ -2693,12 +2717,20 @@ procedure emlMeasureBarData: .tableId, .groupCol$, .valueCol$, .errorMode, .erro
         endif
     endfor
 
-    # Compute visible maximum (max of mean + error)
+    # Compute visible maximum (max of mean + error) and minimum (min of
+    # mean - error). Both seed at 0 so 0 stays the baseline for all-positive
+    # OR all-negative data; visibleMin only goes negative when a group's
+    # (mean - error) drops below 0, so negative-mean bars are no longer clipped.
     emlBarData_visibleMax = 0
+    emlBarData_visibleMin = 0
     for .g from 1 to emlBarData_nGroups
         .topVal = emlBarData_mean[.g] + emlBarData_error[.g]
         if .topVal > emlBarData_visibleMax
             emlBarData_visibleMax = .topVal
+        endif
+        .botVal = emlBarData_mean[.g] - emlBarData_error[.g]
+        if .botVal < emlBarData_visibleMin
+            emlBarData_visibleMin = .botVal
         endif
     endfor
 

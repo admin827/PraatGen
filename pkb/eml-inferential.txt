@@ -38,6 +38,11 @@
 #   before inferential:
 #     include eml-extract.praat
 #     include eml-inferential.praat
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-inferential.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 #
 # All procedures use the "eml" prefix (EML Stats) to avoid
 # namespace collisions with user scripts.
@@ -566,8 +571,8 @@ endproc
 # comparison (nonparametric alternative to independent-samples t-test).
 #
 # Algorithm selection:
-#   n1 + n2 <= 20 → exact p-value via DP (no-tie null distribution)
-#   n1 + n2 > 20  → normal approximation with continuity correction
+#   n1 + n2 < 50 → exact p-value via DP (no-tie null distribution)
+#   n1 + n2 >= 50  → normal approximation with continuity correction
 #                    and tie correction factor
 #
 # DEPENDENCY: Requires @emlRankVector from eml-core-utilities.praat.
@@ -645,8 +650,8 @@ procedure emlMannWhitneyU: .v1#, .v2#, .tails
         .u2 = .r2 - .n2 * (.n2 + 1) / 2
         .expectedU = .n1 * .n2 / 2
 
-        if .nTotal <= 20
-            # --- Exact path (DP) ---
+        if .nTotal < 50
+            # --- Exact path (DP, matches R wilcox.test threshold) ---
             .method$ = "exact"
 
             @eml_mannWhitneyExactP: .u1, .n1, .n2
@@ -827,9 +832,9 @@ endproc
 # around zero. Nonparametric alternative to the paired t-test.
 #
 # Algorithm selection:
-#   n_nonzero <= 15 -> exact p-value via subset-sum DP
+#   n_nonzero < 50 -> exact p-value via subset-sum DP
 #                      (no-tie null distribution, standard)
-#   n_nonzero > 15  -> normal approximation with continuity correction
+#   n_nonzero >= 50  -> normal approximation with continuity correction
 #                      and tie correction factor
 #
 # Zero differences are excluded before ranking (standard practice).
@@ -936,8 +941,8 @@ procedure emlWilcoxonSignedRank: .v1#, .v2#, .tails
 
             .expectedT = .nNonzero * (.nNonzero + 1) / 4
 
-            if .nNonzero <= 15
-                # --- Exact path (subset-sum DP) ---
+            if .nNonzero < 50
+                # --- Exact path (subset-sum DP, matches R wilcox.test threshold) ---
                 .method$ = "exact"
 
                 @eml_wilcoxonExactP: .tPlus, .nNonzero
@@ -1119,7 +1124,7 @@ endproc
 # 2. Z-based r (approximation path only, Rosenthal 1991):
 #    rZ = z / sqrt(n_nonzero)
 #    Only meaningful when the normal approximation is used
-#    (n_nonzero > 15). Set to undefined for the exact path.
+#    (n_nonzero >= 50). Set to undefined for the exact path.
 #
 # Interpretation (both measures):
 #   r = +1  — all differences favor v1 > v2
@@ -2382,6 +2387,11 @@ procedure emlKruskalWallis: .tableId, .dataCol$, .factorCol$
 
         .df = .nGroups - 1
 
+        # L7: a tiny-negative H from rounding on near-identical groups must
+        # not reach chiSquareQ (undefined for negative argument). Clamp to 0.
+        if .h < 0
+            .h = 0
+        endif
         if .h = 0
             .p = 1
         else
@@ -3127,6 +3137,200 @@ procedure emlScheffe: .tableId, .dataCol$, .factorCol$
     # --- Restore selection ---
 
     selectObject: .tableId
+endproc
+
+
+# ============================================================================
+# @emlLinearRegression — Simple OLS linear regression
+# ============================================================================
+# Inputs:
+#   .x#, .y#   — predictor and response vectors (same length, n >= 3)
+#
+# Outputs:
+#   .slope, .intercept          — regression coefficients
+#   .r, .rSquared               — Pearson r and coefficient of determination
+#   .fStat, .dfReg, .dfRes, .pF — F-test for overall model significance
+#   .seResidual                 — residual standard error
+#   .seSlope, .seIntercept      — coefficient standard errors
+#   .tSlope, .tIntercept        — t-statistics for coefficients
+#   .pSlope, .pIntercept        — two-tailed p-values for coefficients
+#   .n                          — sample size used
+#   .error$                     — empty string if successful
+#
+# Method: Ordinary least squares via normal equations.
+#   b = Σ(xi−x̄)(yi−ȳ) / Σ(xi−x̄)²
+#   a = ȳ − b·x̄
+#   F = MSreg / MSres with df1=1, df2=n−2
+#   SE(b) = SE_resid / √(SSxx)
+#   t = coefficient / SE(coefficient), p via studentQ
+#
+# Provenance: Implemented 10 May 2026. Verified against scipy.stats.linregress
+#   on 4 test vectors (strong negative, weak positive, near-zero, perfect fit).
+# ============================================================================
+
+procedure emlLinearRegression: .x#, .y#
+    .error$ = ""
+    .n = size (.x#)
+
+    if .n <> size (.y#)
+        .error$ = "Vectors must be same length."
+    elsif .n < 3
+        .error$ = "Need at least 3 observations for regression."
+    endif
+
+    if .error$ = ""
+        .xMean = mean (.x#)
+        .yMean = mean (.y#)
+
+        .ssXX = 0
+        .ssYY = 0
+        .ssXY = 0
+        .sumX2 = 0
+        for .i from 1 to .n
+            .dx = .x# [.i] - .xMean
+            .dy = .y# [.i] - .yMean
+            .ssXX = .ssXX + .dx * .dx
+            .ssYY = .ssYY + .dy * .dy
+            .ssXY = .ssXY + .dx * .dy
+            .sumX2 = .sumX2 + .x# [.i] * .x# [.i]
+        endfor
+
+        if .ssXX = 0
+            .error$ = "Predictor has zero variance."
+        elsif .ssYY = 0
+            .error$ = "Response has zero variance."
+        endif
+    endif
+
+    if .error$ = ""
+        # Coefficients
+        .slope = .ssXY / .ssXX
+        .intercept = .yMean - .slope * .xMean
+
+        # Correlation and R²
+        .r = .ssXY / sqrt (.ssXX * .ssYY)
+        .rSquared = .r * .r
+
+        # Sums of squares decomposition
+        .ssReg = .slope * .ssXY
+        .ssRes = .ssYY - .ssReg
+
+        # Degrees of freedom
+        .dfReg = 1
+        .dfRes = .n - 2
+
+        # Mean squares and F-test
+        .msReg = .ssReg / .dfReg
+        .msRes = .ssRes / .dfRes
+        .fStat = .msReg / .msRes
+        .pF = fisherQ (.fStat, .dfReg, .dfRes)
+
+        # Residual standard error
+        .seResidual = sqrt (.msRes)
+
+        # Coefficient standard errors
+        .seSlope = .seResidual / sqrt (.ssXX)
+        .seIntercept = .seResidual * sqrt (.sumX2 / (.n * .ssXX))
+
+        # t-statistics and p-values (two-tailed)
+        .tSlope = .slope / .seSlope
+        .tIntercept = .intercept / .seIntercept
+        .pSlope = 2 * studentQ (abs (.tSlope), .dfRes)
+        .pIntercept = 2 * studentQ (abs (.tIntercept), .dfRes)
+    endif
+endproc
+
+
+# ============================================================================
+# @emlTheilSen — Theil-Sen robust regression estimator
+# ============================================================================
+# Computes the Theil-Sen slope (median of all pairwise slopes) and
+# intercept (median of y_i - slope * x_i). Appropriate for Spearman
+# contexts where OLS is not methodologically coherent.
+#
+# Arguments:
+#   .x#     — predictor values (vector)
+#   .y#     — response values (vector, same length as .x#)
+#
+# Outputs:
+#   .slope      — Theil-Sen slope (median of pairwise slopes)
+#   .intercept  — Theil-Sen intercept (median of residual intercepts)
+#   .error$     — "" if successful, error message otherwise
+#   .nSlopes    — number of valid pairwise slopes computed
+#
+# Complexity: O(n^2) for slope computation, O(n^2 log n^2) for sort.
+# Feasible for typical voice science sample sizes (n < 1000).
+# ============================================================================
+procedure emlTheilSen: .x#, .y#
+    .slope = undefined
+    .intercept = undefined
+    .error$ = ""
+    .nSlopes = 0
+
+    .n = size (.x#)
+    if .n <> size (.y#)
+        .error$ = "emlTheilSen: x and y must have equal length"
+    elsif .n < 2
+        .error$ = "emlTheilSen: need at least 2 observations"
+    endif
+
+    if .error$ = ""
+        # Count valid pairs (where x_i != x_j)
+        .maxPairs = .n * (.n - 1) / 2
+        .slopes# = zero# (.maxPairs)
+        .count = 0
+
+        for .i from 1 to .n - 1
+            for .j from .i + 1 to .n
+                if .x# [.i] <> .x# [.j]
+                    .count = .count + 1
+                    .slopes# [.count] = (.y# [.j] - .y# [.i])
+                    ... / (.x# [.j] - .x# [.i])
+                endif
+            endfor
+        endfor
+
+        .nSlopes = .count
+
+        if .nSlopes = 0
+            .error$ = "emlTheilSen: all x values are identical"
+        else
+            # Extract valid slopes and sort for median
+            .validSlopes# = zero# (.nSlopes)
+            for .k from 1 to .nSlopes
+                .validSlopes# [.k] = .slopes# [.k]
+            endfor
+            .sortedSlopes# = sort# (.validSlopes#)
+
+            # Median of slopes
+            .mid = ceiling (.nSlopes / 2)
+            if .nSlopes mod 2 = 1
+                .slope = .sortedSlopes# [.mid]
+            else
+                .slope = (.sortedSlopes# [.mid]
+                ... + .sortedSlopes# [.mid + 1]) / 2
+            endif
+
+            # Intercept = median(y) - slope * median(x) (Conover 1980)
+            .sortedY# = sort# (.y#)
+            .midY = ceiling (.n / 2)
+            if .n mod 2 = 1
+                .medY = .sortedY# [.midY]
+            else
+                .medY = (.sortedY# [.midY]
+                ... + .sortedY# [.midY + 1]) / 2
+            endif
+            .sortedX# = sort# (.x#)
+            .midX = ceiling (.n / 2)
+            if .n mod 2 = 1
+                .medX = .sortedX# [.midX]
+            else
+                .medX = (.sortedX# [.midX]
+                ... + .sortedX# [.midX + 1]) / 2
+            endif
+            .intercept = .medY - .slope * .medX
+        endif
+    endif
 endproc
 
 

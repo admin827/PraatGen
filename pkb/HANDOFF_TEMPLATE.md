@@ -1,4 +1,4 @@
-# EML Praat Assistant — Handoff Document Template
+# EML PraatGen — Handoff Document Template
 #
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
@@ -15,7 +15,7 @@
 
 ## Format
 
-    # EML Praat Assistant — Session Handoff
+    # EML PraatGen — Session Handoff
     # [Session title or topic]
     # Date: [date]
     # Session type: [Debugging / Development / Design / Audit / Mixed]

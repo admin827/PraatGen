@@ -2,9 +2,17 @@
 # EML Stats : Data Extraction Layer
 # ============================================================================
 # Module: eml-extract.praat
-# Version: 1.2
-# Date: 6 April 2026
+# Version: 1.4
+# Date: 11 April 2026
 #
+# v1.4: @eml_getGroupPairedData — row-wise complete-case extraction of
+#        two numeric columns within one group, for grouped correlation
+#        (keeps X and Y aligned; per-column extraction misaligned pairs
+#        on missing data).
+# v1.3: @emlGuessColumnRoles — infers column roles (group, data,
+#        subject, time, factor) from column names via weighted keyword
+#        matching + type detection. Replaces positional guessing in
+#        wizard and graph form dialogs. Helper: @eml_kwScan.
 # v1.2: Group sort order — @emlCountGroups optionally sorts labels
 #        alphabetically when emlGroupSortAlphabetical = 1. Default 0
 #        (table/discovery order). Global initialized in this file.
@@ -28,8 +36,13 @@
 #   @emlExtractFormantValues, @emlExtractIntensityFrames,
 #   @emlExtractHarmonicityFrames, @emlValidateTable,
 #   @emlValidateNumericColumn, @emlTableColumnNames,
-#   @emlCountGroups
+#   @emlCountGroups, @emlGuessColumnRoles
 #
+# PKB copy: flattened from plugin_EML_Praat_Tools/stats/eml-extract.praat
+#   Content is verbatim from plugin source; only the License line is
+#   normalized to the repo's GPL-3.0-or-later. Version above is the
+#   PLUGIN's version and must match it exactly — a mismatch means the
+#   PKB has drifted. PKB sync: 29 July 2026 (PraatGen v14.0.0).
 # These procedures extract data from Praat objects into numeric
 # vectors suitable for passing to EML Stats statistical procedures.
 # ============================================================================
@@ -128,16 +141,18 @@ procedure emlExtractColumnAsStrings: .tableId, .columnName$
     .n = 0
     .error$ = ""
     
-    # Pre-allocate string array (max 1000)
-    for .init from 1 to 1000
-        .str$[.init] = ""
-    endfor
-    
     # Select table and get dimensions
     selectObject: .tableId
     .nRows = Get number of rows
     .nCols = Get number of columns
-    
+
+    # Pre-initialize the string array to the ACTUAL row count, not a fixed cap
+    # of 1000. A fixed cap left stale indexed values beyond the cap on tables
+    # with >1000 rows; sizing to .nRows removes the cap entirely. (M7)
+    for .init from 1 to .nRows
+        .str$[.init] = ""
+    endfor
+
     # Check if column exists
     .colExists = 0
     for .c from 1 to .nCols
@@ -792,14 +807,15 @@ procedure emlTableColumnNames: .tableId
     # Initialize
     .nCols = 0
     
-    # Pre-initialize name array
-    for .init from 1 to 100
-        .name$[.init] = ""
-    endfor
-    
     # Select table and get column count
     selectObject: .tableId
     .nCols = Get number of columns
+
+    # Pre-initialize the name array to the ACTUAL column count, not a fixed cap
+    # of 100, so no stale indexed names persist beyond the real data. (M7)
+    for .init from 1 to .nCols
+        .name$[.init] = ""
+    endfor
     
     # Get each column name
     for .c from 1 to .nCols
@@ -849,8 +865,17 @@ procedure emlCountGroups: .tableId, .groupCol$
     if .colExists = 0
         .error$ = "Column not found: " + .groupCol$
     elsif .nRows > 0
+        # If alphabetical order requested, sort a copy of the table
+        # so that encounter order IS alphabetical order
+        if emlGroupSortAlphabetical = 1
+            .workId = Copy: "eml_temp_sort"
+            Sort rows: .groupCol$
+        else
+            .workId = .tableId
+        endif
+
         for .row from 1 to .nRows
-            selectObject: .tableId
+            selectObject: .workId
             .grp$ = Get value: .row, .groupCol$
 
             .found = 0
@@ -866,16 +891,8 @@ procedure emlCountGroups: .tableId, .groupCol$
             endif
         endfor
 
-        # Optional alphabetical sort
-        if emlGroupSortAlphabetical = 1 and .nGroups > 1
-            .tempVec$# = empty$# (.nGroups)
-            for .g from 1 to .nGroups
-                .tempVec$#[.g] = .groupLabel$[.g]
-            endfor
-            .tempVec$# = sort$# (.tempVec$#)
-            for .g from 1 to .nGroups
-                .groupLabel$[.g] = .tempVec$#[.g]
-            endfor
+        if emlGroupSortAlphabetical = 1
+            removeObject: .workId
         endif
     endif
 endproc
@@ -911,4 +928,408 @@ procedure eml_getGroupData: .tableId, .dataCol$, .groupCol$, .groupLabel$
         .data# = zero# (0)
     endif
     removeObject: .tempClean
+endproc
+
+
+# ============================================================================
+# @eml_getGroupPairedData
+# ============================================================================
+# Extract two numeric columns for one group, keeping only rows where BOTH
+# columns are defined (row-wise complete-case deletion within the group).
+# Use this for grouped correlation so X and Y stay row-aligned; extracting
+# each column separately with eml_getGroupData would misalign the pairs
+# when cells are missing.
+#
+# Arguments:
+#   .tableId    - ID of the Table object
+#   .colX$      - first numeric column
+#   .colY$      - second numeric column
+#   .groupCol$  - grouping column
+#   .groupLabel$ - label value to match
+#
+# Output:
+#   .n         - number of complete pairs in the group
+#   .nExcluded - group rows dropped for a missing X or Y
+#   .dataX#    - aligned X values
+#   .dataY#    - aligned Y values
+# ============================================================================
+procedure eml_getGroupPairedData: .tableId, .colX$, .colY$, .groupCol$, .groupLabel$
+    selectObject: .tableId
+    .tempGroup = Extract rows where column (text): .groupCol$, "is equal to", .groupLabel$
+    selectObject: .tempGroup
+    .beforeN = Get number of rows
+    .tempClean = Extract rows where: ~self [.colX$] <> undefined and self [.colY$] <> undefined
+    removeObject: .tempGroup
+    selectObject: .tempClean
+    .n = Get number of rows
+    if .n > 0
+        .dataX# = Get all numbers in column: .colX$
+        .dataY# = Get all numbers in column: .colY$
+    else
+        .dataX# = zero# (0)
+        .dataY# = zero# (0)
+    endif
+    .nExcluded = .beforeN - .n
+    removeObject: .tempClean
+endproc
+
+
+# ============================================================================
+# @eml_kwScan (internal helper)
+# ============================================================================
+# Scan a "|"-delimited keyword list against a column name.
+# Applies word-boundary check for keywords <= 4 characters to reduce
+# false positives (e.g., "id" in "video", "rate" in "moderate").
+# Boundary = start of string, or preceded by _, space, or hyphen.
+#
+# Input:
+#   .colName$ — column name to test
+#   .kwList$  — "|"-delimited keywords (e.g., "group|condition")
+#
+# Output:
+#   .hit — 1 if any keyword matched with boundary rules, 0 otherwise
+# ============================================================================
+
+procedure eml_kwScan: .colName$, .kwList$
+    .hit = 0
+    .rem$ = .kwList$
+    while .rem$ <> "" and .hit = 0
+        .pipePos = index (.rem$, "|")
+        if .pipePos > 0
+            .kw$ = left$ (.rem$, .pipePos - 1)
+            .rem$ = right$ (.rem$, length (.rem$) - .pipePos)
+        else
+            .kw$ = .rem$
+            .rem$ = ""
+        endif
+        if .kw$ <> ""
+            .pos = index_caseInsensitive (.colName$, .kw$)
+            if .pos > 0
+                if length (.kw$) <= 4
+                    # Word boundary check for short keywords
+                    if .pos = 1
+                        .hit = 1
+                    else
+                        .prev$ = mid$ (.colName$, .pos - 1, 1)
+                        if .prev$ = "_" or .prev$ = " " or .prev$ = "-"
+                            .hit = 1
+                        endif
+                    endif
+                else
+                    .hit = 1
+                endif
+            endif
+        endif
+    endwhile
+endproc
+
+
+# ============================================================================
+# @emlGuessColumnRoles
+# ============================================================================
+# Infers column roles from Table column names using weighted keyword
+# matching and type detection. Replaces positional guessing for dialog
+# default population in the wizard and graph form.
+#
+# Algorithm (3 passes):
+#   Pass 1 — Keyword matching: each column is scored (0-10) for 4 roles
+#            (group, data, subject, time) using tiered keyword lists.
+#   Pass 2 — Type detection: numeric columns get baseline data score 5,
+#            string columns get baseline group score 5.
+#   Pass 3 — Global greedy assignment: highest-scoring (column, role)
+#            pair assigned first, preventing low-priority roles from
+#            stealing high-confidence matches.
+#   Post  — Factor assignment for two-way designs.
+#   Final — Positional fallback if detection fails.
+#
+# Calls @emlTableColumnNames internally.
+#
+# Input:
+#   .tableId — ID of the Table object
+#
+# Output:
+#   .groupIdx   — categorical/grouping column (0 if undetected)
+#   .dataIdx    — numeric data/value column (0 if undetected)
+#   .dataIdx2   — secondary numeric column (0 if < 2 numeric columns;
+#                 for paired/correlation dialogs needing two data columns)
+#   .subjectIdx — participant/speaker ID column (0 if undetected)
+#   .timeIdx    — trial/session/time column (0 if undetected)
+#   .factor1Idx — primary factor (= groupIdx, for two-way designs)
+#   .factor2Idx — secondary factor (0 if < 2 categorical columns)
+#
+# Callers use whichever outputs are relevant. If both groupIdx and
+# dataIdx are 0 after detection, positional defaults are applied
+# (groupIdx=1, dataIdx=min(2, nCols)).
+# ============================================================================
+
+procedure emlGuessColumnRoles: .tableId
+    .groupIdx = 0
+    .dataIdx = 0
+    .dataIdx2 = 0
+    .subjectIdx = 0
+    .timeIdx = 0
+    .factor1Idx = 0
+    .factor2Idx = 0
+
+    @emlTableColumnNames: .tableId
+    .nCols = emlTableColumnNames.nCols
+
+    if .nCols < 1
+        goto GUESS_ROLES_DONE
+    endif
+
+    # ── PASS 1: Keyword scoring ──────────────────────────────────────
+    # Score each column (0-10) for each role. Keywords grouped by
+    # weight tier: 10 = unambiguous, 8 = strong, 6 = moderate.
+
+    for .col from 1 to .nCols
+        .cn$ = emlTableColumnNames.name$[.col]
+        .gS[.col] = 0
+        .dS[.col] = 0
+        .sS[.col] = 0
+        .tS[.col] = 0
+
+        # ── Group score ──
+
+        # Weight 10: unambiguous categorical identifiers
+        @eml_kwScan: .cn$, "group|condition|category"
+        if eml_kwScan.hit = 1 and .gS[.col] < 10
+            .gS[.col] = 10
+        endif
+
+        # Weight 8: domain-specific categorical terms
+        @eml_kwScan: .cn$, "treatment|species|vowel|phoneme|diagnosis|pathology|severity|consonant|language|dialect"
+        if eml_kwScan.hit = 1 and .gS[.col] < 8
+            .gS[.col] = 8
+        endif
+
+        # Weight 6: general categorical terms
+        @eml_kwScan: .cn$, "class|type|sex|gender|style|task|register|ensemble|choir|cohort|genre|mode|status|label|level|setting|location|method|technique|instrument|stimulus|repertoire|voice_type|age_group|section|part|region|site"
+        if eml_kwScan.hit = 1 and .gS[.col] < 6
+            .gS[.col] = 6
+        endif
+
+        # ── Data score ──
+
+        # Weight 10: unambiguous measurement terms
+        @eml_kwScan: .cn$, "value|score|measurement|jitter|shimmer"
+        if eml_kwScan.hit = 1 and .dS[.col] < 10
+            .dS[.col] = 10
+        endif
+
+        # Weight 8: acoustic and scientific measures
+        @eml_kwScan: .cn$, "intensity|frequency|pitch|duration|hnr|cpps|amplitude|bandwidth|formant|energy|power|contact_quotient"
+        if eml_kwScan.hit = 1 and .dS[.col] < 8
+            .dS[.col] = 8
+        endif
+
+        # Weight 8: short acoustic keywords (boundary-checked)
+        @eml_kwScan: .cn$, "f0|f1|f2|f3|f4|cq|cpp"
+        if eml_kwScan.hit = 1 and .dS[.col] < 8
+            .dS[.col] = 8
+        endif
+
+        # Weight 6: general numeric/measurement terms
+        @eml_kwScan: .cn$, "mean|rate|ratio|result|outcome|response|rating|measure|percent|proportion|slope|median|average|threshold|alpha_ratio|cog|spectral|harmonic|noise|spl|snr|fraction|extent|area|count|total|period|cycle"
+        if eml_kwScan.hit = 1 and .dS[.col] < 6
+            .dS[.col] = 6
+        endif
+
+        # ── Subject score ──
+
+        # Weight 10: unambiguous participant identifiers
+        @eml_kwScan: .cn$, "participant|subject|speaker|singer"
+        if eml_kwScan.hit = 1 and .sS[.col] < 10
+            .sS[.col] = 10
+        endif
+
+        # Weight 8: domain-specific person identifiers
+        @eml_kwScan: .cn$, "patient|listener|rater|talker|client|student|evaluator|assessor"
+        if eml_kwScan.hit = 1 and .sS[.col] < 8
+            .sS[.col] = 8
+        endif
+
+        # Weight 6: general person/case terms
+        @eml_kwScan: .cn$, "performer|respondent|child|adult|judge"
+        if eml_kwScan.hit = 1 and .sS[.col] < 6
+            .sS[.col] = 6
+        endif
+
+        # Weight 6: short identifier keywords (boundary-checked)
+        @eml_kwScan: .cn$, "id"
+        if eml_kwScan.hit = 1 and .sS[.col] < 6
+            .sS[.col] = 6
+        endif
+
+        # ── Time score ──
+
+        # Weight 10: unambiguous temporal/trial identifiers
+        @eml_kwScan: .cn$, "trial|session|timepoint|baseline"
+        if eml_kwScan.hit = 1 and .tS[.col] < 10
+            .tS[.col] = 10
+        endif
+
+        # Weight 8: repeated-measures temporal terms
+        @eml_kwScan: .cn$, "repetition|block|recording|iteration"
+        if eml_kwScan.hit = 1 and .tS[.col] < 8
+            .tS[.col] = 8
+        endif
+
+        # Weight 6: general temporal/order terms
+        @eml_kwScan: .cn$, "visit|phase|wave|attempt|occasion|round|stage"
+        if eml_kwScan.hit = 1 and .tS[.col] < 6
+            .tS[.col] = 6
+        endif
+
+        # Weight 6: short temporal keywords (boundary-checked)
+        @eml_kwScan: .cn$, "pre|post|rep|day|week|time|date|take"
+        if eml_kwScan.hit = 1 and .tS[.col] < 6
+            .tS[.col] = 6
+        endif
+    endfor
+
+    # ── PASS 2: Type detection ───────────────────────────────────────
+    # Numeric columns get baseline data score 5; string columns get
+    # baseline group score 5. This ensures type evidence participates
+    # in scoring but cannot override strong keyword matches.
+
+    for .col from 1 to .nCols
+        .cn$ = emlTableColumnNames.name$[.col]
+        selectObject: .tableId
+        .nRows = Get number of rows
+        if .nRows > 0
+            .testVal$ = Get value: 1, .cn$
+            .numTest = number (.testVal$)
+            if .numTest <> undefined
+                # Numeric column: boost data score
+                if .dS[.col] < 5
+                    .dS[.col] = 5
+                endif
+            else
+                # String column: boost group score
+                if .gS[.col] < 5
+                    .gS[.col] = 5
+                endif
+            endif
+        endif
+    endfor
+
+    # ── PASS 3: Global greedy assignment ─────────────────────────────
+    # Find the highest-scoring (column, role) pair globally, assign it,
+    # remove both from consideration. Repeat for all 4 roles.
+    # This prevents low-priority roles from stealing high-confidence
+    # matches. E.g., "participant" scores group=6 (via "part") but
+    # subject=10 — the subject match wins globally.
+
+    for .col from 1 to .nCols
+        .taken[.col] = 0
+    endfor
+    .roleDone[1] = 0
+    .roleDone[2] = 0
+    .roleDone[3] = 0
+    .roleDone[4] = 0
+
+    for .assignRound from 1 to 4
+        .bestScore = 0
+        .bestCol = 0
+        .bestRole = 0
+        for .col from 1 to .nCols
+            if .taken[.col] = 0
+                if .roleDone[1] = 0 and .gS[.col] > .bestScore
+                    .bestScore = .gS[.col]
+                    .bestCol = .col
+                    .bestRole = 1
+                endif
+                if .roleDone[2] = 0 and .dS[.col] > .bestScore
+                    .bestScore = .dS[.col]
+                    .bestCol = .col
+                    .bestRole = 2
+                endif
+                if .roleDone[3] = 0 and .sS[.col] > .bestScore
+                    .bestScore = .sS[.col]
+                    .bestCol = .col
+                    .bestRole = 3
+                endif
+                if .roleDone[4] = 0 and .tS[.col] > .bestScore
+                    .bestScore = .tS[.col]
+                    .bestCol = .col
+                    .bestRole = 4
+                endif
+            endif
+        endfor
+        if .bestScore > 0
+            .taken[.bestCol] = 1
+            .roleDone[.bestRole] = 1
+            if .bestRole = 1
+                .groupIdx = .bestCol
+            elsif .bestRole = 2
+                .dataIdx = .bestCol
+            elsif .bestRole = 3
+                .subjectIdx = .bestCol
+            elsif .bestRole = 4
+                .timeIdx = .bestCol
+            endif
+        endif
+    endfor
+
+    # ── Secondary data column (paired/correlation) ───────────────────
+    # Best unassigned column with a data score, for dialogs needing
+    # two numeric columns (paired t-test, correlation).
+
+    .bestD2 = 0
+    for .col from 1 to .nCols
+        if .taken[.col] = 0 and .dS[.col] > .bestD2
+            .bestD2 = .dS[.col]
+            .dataIdx2 = .col
+        endif
+    endfor
+
+    # ── Factor assignment (two-way designs) ──────────────────────────
+    # factor1 = groupIdx. factor2 = next-best unassigned column with
+    # a group-type keyword score > 0.
+
+    if .groupIdx > 0
+        .factor1Idx = .groupIdx
+        .bestF2 = 0
+        for .col from 1 to .nCols
+            if .col <> .groupIdx and .col <> .dataIdx
+                if .gS[.col] > .bestF2
+                    .bestF2 = .gS[.col]
+                    .factor2Idx = .col
+                endif
+            endif
+        endfor
+    endif
+
+    # ── Fallbacks ────────────────────────────────────────────────────
+    # If detection failed for essential roles, apply positional
+    # defaults matching the graph form convention (group=1, data=2).
+
+    if .groupIdx = 0 and .dataIdx = 0
+        .groupIdx = 1
+        if .nCols >= 2
+            .dataIdx = 2
+        endif
+    elsif .groupIdx = 0
+        # Data found but no group — first column != dataIdx
+        for .col from 1 to .nCols
+            if .col <> .dataIdx and .groupIdx = 0
+                .groupIdx = .col
+            endif
+        endfor
+    elsif .dataIdx = 0
+        # Group found but no data — first column != groupIdx
+        for .col from 1 to .nCols
+            if .col <> .groupIdx and .dataIdx = 0
+                .dataIdx = .col
+            endif
+        endfor
+    endif
+
+    # Ensure factor1 has a value if group was detected
+    if .groupIdx > 0 and .factor1Idx = 0
+        .factor1Idx = .groupIdx
+    endif
+
+    label GUESS_ROLES_DONE
 endproc

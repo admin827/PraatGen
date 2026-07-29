@@ -6,8 +6,9 @@
 # the triggering criteria for a feature, the compiler MUST implement that
 # feature unless the user explicitly opts out.
 #
-# Version: 1.1
+# Version: 1.2
 # Date: 26 February 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — stale `EML_DRAWING_PROCEDURES.txt` references repointed to `eml-graph-procedures.txt`
 
 # ============================================================================
 # DESIGN PRINCIPLES
@@ -1028,8 +1029,8 @@
 # ============================================================================
 #
 # The following reusable procedures implement Appendix F patterns.
-# They may be included in EML_DRAWING_PROCEDURES.txt or shipped as
-# a separate include file.
+# They are EML Graphs procedures in eml-graph-procedures.txt
+# (see EML_PROCEDURE_REGISTRY.md, Graphs: Core).
 #
 # S12A: @checkStopSentinel
 #
@@ -1238,7 +1239,7 @@
 #   unchanged.
 # - The reusable procedures @emlHandleStereo (interactive, single-file)
 #   and @emlApplyChannelChoice (non-interactive, batch) implement
-#   these patterns. See EML_DRAWING_PROCEDURES.txt.
+#   these patterns. See eml-graph-procedures.txt (registry: Graphs: Core).
 
 ---
 
