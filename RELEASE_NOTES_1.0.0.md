@@ -97,6 +97,14 @@ than error and is not comparable between a threshold and a derivative method.
 one-directional: bare numeric defaults are a parse error in `form:`, while
 `beginPause:` accepts either. Rule 19 and the SELF-AUDIT line now say so.
 
+**Rule 27 snippet.** The `@emlGenerateUniquePath` pattern read the return value
+as `.path$`, which is the procedure's input parameter — the guard would return
+the candidate path unchanged. Corrected to `.result$` per the source.
+`EML_PROCEDURE_REGISTRY.md` now states that its `Parameters` column lists inputs
+only and that return variables must be read from the procedure body. Nineteen
+registry rows for zero-argument procedures had a line of body text in the
+`Parameters` cell; those now read `(none)`.
+
 **Vector arguments.** `COMMANDS_Pitch.txt` and `COMMANDS_PitchTier.txt` examples
 now use `{0, 0.5, 1}` for REALVECTOR arguments.
 

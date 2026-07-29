@@ -2477,8 +2477,14 @@ No hardcoded or assumed paths. SELF-AUDIT must confirm compliance.
 Pattern:
 
     @emlGenerateUniquePath: candidatePath$
-    outputPath$ = emlGenerateUniquePath.path$
+    outputPath$ = emlGenerateUniquePath.result$
     writeFileLine: outputPath$, ...
+
+The return variable is **`.result$`**, not `.path$`. `.path$` is the procedure's
+*input parameter* — reading it back gives you the candidate path unchanged, so
+the collision guard silently does nothing. Verified against
+`eml-graphs-form.txt` and its own two internal call sites. Where a snippet in
+this prompt and the library source disagree, Rule 223 governs: the source wins.
 
 **Pure date stamps are not sufficient for uniqueness.** Sub-minute collisions occur in batch contexts and during rapid iterative testing. Date stamps may be included as part of the filename strategy for human readability, but `@emlGenerateUniquePath` must still wrap the final path.
 
