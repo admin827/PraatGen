@@ -52,12 +52,18 @@ PraatGen is not a plugin or a standalone application. It is a **Claude Project**
 The model is a variable — keep the one you're using in mind.
 
 - **Opus 5** is the current recommendation and what the author uses most of the time.
-- **Opus 4.8** also performs well — high reasoning effort for non-trivial work.
+- **Opus 4.8** also performs well.
 - **Opus 4.7** is fine but more agentic by default; it wants to take initiative. That suits large-scale refactors in AUTO SANDBOX mode, but in close collaborative work watch that it doesn't run ahead of your decisions. Superseded by Opus 5.
 - **Opus 4.6 + Extended Thinking** is the original development-and-validation baseline for PraatGen and remains solid, particularly if you are token-conscious.
 - **Sonnet and Haiku are not supported.** Simple scripts may succeed, but command-verification reliability decreases with complexity and silent failures are possible.
 
-**A note on thinking and effort.** Extended thinking as a user-facing on/off toggle was retired in Opus 4.8. On 4.8 and later, PraatGen's pre-flight and Phase 3B complexity score read as a *reasoning-effort* recommendation instead: high effort for command planning, where the real reasoning happens, and a lower tier is generally sufficient for code emission, which is largely transcription from verified sources. On 4.6/4.7, where the toggle still exists, PraatGen will tell you during pre-flight when you can safely turn thinking off.
+**A note on thinking and effort.** Extended thinking as a user-facing on/off toggle was retired in Opus 4.8. On 4.6/4.7, where the toggle still exists, PraatGen will tell you during pre-flight when you can safely turn thinking off. On 4.8 and later, the same pre-flight and Phase 3B assessments read as effort guidance instead — and that guidance is provisional, so take it as a starting point rather than a rule:
+
+- Currently there does not appear to be an advantage to setting effort higher than the default ("high").
+- Setting it higher can actually derail a project, largely through context exhaustion.
+- There is some evidence that effort may be set lower once the command plan is established.
+
+Please experiment with this setting and find what works best for your own workflows. As better evidence accumulates this guidance will get sharper.
 
 ---
 
@@ -93,7 +99,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 ### The Basic Workflow
 
-0. **Verify your model and settings:** Opus 5 recommended (4.8 also strong; 4.6 with Extended Thinking fine — see "Choosing a model"), at high reasoning effort for non-trivial work.
+0. **Verify your model and settings:** Opus 5 recommended (4.8 also strong; 4.6 with Extended Thinking fine — see "Choosing a model"). Default effort ("high") is a sensible starting point; see the note on thinking and effort.
 
 1. **Describe your task.** PraatGen asks for four things:
    - What should the script accomplish?
@@ -101,9 +107,9 @@ Open a new conversation within the project. PraatGen will respond with its readi
    - What information does the script need from the user?
    - What should remain when the script finishes?
 
-2. **Review the pre-flight.** PraatGen verifies it has the right references loaded and flags any ambiguities. It recommends a model tier and Thinking settings. You approve this step or raise concerns.
+2. **Review the pre-flight.** PraatGen verifies it has the right references loaded and flags any ambiguities. It notes a model tier and, where relevant, thinking or effort settings. You approve this step or raise concerns.
 
-3. **Reply EXECUTE (or GO).** PraatGen generates a command plan. There is a Thinking gate after the plan — PraatGen tells you whether to keep Thinking on for code generation. Reply GO and it writes and delivers the script and a self-audit.
+3. **Reply EXECUTE (or GO).** PraatGen generates a command plan, then scores its complexity. On 4.6/4.7 that is a gate: it tells you whether to keep Thinking on for code generation and waits for GO. On 4.8+ it is advisory — a one-line note on whether the plan looks complete enough that a lower effort setting may serve — and generation continues in the same turn.
 
 4. **Test in Praat.** Copy the script into Praat's script editor and run it. You can also ask PraatGen to present a downloadable `.praat` file in the chat. If it works, you're done.
 
@@ -268,9 +274,9 @@ PraatGen tracks three version numbers:
 
 **EML Tools integration.** PraatGen generates flat scripts inspired by the EML library procedures. The EML Tools plugin itself is in pre-release and distributed separately.
 
-**Thinking management.** Complex scripts benefit significantly from Claude's Thinking. The prompt includes gates that recommend when to enable or disable it, but the setting must be managed manually.
+**Thinking / effort management.** Complex scripts benefit from deliberation, and the prompt includes gates that assess it — but the setting is yours to manage manually, and on 4.8+ the guidance is provisional (see "Choosing a model").
 
-**Model dependency.** Sonnet is not recommended for advanced scripts. Opus 4.8 is the current recommendation; Opus 4.7 and 4.6 with Extended Thinking also work well. Note that 4.7 is more agentic by default — strong for large-scale refactors in AUTO SANDBOX mode, but worth watching in close collaborative work. The model is a variable; keep the one you're using in mind.
+**Model dependency.** Sonnet and Haiku are not supported for advanced scripts. Opus 5 is the current recommendation; Opus 4.8 also performs well, and 4.6 with Extended Thinking remains solid. Note that 4.7 is more agentic by default — strong for large-scale refactors in AUTO SANDBOX mode, but worth watching in close collaborative work. The model is a variable; keep the one you're using in mind.
 
 **Sandbox prerequisites.** Sandbox Mode requires `www.fon.hum.uva.nl` in your allowed network domains, set *before* the conversation starts (the list is frozen at conversation start). If it's missing, PraatGen offers a manual-upload fallback.
 

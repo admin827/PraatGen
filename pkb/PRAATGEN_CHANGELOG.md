@@ -164,6 +164,16 @@ Haiku are now explicitly unsupported** rather than "may work for simple scripts.
 The "PraatGen will tell you when you can safely turn thinking off" promise is
 retained only for toggle models, where it is still true.
 
+**Effort guidance is deliberately soft, and labelled provisional.** On effort
+models the prompt states only what is currently supportable: there does not
+appear to be an advantage to setting effort higher than the default ("high");
+setting it higher can actually derail a project, largely through context
+exhaustion; there is some evidence that effort may be set lower once the
+COMMAND PLAN is established; users should experiment and find what works for
+their own workflows. Phase 3B's line is explicitly not to be presented as a
+settled recommendation, and the Rule 31 phase-value table carries a note that
+it is not a licence to raise effort. Revisit when there is better evidence.
+
 **Carried forward, not fixed:** C6 (PulseAudio startup was commented out in both
 the SANDBOX install step and the Rule 24C test template — now uncommented) and
 C7 (UTF-16BE `eml-batch-process.txt`) were both resolved; C7 at source before

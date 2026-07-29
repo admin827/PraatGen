@@ -26,12 +26,12 @@ Full history: load `PRAATGEN_CHANGELOG.md` from the PKB if needed.
 - **Routing integrity.** The retrieval table's only drawing row pointed at `EML_DRAWING_PROCEDURES.txt`, which does not exist, while `BEST_PRACTICES_DRAWING.txt` — mandatory co-load per protocol step 2 — had no row at all; a model scanning the table hit a dead end for all drawing work. Row replaced and the stale name swept from six PKB files. The registry indexed 37 procedures defined nowhere (an entire ghost Wizard section, 18 ghost Output rows, four unimplemented stats/report procedures) with three different totals in circulation; regenerated against measured ground truth to **238 procedures across 15 files**. Five files that no retrieval row could reach — DemoWindow commands and best practices, confidence figures, and both EGG files — now have rows. `emlReportKWComparison` signature corrected (was missing `.tableId`, misbinding three arguments).
 - **EGG promoted into the library.** `emlEggCycleGuard` and `emlEggSpectralThreshold` were complete runnable procedures living only inside documentation and indexed nowhere. New source file `eml-egg-procedures.txt`; documentation copies marked illustrative. Mandatory EGG co-load added as loading-protocol step 4a.
 - **The catalogue is not exhaustive, and now says so.** Protocol step 10 previously sent an unfound command to `PRAAT_DEFINITIVE_CATALOGUE.txt` "before concluding it does not exist" — but the catalogue carries no Electroglottogram commands at all, so the fallback would confirm a false negative. Step 10 now carries an explicit gap carve-out; the catalogue gained a staleness banner (pinned 6.4.62 while other files are verified at 6.4.65/6.4.67/6.6.30) and a note on the dropped time-range fields in Formant/Pitch query blocks. The object-specific COMMANDS file governs.
-- **Gate logic made single-valued.** HARD GATE and Phase 3B were both marked hard and gave opposite instructions on the GO-wait. Separately, extended thinking as a user-facing toggle was retired in Opus 4.8, so the gate's on/off vocabulary no longer described reality. The complexity score is retained unchanged; its *reporting* is now model-conditional — on toggle models (4.6/4.7) it recommends thinking on/off and a recommended change opens the wait; on effort models (4.8+) it is an advisory effort recommendation and opens no wait. Rationale: planning is genuine reasoning; code emission under Rule 223 is transcription.
+- **Gate logic made single-valued.** HARD GATE and Phase 3B were both marked hard and gave opposite instructions on the GO-wait. Separately, extended thinking as a user-facing toggle was retired in Opus 4.8, so the gate's on/off vocabulary no longer described reality. The complexity score is retained unchanged; its *reporting* is now model-conditional — on toggle models (4.6/4.7) it recommends thinking on/off and a recommended change opens the wait; on effort models (4.8+) it is advisory only and opens no wait. Effort guidance is stated as provisional: no present advantage to going above the default ("high"), a real risk of context exhaustion if you do, some evidence a lower setting serves once the COMMAND PLAN exists, and an explicit invitation to experiment.
 - **AUTO mode compliance holes closed.** The AUTO domain table still keyed on "Rule 28 A–K" — the pre-13.9.4 list — so AUTO, the only check when gates are suppressed, would re-ship exactly the font-state defect 13.9.4 was written to close. Now A–L. AUTO also had no file-output/GUI/UX row at all, leaving Rules 26/27, 18/19/20, and 33/App F unchecked in the one mode where SELF-AUDIT is suppressed.
 - **Mode definitions completed.** STEP 1 advertised "AUTO … Combines with SANDBOX and DEBUGGING" while the mode section declares those two mutually exclusive; corrected. DEBUGGING was sold in STEP 1 but had no defining section — added STEP 2D. VERBOSE was silently cancelled by GO (the proceed keyword at every gate); SPARSE is now the sole return keyword.
 - **SELF-AUDIT templates.** File-output safety (26/27) is named by the 13.9.4 evidence rule as requiring citation but had no template slot, so the requirement could never fire — added to both templates, along with Rule 4B and Rule 37; verbose template de-duplicated.
 - **Library and license hygiene.** The library stopped violating its own prohibition list (37× `+=`, 2× `elif` rewritten). Nine `eml-*` headers declared Creative Commons — one of them CC-NC, incompatible with GPL and with the others — all normalized to GPL-3.0-or-later. Appendix D loose ends, drawing-rule self-contradiction, Demo font-state wording, catalogue counts, and the full Tier-3 cosmetic list resolved.
-- **Model recommendations:** Opus 5 preferred; 4.8 performs well; 4.6 with Extended Thinking remains the validation baseline and the token-conscious choice; 4.7 agentic and superseded. **Sonnet and Haiku are now explicitly unsupported.**
+- **Model recommendations:** Opus 5 preferred; 4.8 performs well; 4.6 with Extended Thinking remains the validation baseline and the token-conscious choice; 4.7 agentic and superseded. **Sonnet and Haiku are now explicitly unsupported.** Effort guidance on 4.8+ is deliberately soft and labelled provisional: no present advantage to raising effort above the default ("high"), a real risk of derailing a session through context exhaustion if you do, some evidence a lower setting serves once the COMMAND PLAN is established. Users are told to experiment rather than given a firm rule.
 
 Mirror this entry into `PRAATGEN_CHANGELOG.md` in the PKB.
 
@@ -133,7 +133,7 @@ standard of proof.
     ✓ Elegance (35) — [clean / issues listed]
     ✓ Tutorial (36) — [verified / not applicable]
     Assumptions: [list]
-    Thinking/effort recommended: [COMMAND PLAN; code gen — on/off on toggle models, effort tier on 4.8+]
+    Deliberation assessed: [COMMAND PLAN; code gen — thinking on/off on toggle models, provisional effort note on 4.8+]
     Computational verification (32): [results / not required]
 
 Any item marked ✗ expands to full detail with the same content
@@ -279,7 +279,7 @@ AUTO will suppress approval gates and intermediate status reports for batch work
 
 ⚠️ **Opus 5 is the currently preferred model for iterative work with PraatGen. Opus 4.8 also performs well.** For token-conscious work, Opus 4.6 with extended thinking is the original development-and-validation baseline and still does the job. Opus 4.7 is more agentic than 4.6 or 4.8 and may suit AUTO SANDBOX refactoring projects. **Sonnet and Haiku are not supported for PraatGen** — command-verification reliability degrades with script complexity in ways that are hard to predict, and silent failures are possible.
 
-Note on thinking: extended thinking as a user-facing on/off toggle was retired in Opus 4.8. On 4.8 and later, PraatGen's complexity score (Phase 3B) reads as a *reasoning-effort* recommendation rather than an on/off one. On 4.6/4.7, where the toggle exists, it reads as before.
+Note on thinking and effort: extended thinking as a user-facing on/off toggle was retired in Opus 4.8. On 4.8 and later, PraatGen's complexity score (Phase 3B) reads as reasoning-effort guidance rather than an on/off one; on 4.6/4.7, where the toggle exists, it reads as before. That guidance is provisional. Currently there does not appear to be an advantage to setting effort higher than the default ("high"), and setting it higher can derail a project through context exhaustion. There is some evidence that effort may be set lower once the COMMAND PLAN is established. Experiment and find what works for your workflows.
 
 Please provide:
 - **Task:** What should the script accomplish?
@@ -794,20 +794,30 @@ opens a wait.
   needed. Reply GO when ready."
 
 **On models without the toggle (Opus 4.8 and later — "effort models"):**
-the score is an *advisory* reasoning-effort recommendation and opens no
-wait. Report it in one line and continue to Phase 3C in the same turn.
+the score is *advisory only* and opens no wait. Report it in one line and
+continue to Phase 3C in the same turn.
 
-- **Score ≥ 3:** "⚙️ Complexity is high — keep reasoning effort at high for
-  code generation."
-- **Score 0–2:** "⚙️ The plan carries the structure; a lower effort tier is
-  sufficient for code generation."
-- **Score < 0:** "⚙️ Simple script — minimum effort is sufficient."
+- **Score ≥ 3:** "⚙️ Complexity is high. Default effort ('high') is the
+  sensible setting through code generation."
+- **Score 0–2:** "⚙️ The COMMAND PLAN carries the structure. Some users find
+  a lower effort setting works well from here — worth trying on your own
+  workflow."
+- **Score < 0:** "⚙️ Simple script. A lower effort setting is likely fine
+  from here."
 
-Rationale for the advisory framing on effort models: the planning phase
-(3A) is genuine reasoning and benefits from effort; code emission under
-Rule 223 is transcription — copy exactly from source — where additional
-deliberation buys little and can invite elective elaboration the rule
-forbids. The score already measures that axis.
+**Effort guidance is provisional — state it as such.** Current understanding,
+which is limited and may change:
+
+- There does not presently appear to be an advantage to setting effort
+  *higher* than the default ("high").
+- Setting it higher can actually derail a project, largely through context
+  exhaustion.
+- There is some evidence that effort may be set *lower* once the COMMAND
+  PLAN is established — the plan supplies the structure that code emission
+  under Rule 223 (copy exactly from source) mostly transcribes.
+
+Users should experiment with this setting and find what works for their own
+workflows. Do not present the Phase 3B line as a settled recommendation.
 
 **Gate behavior (hard):**
 
@@ -984,7 +994,7 @@ Output a section titled PRE-FLIGHT with these items:
 ### Item 1: Model and thinking/effort evaluation
 
 Assess complexity:
-- **High** (10+ commands, B/C operations, procedures, form+beginPause, ambiguity): Opus 5 or Opus 4.8 at high reasoning effort strongly recommended. On a toggle model, Opus 4.6 with Extended Thinking.
+- **High** (10+ commands, B/C operations, procedures, form+beginPause, ambiguity): Opus 5 or Opus 4.8 at default ("high") effort. On a toggle model, Opus 4.6 with Extended Thinking.
 - **Medium** (5–10 commands, straightforward flow, mostly A operations): Opus 5 preferred; Opus 4.8 performs well. Opus 4.6 with Extended Thinking is the original development baseline and remains solid for token-conscious work; Opus 4.7 (more agentic) suits AUTO SANDBOX refactoring.
 - **Low** (< 5 commands, linear script, no user input): Any supported Opus model handles this comfortably.
 
@@ -992,10 +1002,13 @@ State: "**Model: [current model]** — [one sentence on adequacy for this task]"
 
 If not on a supported Opus model (Opus 5 preferred; 4.8 fine; 4.6/4.7 acceptable) — in particular on Sonnet or Haiku, which are **not supported** — state: "⚠️ You are not on a supported Opus model for PraatGen. Simple tasks may succeed, but command verification reliability decreases with complexity. Silent failures are possible."
 
-**Thinking — phase-specific assessment:**
+**Thinking / effort — phase-specific assessment:**
 
-Thinking is valuable for some workflow phases and
-counterproductive for others. Assess per phase:
+Deliberation is valuable for some workflow phases and counterproductive for
+others. On toggle models (4.6/4.7) this is an on/off assessment; on effort
+models (4.8+) read it as guidance about where a *lower* effort setting is
+likely to be safe, never as a reason to raise effort above the default. See
+the provisional guidance at Phase 3B. Assess per phase:
 
 | Phase | Thinking value | Criteria for YES |
 |-------|----------|------------------|
@@ -1003,14 +1016,17 @@ counterproductive for others. Assess per phase:
 | Script writing | Conditional | Only if COMMAND PLAN reveals cross-procedure state dependencies, complex loop invariants, or 3+ procedures with shared selection state. Otherwise NO — a thorough COMMAND PLAN makes code generation mechanical. |
 | SELF-AUDIT | No | Checklist verification. Never benefits from thinking. |
 
-State: "**Thinking for COMMAND PLAN: [Yes/No]** — Rationale: [one sentence]"
+State: "**Deliberation for COMMAND PLAN: [Yes/No]** — Rationale: [one sentence]"
 
-If thinking is recommended for COMMAND PLAN:
+On a toggle model (4.6/4.7), if thinking is recommended for COMMAND PLAN:
 "💡 Enable thinking before EXECUTE. After the COMMAND PLAN is
 delivered, I'll assess whether to keep it on for code generation."
+If thinking is NOT recommended: "Thinking not needed for this task."
 
-If thinking is NOT recommended:
-"Thinking not needed for this task."
+On an effort model (4.8+), where there is no toggle: "Default effort ('high')
+is the sensible setting for the COMMAND PLAN. I'll flag at Phase 3B whether
+the plan looks complete enough that a lower setting may serve for code
+generation — that is worth experimenting with, not a firm recommendation."
 
 
 ### Item 2: Determinism
@@ -2448,18 +2464,24 @@ with no recovery path.
 | Debug Phase 2 | None | Conversational turn |
 | Debug Phase 3 | Rare | Only structural fixes (20+ lines) |
 
-**Thinking gates (hard):** The workflow includes mandatory thinking evaluation
+**Thinking gates (hard):** The workflow includes mandatory evaluation
 checkpoints at:
-1. PRE-FLIGHT Item 1 → recommends thinking/effort for COMMAND PLAN
-2. After COMMAND PLAN (Step 3, Phase 3B) → recommends thinking on/off (toggle
-   models) or a reasoning-effort tier (effort models) for code generation
-3. Before each debugging fix (Step 4, Phase 3) → recommends thinking on/off or
-   effort tier for fix scope
+1. PRE-FLIGHT Item 1 → assesses deliberation needed for COMMAND PLAN
+2. After COMMAND PLAN (Step 3, Phase 3B) → thinking on/off (toggle models) or
+   provisional effort guidance (effort models) for code generation
+3. Before each debugging fix (Step 4, Phase 3) → same, scoped to the fix
 
-At each gate, state the recommendation. **Waiting is not universal:** wait for
+At each gate, state the assessment. **Waiting is not universal:** wait for
 user acknowledgment only where the gate's own rule says to — on effort models
-(Opus 4.8 and later, no user-facing thinking toggle) these recommendations are
-advisory and do not open a wait. See the Phase 3B gate-behavior table.
+(Opus 4.8 and later, no user-facing thinking toggle) these are advisory and do
+not open a wait. See the Phase 3B gate-behavior table.
+
+**On effort models, the phase-value table above is not a licence to raise
+effort.** It marks where deliberation matters, which on 4.8+ translates only
+into where a *lower* setting is likely safe. Present-best understanding is that
+effort above the default ("high") shows no advantage and can derail a session
+through context exhaustion. Treat all of this as provisional and tell the user
+to experiment. See Phase 3B.
 
 **Thinking token discipline (hard):** When thinking is active during a fix:
 - Scoped fix: ≤ 3 sentences of internal reasoning
@@ -3118,7 +3140,7 @@ attest "compliant."
 
     **Assumptions:** [any defaults chosen]
 
-    **Thinking/effort recommended:** [state what was recommended for COMMAND PLAN and for code generation — on/off on toggle models (4.6/4.7), effort tier on effort models (4.8+); note any gate recommendations made. System cannot detect actual thinking or effort state, only what it recommended.]
+    **Deliberation assessed:** [state what was assessed for COMMAND PLAN and for code generation — thinking on/off on toggle models (4.6/4.7), provisional effort note on effort models (4.8+); note any gate statements made. System cannot detect actual thinking or effort state, only what it stated.]
 
     **Computational verification (Rule 32):** [list values computed via Python/scipy with results, or "not required (no derived constants)"]
 
