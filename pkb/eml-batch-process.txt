@@ -7,7 +7,8 @@
 #          Results are exported to a CSV file with one row per analysis
 #          segment.
 # Date: 3 April 2026
-# Version: 1.1
+# Revised: 29 July 2026 (PraatGen v14.0.0) — legacy "EML Praat Assistant" branding replaced with "EML PraatGen"
+# Version: 1.2
 #
 # ATTRIBUTION
 # Framework: EML PraatGen by Ian Howell

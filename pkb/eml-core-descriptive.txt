@@ -2,8 +2,9 @@
 # EML Stats : Core Descriptive Statistics
 # ============================================================================
 # Module: eml-core-descriptive.praat
-# Version: 1.0
+# Version: 1.1
 # Date: 20 February 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 #
 # Part of the EML Stats library (EML Praat Tools).
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)

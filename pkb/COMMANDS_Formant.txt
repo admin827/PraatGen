@@ -4,8 +4,9 @@
 # Manual-verified commands: fon.hum.uva.nl/praat/manual (Apr 2026)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
-# Version: 2.0
+# Version: 2.1
 # Date: 21 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — duplicated "Draw tracks vs. Speckle" behavioural note collapsed to a pointer; open `[NEEDS PASTE]` placeholder on `Down to Table (optimal interval)` replaced with an explicit not-sandbox-verified warning
 # Replaces: COMMANDS_Formant.txt v1.0 (Feb 2026)
 # Absorbs: FormantPath and FormantModeler entries from WHITELIST_CURRENT.txt
 

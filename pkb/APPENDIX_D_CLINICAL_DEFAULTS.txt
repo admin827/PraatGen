@@ -6,8 +6,9 @@
 # explicitly specifies alternatives. If the user specifies alternatives,
 # note the deviation in the SELF-AUDIT.
 #
-# Version: 2.0
+# Version: 2.1
 # Date: 25 February 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — §5B CPPS-vs-dialog-default difference corrected from three values to five (time averaging and quefrency averaging were missing); §9 dangling `HANDOFF_A2_Batch_Analyzer.md §4` pointer repointed to §10; `"Parabolic"` normalized to verified `"parabolic"`
 # Source: Praat GUI dialog defaults (verified via screenshots, 25 Feb 2026)
 
 # ============================================================================
@@ -529,6 +530,11 @@ Get CPPS: "no", 0.01, 0.001, 60, 330, 0.05, "parabolic", 0.001, 0, "Straight", "
 #   quefrency averaging window     = 0.0005 s (Maryn: 0.001 s)
 #   tilt line quefrency ceiling    = 0.05 s  (Maryn: 0 = no upper bound)
 #   fit method                     = "Robust slow" (Maryn: "Robust")
+#     ⚠️ this one line is NOT independently verified — the catalogue's
+#     registration extraction exposes the Fit method field but not its
+#     default value. The other four differences above are confirmed
+#     against PRAAT_DEFINITIVE_CATALOGUE.txt's Get CPPS block. Confirm
+#     the fit-method default against the dialog before relying on it.
 # The Maryn values above are what the clinical CPPS literature
 # consistently uses.
 #

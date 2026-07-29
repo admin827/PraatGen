@@ -5,8 +5,9 @@
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # License: GPL-3.0-or-later
-# Version: 1.4
+# Version: 1.5
 # Date: 6 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 #
 # v1.4: Scatter preset globals (emlGraphsPresetXCol$, emlGraphsPresetYCol$)
 #        added for stats wrapper wiring. Consumed in scatter form section

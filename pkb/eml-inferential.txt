@@ -2,8 +2,9 @@
 # EML Stats : Inferential Statistics
 # ============================================================================
 # Module: eml-inferential.praat
-# Version: 1.2
+# Version: 1.3
 # Date: 6 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — 2 `elif` normalized to `elsif` (the other 154 branches already used `elsif`)
 #
 # v1.2: @emlTukeyHSD internal sort removed — group order now controlled
 #        by @emlCountGroups via emlGroupSortAlphabetical global.

@@ -5,8 +5,9 @@
 #         www.embodiedmusiclab.com
 # Development: Claude (Anthropic)
 # License: GPL-3.0-or-later
-# Version: 2.0
+# Version: 2.1
 # Date: 18 March 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — 37 `+=` compound assignments rewritten to `x = x + n` (MP forbids `+=`); license header normalized to GPL-3.0-or-later (was CC Non-Commercial)
 #
 # Vibrato analysis procedures for rate, half-extent, smoothing (Nestorova
 # et al. 2024), coefficient of variation time series, and vibrato jitter.

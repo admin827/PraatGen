@@ -2,8 +2,9 @@
 # EML Stats : Output Formatting
 # ============================================================================
 # Module: eml-output.praat
-# Version: 1.3
+# Version: 1.4
 # Date: 7 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — license header normalized to GPL-3.0-or-later (was CC Share-Alike)
 # v1.3: Info window is now append-only. Removed emlReportFirstRun sentinel.
 #        @emlReportHeader never clears — always appends. New @emlClearInfo
 #        procedure for explicit clearing via dialog toggle. Timestamp kept.

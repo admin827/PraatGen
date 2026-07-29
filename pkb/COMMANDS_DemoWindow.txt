@@ -21,8 +21,9 @@
 # when appropriate object is selected). Load COMMANDS_PictureWindow.txt
 # for the full set of drawable commands.
 #
-# Version: 1.3
+# Version: 1.4
 # Date: 21 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — `BEST_PRACTICES_DEMO_WINDOW.txt` references corrected to `.md`; stale `EML_DRAWING_PROCEDURES.txt` / `@drawViolin` references repointed to `eml-graph-procedures.txt` / `@emlDrawViolin`
 #
 # v1.3 changes (from v1.2):
 #   - Section 2: Internal canvas corrected from ~12×12 to ~12×7 inches

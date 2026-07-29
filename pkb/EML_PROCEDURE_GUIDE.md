@@ -1,6 +1,7 @@
 # EML Procedure Guide
-# Version: 1.2
+# Version: 1.3
 # Date: 8 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — dead `@emlVibratoDrawFigure` / `vibrato-procedures-manual.md` references removed; "Regression: not yet implemented" clarified as workflow wiring, with a pointer to the registry quarantine section
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Author: Ian Howell, Embodied Music Lab (www.embodiedmusiclab.com)
 #
@@ -16,21 +17,25 @@
 #
 # VERSIONING
 # This guide reflects the following source file versions:
-#   eml-graph-procedures.praat      v3.20
+#   eml-graph-procedures.praat      v3.21
 #   eml-draw-procedures.praat       v1.16
 #   eml-annotation-procedures.praat v3.15
-#   eml-core-utilities.praat        v1.0
-#   eml-core-descriptive.praat      v1.0
+#   eml-core-utilities.praat        v1.1
+#   eml-core-descriptive.praat      v1.1
 #   eml-extract.praat               v1.2
-#   eml-output.praat                v1.3
-#   eml-inferential.praat           v1.2
-#   eml-vibrato-procedures.praat    v2.0
+#   eml-output.praat                v1.4
+#   eml-inferential.praat           v1.3
+#   eml-vibrato-procedures.praat    v2.1
 #   eml-demo-procedures.praat       v1.2
-#   eml-batch-process.praat         v1.1
-#   eml-test-helpers.praat          v1.0
-#   eml-wizard.praat                v1.4
-#   eml-graphs.praat                v3.0
-#   eml-graphs-form.praat           v1.4
+#   eml-batch-process.praat         v1.2
+#   eml-test-helpers.praat          v1.1
+#   eml-egg-procedures.praat        v1.0   (new, 29 Jul 2026)
+#   eml-graphs.praat                v3.1
+#   eml-graphs-form.praat           v1.5
+#
+#   eml-wizard.praat — vestigial. Present in the plugin tree, not wired
+#   into the workflow, and not shipped in the PKB. Removed from the
+#   registry in PraatGen v14.0.0; do not route to it.
 #
 # When a source file is updated, bump its version here. A mismatch
 # between this table and the source file header signals the guide

@@ -5,8 +5,9 @@
 #
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Author: Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
-# Version: 2.0
+# Version: 2.1
 # Date: 25 April 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — stale `EML_DRAWING_PROCEDURES*` references repointed to `eml-graph-procedures.txt`; doubled end-of-file footer deduplicated; TODO-049/050 residue marked closed
 # Provenance: Patterns extracted from CAPE-V Auto-Segmenter v2.3 and
 #   validated on real data (5 Mar 2026).
 #

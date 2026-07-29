@@ -6,8 +6,9 @@
 # the triggering criteria for a feature, the compiler MUST implement that
 # feature unless the user explicitly opts out.
 #
-# Version: 1.1
+# Version: 1.2
 # Date: 26 February 2026
+# Revised: 29 July 2026 (PraatGen v14.0.0) — stale `EML_DRAWING_PROCEDURES.txt` references repointed to `eml-graph-procedures.txt`
 
 # ============================================================================
 # DESIGN PRINCIPLES
