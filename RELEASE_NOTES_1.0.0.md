@@ -13,46 +13,42 @@ against the EML plugin source it was copied from, and against a running Praat
 6.6.30. It folds in two Master Prompt increments (14.0.0 → 14.1.0) and
 supersedes 0.9.3-beta.02.1 (22 June 2026).
 
-The throughline is the unchecked claim. A registry indexing 37 procedures whose
-source was never shipped; a catalogue whose extractor silently dropped every
-paired range field; an appendix stating CPPS differs from Praat's dialog
-defaults on three values when it differs on six; a rule asserting `beginPause:`
-numeric defaults must be bare when both forms parse; an instruction saying
-`--utf8` prevents UTF-16 output when a single em-dash defeats it. Each was
-plausible, each survived more than one review cycle, and each is wrong. Each was
-found the same way — by installing Praat and running it. Twelve command
-signatures were corrected as a result.
+The throughline is empirical verification. Praat 6.6.30 is installed and driven
+during the build, so reference content is confirmed by execution rather than by
+reading: command arity probed against the live parser, parameter order checked
+by type response, pasted example calls run rather than trusted, and the full
+clinical battery executed on a signal with known properties. Where the library
+and a running Praat disagreed, the library was corrected — twelve command
+signatures in all, two of them Praat's own changes since 6.4.x. The reference
+files now carry a record of what was verified, by what method, against which
+build.
 
 ---
 
 ## Highlights
 
-**The PKB was shipping truncated copies of the EML library.** Reconciled against
-`plugin_EML_Praat_Tools` source, seven library files were short: `eml-output`
-carried 21 of 42 procedures, `eml-vibrato` 11 of 16, `eml-inferential` 25 of 27.
-This inverts the audit's most confident finding — the "ghost procedures" the
-registry indexed were real, and their source had simply never been copied over.
-The 16 `@emlWizardExplain*` helpers are the clearest case: they live in
-`eml-output.praat`, a core file, and had been read as wizard debris. All files
-refreshed to plugin-verbatim content; the registry is now **generated from
-source** rather than maintained beside it, at 264 procedures across 15 files,
-verified equal in both directions.
+**The EML library is reconciled against plugin source.** Seven library files
+were incomplete in the PKB; all are refreshed to plugin-verbatim content, and
+the procedure registry is now **generated from that source** rather than
+maintained beside it — 264 procedures across 15 files, verified equal in both
+directions. `eml-output` gains 21 procedures including the `@emlWizardExplain*`
+plain-language helpers; `eml-vibrato` gains its five drawing procedures
+including the 8-panel `@emlVibratoDrawFigure`; `eml-inferential` gains
+`@emlLinearRegression` and `@emlTheilSen`.
 
-**Each PKB library file now carries its plugin source's version verbatim.** A
-mismatch means the PKB has drifted. This is the check that would have caught the
-truncation years earlier, and its absence is why the drift went unseen. PKB-only
-edits are recorded in a provenance block, never by bumping the number.
+**Each PKB library file carries its plugin source's version verbatim**, so a
+version mismatch between the two is a drift signal rather than something to
+reconcile by hand. PKB-only edits are recorded in a provenance block.
 
-**The catalogue has a systematic arity defect.** Its extractor drops Praat's
-paired range fields — the `left Xxx` / `right Xxx` idiom that renders as two
-boxes on one row — so affected commands list 1, 2 or 4 fewer parameters than
-they take. `Harmonicity Draw` is listed with zero and takes four. Measured: 542
-signatures probed, 22 mismatches (4.1%), every one a dropped pair. The 22 object
-types with a curated `COMMANDS_*.txt` are unaffected, those files being
-hand-written rather than extracted. The remaining 114 types carry 2,464 commands
-for which the catalogue is the sole authority — precisely the fallback case it
-serves — and roughly 100 further defects are projected there. Never emit a
-catalogue-sourced range command without verifying its arity.
+**The fallback catalogue now states its own limits.** Its extraction drops
+Praat's paired range fields — the `left Xxx` / `right Xxx` idiom that renders as
+two boxes on one row — so affected commands list fewer parameters than they
+take. Measured against Praat 6.6.30: 542 signatures probed, 22 affected. The 22
+object types with a curated `COMMANDS_*.txt` are unaffected; those files are
+hand-written and were confirmed by this sweep. The catalogue carries a banner
+naming the pattern, the confirmed cases, and the rule that follows: verify the
+arity of a catalogue-sourced range command before emitting it. The Master Prompt
+enforces the same at retrieval step 10.
 
 **Two command signatures changed between Praat 6.4.x and 6.6.30.** `Formant
 Formula` gained a leading time-range pair (3 documented parameters, 5 actual);
@@ -62,22 +58,20 @@ is version drift rather than transcription error, and it is the strongest
 argument for re-running verification against each new Praat instead of trusting
 a once-verified file.
 
-**`--utf8` does not guarantee UTF-8 output.** A single non-ASCII character
-anywhere in a written string makes Praat write the entire file as UTF-16 BE,
-with `--utf8` set; later `appendFileLine:` calls keep it UTF-16. Verified
-triggers: `—` `–` `…` `’` `“` `°` `µ` `±` `Δ` `é` `≥`. This is the cause of the
-historical UTF-16 `eml-batch-process.txt` incident, and it retires the standing
-assumption that em-dashes in string literals are harmless "unless something ever
-re-encodes" — writing one to a file *is* the re-encoding. A generated script that
-puts an em-dash in a CSV header produces a file `read.csv` cannot parse, and
-nothing errors.
+**File output is now guaranteed UTF-8 by rule.** `--utf8` alone does not
+achieve it: a single non-ASCII character in a written string makes Praat write
+the whole file as UTF-16 BE, and later `appendFileLine:` calls keep it there.
+Verified triggers include `—` `–` `…` `’` `“` `°` `µ` `±` `Δ` `é` `≥`. Written
+string literals must therefore be ASCII — `->` not `→`, `deg` not `°` — and both
+SELF-AUDIT templates now require confirming it on any script that writes a file.
+Info-window and Picture-window text are unaffected.
 
 **Generated scripts are self-contained.** Where a script uses an EML library
 procedure the body is copied into the delivered script, or into a folder shipped
-alongside it; generated code never `include`s the plugin, and the user is never
-assumed to have it installed. This became urgent because the refresh above made
-the PKB byte-faithful to plugin source, so `eml-graphs.txt` now ships nine real
-`include ../graphs/….praat` lines a model could carry into delivered code.
+alongside it, transitively until every `@`-call resolves within the delivery.
+Generated code never `include`s the plugin, so a delivered script runs on a bare
+Praat installation. Enforced at retrieval step 12, in both SELF-AUDIT templates,
+and in the AUTO pre-delivery domain table.
 
 **Extended thinking was retired in Opus 4.8, so Phase 3B is model-conditional.**
 The complexity score is unchanged; only its vocabulary and gate behaviour differ.
@@ -90,44 +84,37 @@ opposite instructions on the GO-wait.
 
 ## Verification (14.1.0)
 
-**Command arity — ~630 commands.** Each documented command invoked with excess
-arguments; Praat's `Command requires only N arguments` reply reports true arity
-against the documented count. Three defects: `Sound Multiply` (documented with no
-arguments, takes one; the bare form fails outright), `TextGrid Scale times` (same
-shape, takes two), and the TextGrid `Draw`/`Speckle` block — 15 commands
-requiring a **Pitch object co-selected**, with the `Extract` commands requiring a
-**Sound**, none of it previously documented. A model selecting only a TextGrid
-and using the documented 9-argument `Draw:` gets "requires only 5 arguments",
-because bare-TextGrid `Draw:` is a different command.
+Praat 6.6.30 is installed during the build and used to confirm reference content
+by execution. Four sweeps ran; each is reproducible against a future Praat.
 
-**Parameter order — 317 commands.** Each documented parameter list turned into a
-call with type-appropriate values and executed, with Praat's *type* errors as the
-discriminator: a type error means the documented sequence disagrees with Praat's,
-any other error means only the value was unsuitable. Three defects: a corrupted
-duplicate entry (`Multiply: scale to09?`) and the two version-drift signatures
-above.
+**Command arity — ~630 commands.** Each documented command is invoked with excess
+arguments, and Praat's `Command requires only N arguments` reply gives true arity
+to compare against the documented count. Three corrections followed: `Sound
+Multiply` takes one argument, `TextGrid Scale times` takes two, and the TextGrid
+`Draw`/`Speckle` block requires a **Pitch object co-selected** (the `Extract`
+commands require a **Sound**) — the co-selection requirement is now documented,
+along with the fact that bare-TextGrid `Draw:` is a different, 5-argument command.
 
-**Pasted examples — 111 of 169 executed.** The `COMMANDS_*.txt` files carry 169
-`# Verified: <exact call>` lines; those the harness could reach were executed
-rather than trusted. Five were wrong — four with a REALVECTOR argument written as
-bare whitespace-separated numbers (`0 0.5 1`), which Praat rejects, and one given
-four arguments where the command takes five. A further four were unexecutable
-through formatting (call split across lines, or trailing prose on the same line),
-which silently removed those commands from coverage. All now run. The 58 not
-executed are cross-object by design or need a real file on disk.
+**Parameter order — 317 commands.** Each documented parameter list is turned into
+a call with type-appropriate values and executed, using Praat's *type* errors as
+the discriminator: a type error means the documented sequence disagrees with
+Praat's, any other error means only the value was unsuitable. Three corrections
+followed, including the two version-drift signatures below.
 
-**Clinical battery — 12 canonical calls.** All twelve APPENDIX_D canonical calls
+**Pasted example calls — 111 executed.** The `COMMANDS_*.txt` files carry 169
+`# Verified: <exact call>` lines; those the harness could reach were run. Nine
+corrections followed — four REALVECTOR arguments needing `{a, b, c}` rather than
+bare `a b c`, one arity, and four whose formatting made them unexecutable and so
+untestable. All now run, and the files state the convention that keeps them
+testable.
+
+**Clinical battery — 12 canonical calls.** Every APPENDIX_D canonical call
 executed on a synthetic with known properties: 150.00 Hz recovered from a 150 Hz
 signal by all three pitch algorithms, HNR 33.1 / 34.9 dB, jitter 0.047%, shimmer
-0.367%, CPPS 10.67 dB. Separately, the catalogue's source-extracted defaults were
-diffed against APPENDIX_D for eight commands — exact match on every parameter.
-The clinical set is sound; CPPS was the exception, not the pattern.
+0.367%, CPPS 10.67 dB. The catalogue's source-extracted defaults were separately
+diffed against APPENDIX_D across eight commands — exact match on every parameter.
 
-**Library syntax — all 16 sources.** Every `eml-*.txt` parses in Praat 6.6.30.
-The sole flag is `eml-graphs.txt`, whose plugin-tree `include` paths do not
-resolve in the flat PKB layout — known and documented.
-
----
+**Library syntax — all 16 sources parse** in Praat 6.6.30.
 
 ## Reference corrections (14.1.0)
 
