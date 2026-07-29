@@ -393,7 +393,13 @@ explicitly requested otherwise. Composable with any other mode.
 
 2. Install Praat (full + Xvfb):
 
-        apt-get install -y -qq --no-install-recommends xvfb libgtk-3-0 pulseaudio
+        apt-get install -y -qq --no-install-recommends xvfb libgtk-3-0 pulseaudio \
+            openbox xcompmgr xdotool imagemagick
+        # openbox   — window manager; xdotool activate/focus needs a WM
+        # xcompmgr  — compositor; without it, screenshots of occluded
+        #             windows come back BLACK (see Rule 24C, "Screenshot
+        #             capture under Xvfb")
+        # xdotool / imagemagick — GUI driving and capture
         cd /home/claude
         base="https://www.fon.hum.uva.nl/praat"
         # Resolve the build by INTENT — never pin an architecture token. Praat
@@ -2177,6 +2183,79 @@ debugging hypothesis testing). Do not install preemptively.
 
 6. **End test scripts with `Quit`.** Without it, the GUI stays
    open indefinitely after the script completes.
+
+7. **Screenshots: a black frame is a capture defect, not a render
+   failure (hard).** See "Screenshot capture under Xvfb" below before
+   reporting that a dialog or window "did not render."
+
+---
+
+#### Screenshot capture under Xvfb (hard)
+
+Diagnosed and verified 29 July 2026, Praat 6.6.30 / Xvfb / GTK3. Symptom:
+`import -window <id>` returns an all-black or partially-black PNG even
+though the application is running and the window exists.
+
+**Cause.** Plain X11 has no compositing. A window's pixels live in the
+shared framebuffer, so any region covered by another window is simply not
+stored anywhere. `import -window <id>` reads that framebuffer region, and
+occluded areas come back black. This is not a Praat bug and not an
+`import` bug — the content genuinely does not exist to be read.
+
+**Verified behaviour matrix:**
+
+| Condition | `import -window <id>` | `import -window root` |
+|---|---|---|
+| Window fully visible | OK | OK |
+| Window partly occluded, no compositor | **black in the occluded region** | OK (shows the occluder) |
+| Window partly occluded, `Xvfb +bs` | **still black** | OK |
+| Window partly occluded, `xcompmgr` running | **OK** | OK |
+| Application exited / nothing mapped | 100% black | 100% black |
+
+Note that `Xvfb +bs` does **not** fix it: the X server option only
+*permits* backing store, which the client must then request per-window.
+GTK3 does not request it.
+
+**Fix, in order of preference:**
+
+1. **Run a compositing manager.** `xcompmgr` redirects window contents to
+   offscreen pixmaps, so direct window capture always succeeds regardless
+   of stacking. Add to the sandbox GUI setup:
+
+        Xvfb :99 -screen 0 1400x1000x24 &
+        sleep 2
+        DISPLAY=:99 openbox &          # a WM — xdotool windowactivate
+        sleep 2                        #   needs _NET_ACTIVE_WINDOW
+        DISPLAY=:99 xcompmgr &         # the compositor — fixes black frames
+        sleep 2
+
+2. **Raise the window immediately before capturing** —
+   `xdotool windowraise <id>; sleep 1; import -window <id> out.png`.
+   Works without a compositor (verified 0% black), but is racy if
+   anything else maps a window in between.
+
+3. **Capture root and crop** to the window's geometry:
+
+        eval $(xdotool getwindowgeometry --shell $wid)
+        import -window root -crop ${WIDTH}x${HEIGHT}+${X}+${Y} +repage out.png
+
+**Always validate the frame (hard).** A capture that is ~100% black means
+nothing was mapped — usually the application died. Do not report such a
+frame as evidence of anything. Check the pixels, then check the process:
+
+        pct=$(python3 -c "from PIL import Image;im=Image.open('out.png').convert('L');p=list(im.getdata());print(round(100*sum(1 for v in p if v<8)/len(p),1))")
+        # >95 means: pgrep praat (did it crash?), pgrep xcompmgr (compositor up?)
+
+**Two more traps, both verified:**
+
+- **`xdotool windowactivate` fails with no window manager** — "Your
+  windowmanager claims not to support _NET_ACTIVE_WINDOW". Start a WM
+  (openbox) before any activate/focus call, or use `windowraise`, which
+  needs no WM.
+- **`--run` cannot show dialogs.** A script whose `beginPause` you need to
+  see must be opened in the GUI script editor and run with Ctrl+R
+  (`xdotool key ctrl+r`); under `--run` the dialog aborts with a GTK
+  "Trace/breakpoint trap" and no Praat error.
 
 **Complete test template:**
 

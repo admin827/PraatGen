@@ -92,6 +92,41 @@ addendum, T3 = tier-3 cosmetic).
   disagree, the object-specific COMMANDS file governs.
 - New AUTO pre-delivery domain row for EGG (cycle guard + CQ plausibility bound).
 
+**Sandbox verification (Praat 6.6.30 installed and driven, 29 July 2026):**
+- **`elif` confirmed accepted.** Both `elif` and `elsif` parse and execute.
+  The eml-inferential normalization is style conformance with the MP's own
+  prohibition list, not a bug fix.
+- **Get CPPS dialog defaults observed directly.** §5B had said the Maryn set
+  differs from Praat's defaults on three values; a source-extraction reading
+  during this audit said five; the dialog shows **six**. The two missed are
+  the enum fields (Trend type = Exponential decay, Fit method = Robust slow) —
+  precisely the fields the catalogue exposes without their default values.
+  §5B is now a field-by-field table with a sandbox stamp, the Praat-default
+  call is recorded in COMMANDS_PowerCepstrogram.txt for contrast, and the
+  lesson is stated in-file: treat catalogue enum defaults as unknown, not
+  absent.
+- **Rule 19 overclaimed the form/beginPause quoting asymmetry.** 13.9.3 stated
+  that `beginPause:` numeric defaults "must be bare," and added a SELF-AUDIT
+  item enforcing it. Verified: the asymmetry is ONE-DIRECTIONAL. Bare in
+  `form:` is a hard parse error (`Only "choice", "optionmenu" and "boolean"
+  fields can take a number`); quoted in `beginPause:` parses, renders and
+  binds correctly. Bare in beginPause is a house convention. As written the
+  audit item would have flagged compliant code — including this library's own
+  `eml-batch-process.txt`. Corrected in Rule 19, both SELF-AUDIT templates,
+  the AUTO domain table, and APPENDIX_C.
+- **Black-screenshot failure mode diagnosed and fixed.** `import -window <id>`
+  under Xvfb returned all-black or partly-black frames. Cause: plain X11 has
+  no compositing, so pixels of an occluded window region are not stored
+  anywhere and the capture reads empty framebuffer. Verified that `Xvfb +bs`
+  does NOT help (the client must request backing store; GTK3 does not), that
+  `xcompmgr` fixes it completely, and that raise-then-capture or root+crop
+  work as fallbacks. A 100%-black frame means nothing was mapped — usually a
+  dead application — and must never be reported as evidence. Full behaviour
+  matrix, the fix, the validation check, and two related traps (`windowactivate`
+  needs a WM; `--run` cannot show dialogs) documented in Rule 24C under
+  "Screenshot capture under Xvfb"; openbox/xcompmgr/xdotool/imagemagick added
+  to the STEP 2B install step.
+
 **Gate logic (contradictions that made gate-compliance scoring ill-defined):**
 - **C3 — AUTO domain table said "Rule 28 A–K."** The whole point of 13.9.4 was
   promoting the font-state invariant to sub-rule L; the AUTO check — the *only*
