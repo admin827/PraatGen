@@ -7,12 +7,12 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release note — out of beta, 29 July 2026
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.1.0)
 
-The package leaves beta at **14.1.0**. The release number now simply tracks the
-Master Prompt version; the old separate `0.9.x-beta` package track is retired
-(it had drifted to 0.9.3 in the README while the prompt was at 13.9.4, which
-helped nobody). No renumbering, no reset — 14.1.0 is 14.1.0, without the beta tag.
+The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
+Prompt 14.1.0**. These are two independent numbers and both are correct: the
+release versions the whole package, the Master Prompt versions the instruction
+set inside it. Quote both in any bug report.
 
 What made it stable rather than beta: the PKB is reconciled against the EML
 plugin source instead of audited against itself; the procedure registry is
