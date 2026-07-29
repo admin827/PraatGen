@@ -7,117 +7,107 @@
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-A reference-library release. Where 0.9.3-beta.02 hardened the rules the compiler
-follows, this build reconciles the reference files those rules read from —
-against the EML plugin source they were copied from, and against Praat 6.6.30.
-It folds in two Master Prompt increments (14.0.0 → 14.1.0) and supersedes
-0.9.3-beta.02.1 (22 June 2026).
-
-The throughline is the stale copy. A library file copied once and left behind as
-its source grew; a registry maintained by hand beside the code it describes; a
-catalogue extracted from one Praat version and read against another; a command
-whose signature Praat changed underneath the documentation. None of these
-announce themselves — the file still looks right, and the drift only surfaces
-when something is run. This build closes the loop: reference content is now
-verified by execution against a live Praat, and the version stamps that make
-drift visible are in place.
+The first stable release. The EML procedure library is synchronised with the
+current plugin, adding the analysis orchestrators, regression, normality and the
+vibrato drawing family; the command reference is verified against Praat 6.6.30;
+generated scripts are now self-contained by rule; and Phase 3B adapts to the
+model in use. It folds in two Master Prompt increments (14.0.0 → 14.1.0) and
+supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
 ## Highlights
 
-**The EML library is reconciled against plugin source.** Seven library files
-were incomplete; all are refreshed to plugin-verbatim content. `eml-output`
-gains 21 procedures including the `@emlWizardExplain*` plain-language helpers;
-`eml-vibrato` gains its five drawing procedures including the 8-panel
+**The EML procedure library is resynchronised with plugin source.** Fourteen
+source files updated to their current plugin versions. `eml-output` gains the
+`@emlWizardExplain*` plain-language helpers and the dialog wrappers;
+`eml-vibrato` gains its drawing family including the 8-panel
 `@emlVibratoDrawFigure`; `eml-inferential` gains `@emlLinearRegression` and
-`@emlTheilSen`; `eml-core-descriptive` gains `@emlShapiroWilk`.
+`@emlTheilSen`; `eml-core-descriptive` gains `@emlShapiroWilk`;
+`eml-extract` gains column-role inference.
+
+**`eml-analysis.txt` — new.** 21 `@emlRun*Analysis` orchestrators covering
+regression, normality, RM-ANOVA, Friedman, reliability, and the two-group,
+k-group, paired and correlation workflows. This is the layer the plugin's menu
+commands call.
+
+**`eml-egg-procedures.txt` — new.** `@emlEggCycleGuard`, mandatory before `To
+TextGrid (closed glottis)` and `To AmplitudeTier (levels)` — both segfault
+Praat when no cycle falls within the pitch range — and
+`@emlEggSpectralThreshold` for low-SNR EGG rescue.
 
 **The procedure registry is generated from source.** 264 procedures across 15
-files, verified equal in both directions — no registry row without source, no
-source procedure unlisted. Each library file carries its plugin source's version
-verbatim, so a version mismatch is a drift signal.
+files, checked in both directions against the shipped sources. Each library file
+now carries its plugin source's version verbatim, so the two can be compared at
+a glance.
 
-**Twelve command signatures corrected against Praat 6.6.30**, including two that
-Praat itself changed since 6.4.x: `Formant Formula` takes a leading time-range
-pair (5 parameters, not 3), and `Table Bar plot` takes 10 parameters with
-`Vertical column` and `Colours` as string arrays.
+**Command reference brought to Praat 6.6.30.** Two signatures changed since
+6.4.x and are updated: `Formant Formula` takes a leading time-range pair (5
+parameters), and `Table Bar plot` takes 10 parameters with `Vertical column` and
+`Colours` as string arrays. Scripts using either need updating.
 
 **Generated scripts are self-contained.** Library procedure bodies are copied
 into the delivered script, or into a folder shipped alongside it, transitively.
-Generated code never `include`s the plugin; a delivered script runs on a bare
+Generated code never `include`s the plugin, so a delivered script runs on a bare
 Praat installation.
-
-**File output is ASCII-constrained.** `--utf8` does not guarantee UTF-8: one
-non-ASCII character in a written string makes Praat write the whole file as
-UTF-16 BE. Written literals must be ASCII, and both SELF-AUDIT templates now
-check it.
 
 **Phase 3B is model-conditional.** Extended thinking as a user-facing toggle was
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
-(4.6/4.7) it recommends thinking on/off and waits on a recommended change, on
+(4.6/4.7) it recommends thinking on/off and waits on a recommended change, and on
 effort models (4.8+) it is advisory and does not gate the turn.
 
 ---
 
-## Reference corrections (14.1.0)
+## Reference updates (14.1.0)
 
-**`APPENDIX_D` §5B — CPPS.** The Maryn set differs from Praat's dialog defaults
-on six fields, not three. The two previously unlisted are the enum fields: trend
-type (*Exponential decay* vs Straight) and fit method (*Robust slow* vs Robust).
-Now a field-by-field table; the Praat-default call is recorded in
-`COMMANDS_PowerCepstrogram.txt` for contrast.
+**`PRAAT_DEFINITIVE_CATALOGUE.txt` — multiple updates.** A header banner states
+the catalogue's pin (Praat 6.4.62) and its known gaps; where it and an
+object-specific COMMANDS file disagree, the COMMANDS file
+governs. Range-taking commands are under-specified by the extraction, so verify
+arity before emitting one from the catalogue. Electroglottogram carries a
+class-hierarchy line and no commands. §3 function count reconciled with the
+file's own header.
 
-**`COMMANDS_PowerCepstrogram.txt` — query scope.** `Get peak`, `Get quefrency of
-peak` and `Get peak prominence` run on a PowerCepstrum; extract a slice via `To
-PowerCepstrum (slice):` first. `Get CPPS` is a Cepstrogram command — the
-asymmetry is now stated.
+**`APPENDIX_D_CLINICAL_DEFAULTS.txt`.** §5B now carries a field-by-field
+comparison of the Maryn CPPS parameters against Praat's dialog defaults, with
+the sandbox stamp; the values themselves are unchanged. §9's pointer moved to
+§10, which supersedes it. `"Parabolic"` normalised to `"parabolic"` to match
+`COMMANDS_PowerCepstrogram.txt`.
 
-**`COMMANDS_TextGrid.txt` — co-selection.** The `Draw`/`Speckle` block requires a
-Pitch object co-selected; the `Extract` commands require a Sound. Bare-TextGrid
-`Draw:` is a different, 5-parameter command. `Scale times` takes two arguments.
+**`COMMANDS_PowerCepstrogram.txt`.** The peak queries run on a PowerCepstrum;
+extract a slice via `To PowerCepstrum (slice):` first. `Get CPPS` is a
+Cepstrogram command. Praat's dialog defaults recorded alongside the Maryn set.
 
-**`COMMANDS_Sound.txt` — `Multiply`** takes one argument (multiplication
-factor); a duplicate corrupted entry removed.
+**`COMMANDS_TextGrid.txt`.** The `Draw`/`Speckle` block requires a Pitch object
+co-selected and the `Extract` commands require a Sound — both now stated.
+Bare-TextGrid `Draw:` is a separate 5-parameter command.
 
-**`COMMANDS_Formant.txt` / `COMMANDS_Table.txt`** — the two version-drift
-signatures above.
+**`APPENDIX_C_GUI.txt`.** The form/beginPause default-quoting asymmetry is
+one-directional: bare numeric defaults are a parse error in `form:`, while
+`beginPause:` accepts either. Rule 19 and the SELF-AUDIT line updated to match.
 
-**`COMMANDS_Pitch.txt` / `COMMANDS_PitchTier.txt`** — REALVECTOR arguments take
-`{0, 0.5, 1}` or `"0 0.5 1"`, not bare `0 0.5 1`.
+**Vector arguments.** `COMMANDS_Pitch.txt` and `COMMANDS_PitchTier.txt` examples
+now use `{0, 0.5, 1}` for REALVECTOR arguments.
 
-**`APPENDIX_C_GUI.txt` — form/beginPause quoting.** The asymmetry is
-one-directional: bare numeric defaults are a parse error in `form:`, but
-`beginPause:` accepts both forms. Rule 19 and the SELF-AUDIT item corrected
-accordingly.
-
-**`PRAAT_DEFINITIVE_CATALOGUE.txt` — staleness banner.** The extraction drops
-paired range fields (`left Xxx` / `right Xxx`), so affected commands list fewer
-parameters than they take; 22 confirmed cases listed. The 22 object types with a
-curated `COMMANDS_*.txt` are unaffected. Verify the arity of a catalogue-sourced
-range command before use. §3 function count corrected (369 → 365).
+**All 23 remaining `COMMANDS_*` files** carry a verification record naming the
+Praat build.
 
 ---
 
 ## Routing and retrieval (14.0.0)
 
-**C1 — ghost drawing route.** The retrieval table's only drawing row pointed at
-`EML_DRAWING_PROCEDURES.txt`, which does not exist, while
-`BEST_PRACTICES_DRAWING.txt` had no row at all. Row replaced; the stale name
-swept from six PKB files.
+**Drawing route.** The retrieval table now routes drawing to
+`BEST_PRACTICES_DRAWING.txt` and the procedure registry.
 
-**M4 / E1 / E2 — five retrieval rows added:** `COMMANDS_DemoWindow.txt`,
+**Five retrieval rows added:** `COMMANDS_DemoWindow.txt`,
 `BEST_PRACTICES_DEMO_WINDOW.md`, `BEST_PRACTICES_CONFIDENCE_FIGURES.txt`,
 `COMMANDS_Electroglottogram.txt`, `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`.
 
-**M9 — registry signature drift.** `emlReportKWComparison` was missing
-`.tableId` in fourth position; verified as the only such drift in the library.
+**Mandatory EGG co-load.** An EGG task auto-pulls both EGG files, as a sibling to
+the APPENDIX_D clinical rule.
 
-**E3 — mandatory EGG co-load.** An EGG task auto-pulls both EGG files, as a
-sibling to the APPENDIX_D clinical rule.
-
-**E4 — catalogue fallback carve-out.** Retrieval step 10 now states the
-catalogue's known gaps; the object-specific COMMANDS file governs.
+**Catalogue fallback.** Retrieval step 10 states the catalogue's known gaps; the
+object-specific COMMANDS file governs.
 
 **Step 12 — self-containment (new).** Generated code must never `include` the
 plugin. Two accepted delivery shapes; copying is transitive. Enforced in both
@@ -127,45 +117,39 @@ SELF-AUDIT templates and the AUTO domain table.
 
 ## Gates, modes and audit discipline (14.0.0)
 
-**C3 — Rule 28 A–K → A–L** in the AUTO pre-delivery domain table, which keyed on
-the pre-13.9.4 list and is the only compliance check when gates are suppressed.
+**Rule 28 A–L** in the AUTO pre-delivery domain table, matching the 13.9.4
+sub-rule set. AUTO also gains a file-output/GUI/UX row (Rules 26/27, 18/19/20,
+33/App F) and an EGG row.
 
-**M5 — AUTO domain table** gained a file-output/GUI/UX row (Rules 26/27,
-18/19/20, 33/App F had no check in AUTO) and an EGG row.
+**SELF-AUDIT templates.** File-output safety (26/27) added to both, with Rule 4B
+and Rule 37; the file-output line also confirms written literals are ASCII.
 
-**M3 — SELF-AUDIT templates.** File-output safety (26/27) had no line item, so
-the 13.9.4 evidence rule could never fire on it. Added to both templates, with
-Rule 4B and Rule 37; verbose template de-duplicated.
+**STEP 2D — DEBUGGING mode.** The mode now has a defining section: approval
+required for every change, no elective refactoring, binding scope declaration,
+two-hypothesis circuit breaker, no speculative multi-fix bundles.
 
-**M1 — STEP 2D, DEBUGGING mode.** STEP 1 advertised the mode; no section defined
-it. Added with the five behaviours the STEP 1 text promises.
+**Mode composition.** AUTO combines with SANDBOX; AUTO and DEBUGGING remain
+mutually exclusive, and the STEP 1 menu says so.
 
-**C5 — mode composition.** STEP 1 offered "AUTO … Combines with SANDBOX and
-DEBUGGING" against a mutual-exclusion rule. Corrected.
+**VERBOSE** persists across gates — SPARSE is the return keyword.
 
-**M2 — VERBOSE.** GO is the proceed keyword at every gate and was silently
-reverting VERBOSE to SPARSE. SPARSE is now the sole return keyword.
-
-**C4 — HARD GATE / Phase 3B.** Both were marked hard and gave opposite
-instructions on the GO-wait. Resolved by the model-conditional gate above.
+**HARD GATE and Phase 3B** are reconciled by the model-conditional gate above.
 
 ---
 
 ## Sandbox (14.0.0–14.1.0)
 
-**C6 — PulseAudio startup** was commented out in both the STEP 2B install step
-and the Rule 24C test template. Uncommented; without it `asynchronous Play`
-hangs.
+**PulseAudio startup** restored in the STEP 2B install and the Rule 24C test
+template; without it `asynchronous Play` hangs.
 
-**Rule 24C — screenshot capture.** Black frames under Xvfb are a capture defect,
-not a render failure: X11 has no compositing, so an occluded window region reads
-as empty framebuffer. `xcompmgr` fixes it; `Xvfb +bs` does not. A 100%-black
-frame means nothing was mapped. Behaviour matrix, fix and validation check
-documented; `openbox`, `xcompmgr`, `xdotool` and `imagemagick` added to the
-install.
+**Rule 24C — screenshot capture.** Black frames under Xvfb are a capture artefact
+of X11's lack of compositing, not a render failure. `xcompmgr` resolves it;
+`Xvfb +bs` does not. `openbox`, `xcompmgr`, `xdotool` and `imagemagick` added to
+the install.
 
-**Rule 24C — file encoding.** Written string literals must be ASCII; `--utf8`
-does not prevent UTF-16 output when one is not.
+**Rule 24C — file encoding.** Written string literals must be ASCII; a single
+non-ASCII character makes Praat write the whole file as UTF-16 BE regardless of
+`--utf8`.
 
 ---
 
@@ -187,37 +171,26 @@ lower setting serves once the COMMAND PLAN exists. Experiment.
 Every file changed. Replacing the whole `pkb/` folder is the only supported
 upgrade path.
 
-**Refreshed from plugin source (14 files).** `eml-annotation-procedures`,
+**Resynchronised with plugin source (14 files).** `eml-annotation-procedures`,
 `eml-batch-process`, `eml-core-descriptive`, `eml-core-utilities`,
 `eml-draw-procedures`, `eml-extract`, `eml-graph-procedures`, `eml-graphs`,
 `eml-graphs-form`, `eml-inferential`, `eml-output`, `eml-test-helpers`,
-`eml-vibrato-procedures`, `eml-analysis`. Content verbatim; only the License
-line is normalized, and each carries a provenance block.
+`eml-vibrato-procedures`, `eml-analysis`. Content verbatim from plugin source;
+only the License line is normalised, and each carries a provenance block.
 
-**`eml-analysis.txt` — new.** 21 `@emlRun*Analysis` dispatchers: regression,
-normality, RM-ANOVA, Friedman, reliability, and the two-group / k-group /
-paired / correlation orchestrators.
+**New:** `eml-analysis.txt`, `eml-egg-procedures.txt`.
 
-**`eml-egg-procedures.txt` — new.** `@emlEggCycleGuard` (mandatory before `To
-TextGrid (closed glottis)` and `To AmplitudeTier (levels)`, which segfault when
-no cycle falls in range) and `@emlEggSpectralThreshold`.
+**Removed:** `eml-demo-procedures.txt`. `COMMANDS_DemoWindow.txt` and
+`BEST_PRACTICES_DEMO_WINDOW.md` are the source of truth for the Demo window.
 
-**`eml-demo-procedures.txt` — removed.** `COMMANDS_DemoWindow.txt` and
-`BEST_PRACTICES_DEMO_WINDOW.md` are the source of truth for the Demo window;
-neither depends on it.
+**`EML_PROCEDURE_REGISTRY.md`** — generated from source; 264 procedures across 15
+files.
 
-**`EML_PROCEDURE_REGISTRY.md`** — regenerated from source; 264 procedures across
-15 files.
-
-**All 23 previously unaudited `COMMANDS_*` files** carry an arity-check record
-naming the Praat build and what the check does and does not establish.
-
-**License headers** — nine `eml-*` files declared Creative Commons, one of them
-CC Non-Commercial. All normalized to GPL-3.0-or-later.
+**License headers** normalised to GPL-3.0-or-later across the `eml-*` sources.
 
 **Style note.** PKB copies are byte-faithful to plugin source so "copy exactly
-from source" is satisfiable; the `+=` and `elif` instances that remain are
-therefore expected, and the Master Prompt names them as a known SOT exception.
+from source" is satisfiable; the Master Prompt names the resulting `+=` and
+`elif` instances as a known SOT exception so they are not rewritten in place.
 
 ---
 
@@ -230,7 +203,7 @@ therefore expected, and the Master Prompt names them as a known SOT exception.
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
-| EML procedures | **264** across 15 files | 251 indexed |
+| EML procedures | **264** across 15 files | 251 |
 
 ---
 
@@ -246,8 +219,8 @@ overwriting into it.
 
 Do not rename files; the Master Prompt references them by exact filename.
 
-Scripts using `Table Bar plot` or `Formant Formula` need updating — both
-signatures changed in Praat 6.6.30.
+Scripts using `Table Bar plot` or `Formant Formula` need updating — Praat
+changed both signatures.
 
 Sandbox Mode additionally installs `openbox`, `xcompmgr`, `xdotool` and
 `imagemagick`. It still requires `www.fon.hum.uva.nl` in Settings → Capabilities
