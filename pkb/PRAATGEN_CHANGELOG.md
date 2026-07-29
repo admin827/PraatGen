@@ -91,7 +91,6 @@ also excluded (vestigial).
 **Style exception, deliberate.** PKB copies are byte-faithful to plugin source
 so Rule 223 ("copy exactly from source") is satisfiable. That reintroduces 39
 `+=` and 2 `elif` that v14.0.0 had rewritten. Rather than let the PKB diverge
-from source again, the fix goes upstream: `plugin_style_fix.sh` at repo root
 applies it to the plugin. The MP now names this as a known SOT exception so a
 model does not "correct" the library it is copying from.
 

@@ -122,8 +122,8 @@ headers carried incompatible licenses and are now uniformly GPL-3.0-or-later.
 
 **New:** `eml-analysis.txt` (21 analysis dispatchers — regression, normality,
 RM-ANOVA, Friedman, reliability), `eml-egg-procedures.txt` (mandatory EGG cycle
-guard, spectral-threshold de-noiser), a self-containment rule for generated
-scripts, and two helper scripts at repo root.
+guard, spectral-threshold de-noiser), and a self-containment rule for
+generated scripts.
 
 **Removed:** `eml-demo-procedures.txt`. Demo window support is unaffected —
 `COMMANDS_DemoWindow.txt` and `BEST_PRACTICES_DEMO_WINDOW.md` are its source of
@@ -163,10 +163,6 @@ Delete the old folder rather than overwriting into it.
 `imagemagick` for GUI verification and screenshot capture. It still requires
 `www.fon.hum.uva.nl` in Settings → Capabilities → Allowed domains, set *before*
 the conversation starts.
-
-**Two helper scripts ship at repo root.** `praatshot.sh` — reliable X11 window
-capture under Xvfb. `plugin_style_fix.sh` — applies house style to the EML
-plugin sources.
 
 ---
 
