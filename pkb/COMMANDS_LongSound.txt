@@ -7,6 +7,12 @@
 # Parameter notation: $ = string, ? = boolean, others = numeric
 #
 # Cross-type dependencies: None
+# Sandbox arity check (29 Jul 2026 sweep): NOT PERFORMED.
+#   This file's 18 commands require a long sound file on disk, which the headless
+#   arity harness could not supply. Provenance remains as sourced above
+#   (Praat C API (praatlib.h), June 2025); nothing here has been
+#   confirmed against a running Praat 6.6.30. Treat with more caution than the
+#   files carrying a completed arity check.
 
 ---
 

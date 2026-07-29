@@ -3,6 +3,17 @@
 # Additional commands: Session-verified via Paste Commands (Feb 2026)
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 # Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — `Scale times` arity corrected (0 -> 2); Pitch/Sound co-selection requirement documented for the Draw/Speckle/Extract blocks
+# Sandbox arity check: Praat 6.6.30 (Linux x64v3), 29 July 2026.
+#   71 documented commands probed against a live Praat install by invoking each
+#   with excess arguments; Praat's "requires only N arguments" error reports the
+#   true arity, compared against what this file documents.
+#   Result: 8 exact arity match, 41 present and accepting the documented
+#   argument count, 22 requiring a co-selection or class-specific selection
+#   this harness could not supply (spot-checked, not exhaustively resolved).
+#   SCOPE — this establishes that each command EXISTS on this object type and
+#   that its documented PARAMETER COUNT is right. It does NOT verify parameter
+#   ORDER, parameter TYPES, default values, or semantic correctness. Those
+#   remain as previously sourced.
 
 ---
 

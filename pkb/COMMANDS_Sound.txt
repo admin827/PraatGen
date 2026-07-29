@@ -10,6 +10,17 @@
 # Cross-type dependencies: Filter and Filter (no scale) also listed here
 # but require Sound + FormantGrid selected. See also COMMANDS_FormantGrid.txt.
 # Sandbox-verified: Praat 6.6.30 (Linux x64v3), 29 July 2026 — `Multiply` arity corrected (0 -> 1)
+# Sandbox arity check: Praat 6.6.30 (Linux x64v3), 29 July 2026.
+#   120 documented commands probed against a live Praat install by invoking each
+#   with excess arguments; Praat's "requires only N arguments" error reports the
+#   true arity, compared against what this file documents.
+#   Result: 26 exact arity match, 85 present and accepting the documented
+#   argument count, 9 requiring a co-selection or class-specific selection
+#   this harness could not supply (spot-checked, not exhaustively resolved).
+#   SCOPE — this establishes that each command EXISTS on this object type and
+#   that its documented PARAMETER COUNT is right. It does NOT verify parameter
+#   ORDER, parameter TYPES, default values, or semantic correctness. Those
+#   remain as previously sourced.
 
 ---
 

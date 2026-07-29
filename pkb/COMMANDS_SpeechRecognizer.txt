@@ -20,6 +20,12 @@
 #      "Command not available for current selection"
 #    Provenance: Paste Commands, 25 March 2026.
 #
+# Sandbox arity check (29 Jul 2026 sweep): NOT PERFORMED.
+#   This file's 5 commands require a downloaded ASR model, which the headless
+#   arity harness could not supply. Provenance remains as sourced above
+#   (PRAAT_DEFINITIVE_CATALOGUE.txt (v6.4.62) + session verification); nothing here has been
+#   confirmed against a running Praat 6.6.30. Treat with more caution than the
+#   files carrying a completed arity check.
 # 2. SELECTION STATE FOR CREATION
 #    Create SpeechRecognizer may fail if other objects are selected.
 #    Clear selection before calling:
