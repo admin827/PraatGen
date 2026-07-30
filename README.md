@@ -79,14 +79,14 @@ In Claude (claude.ai or the Claude app):
 ### 2. Set the System Prompt
 
 1. In your new project, click **instructions**
-2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_6_1.md` into the instructions field
+2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_7_1.md` into the instructions field
 3. Scroll to the bottom and edit the "Canary" text if you wish. PraatGen reports this value back to you in pre-flight as a confidence measure that it read the entire Master Prompt.
 4. Save
 
 ### 3. Upload the Knowledge Base
 
 1. In your project, click **add files**
-2. Upload all files from the `pkb/` folder — these are the verified reference files PraatGen uses to validate commands and functions
+2. Upload all 61 files from the `pkb/` folder — these are the verified reference files PraatGen uses to validate commands and functions
 3. Do not rename the files; the Master Prompt references them by their exact filenames
 
 ### 4. Start a Conversation
@@ -111,7 +111,7 @@ Open a new conversation within the project. PraatGen will respond with its readi
 
 3. **Reply EXECUTE (or GO).** PraatGen generates a command plan, then scores its complexity. On 4.6/4.7 that is a gate: it tells you whether to keep Thinking on for code generation and waits for GO. On 4.8+ it is advisory — a one-line note on whether the plan looks complete enough that a lower effort setting may serve — and generation continues in the same turn.
 
-4. **Test in Praat.** Copy the script into Praat's script editor and run it. You can also ask PraatGen to present a downloadable `.praat` file in the chat. If it works, you're done.
+4. **Test in Praat.** PraatGen delivers the script as a downloadable `.praat` file rather than a code block — open it in Praat's script editor and run it. (The file matters: copying source out of a rendered code block can substitute curly quotes and en-dashes for the plain characters Praat needs.) If it works, you're done.
 
 5. **Report errors if any.** Paste the exact error message (with line number) and tell it you are debugging. PraatGen diagnoses before changing code — no guesswork fixes. You can also screenshot errors; Claude can read the images.
 
@@ -127,8 +127,28 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 - **DEBUGGING** — strict targeted-fix mode. Requires your approval for any change, declares the scope of each fix as a binding contract, and avoids elective refactoring. Use this for errors and refactors.
 - **SANDBOX** — installs the current stable Praat build in Claude's own environment so it can verify commands and test scripts empirically before delivery, instead of asking you to paste verification snippets. Requires `www.fon.hum.uva.nl` in your account's allowed network domains (Settings → Capabilities → Allowed domains); this must be set *before* starting the conversation. PraatGen will tell you if the domain is missing and offer a manual-upload fallback.
 - **AUTO** (Autonomous) — suppresses the approval gates and intermediate status reports for batch work: task lists, multi-file refactors, or known sequences of changes. PraatGen executes the whole list and delivers once at the end, with a handoff document. Reply STANDARD or GATES ON to restore normal gating.
+- **NOINTRO** — put this in your *first* message to skip the opening menu. PraatGen goes straight to PRE-FLIGHT if you have supplied the four items (task, starting state, inputs, outputs), and otherwise asks only for what is missing. It suppresses the greeting and nothing else — every rule still applies.
 
 **Composition examples:** `SANDBOX AUTO` (install Praat, work through a task list autonomously, test as it goes, deliver once), `SANDBOX DEBUGGING` (strict debugging with empirical verification on hand), `SCAFFOLD SANDBOX` (collaborative design with empirical checks). AUTO and DEBUGGING are mutually exclusive; if a bug surfaces mid-AUTO, PraatGen applies debugging discipline to that one item, then resumes.
+
+### After a summary, reload, or error: VERIFY YOUR STATE
+
+Long sessions get compacted — the earlier part of the conversation is replaced by a
+summary. Sessions also get interrupted: an error telling you to reload the page, a
+response that fails partway and regenerates, a long gap before you come back. In any
+of these, work rebuilt from memory can quietly lose corrections you already made.
+
+**Say `VERIFY YOUR STATE`.** PraatGen re-reads what is actually saved in its output
+folder — the current script, notes, open items — and reports where that disagrees
+with its own recollection, before touching anything. The saved file wins: it
+reconciles by reading, and never regenerates delivered work from memory. In Sandbox
+Mode it also checks whether its Praat environment is still alive, since a reload can
+coincide with the container being recycled.
+
+Use it whenever you are unsure what landed. The command is yours to give because
+PraatGen cannot reliably tell from the inside that anything happened. It writes the
+current script to its output folder as it goes, so there is always something to come
+back to.
 
 ### Tips for Best Results
 
@@ -147,8 +167,11 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 
 | File | Purpose |
 |------|---------|
-| `MASTER_PROMPT_CORE_v14_6_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.6.1. |
+| `MASTER_PROMPT_CORE_v14_7_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.7.1. |
 | `README.md` | This file. |
+| `RELEASE_NOTES_1.0.0.md` | What changed in this release, and the upgrade notes. Read the upgrade notes before replacing an existing installation. |
+| `PARITY_PASS_BACKLOG.md` | Open items carried forward deliberately — known-unknowns, parameters awaiting validation, and structural work scoped but not done. Nothing in it is a defect in this release. |
+| `LICENSE` | GPL-3.0-or-later. |
 
 ### Project Knowledge Base (PKB)
 
@@ -210,6 +233,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text-label safety, spectrum/Ltas/PowerCepstrum axis alignment, accessible color palette (Okabe-Ito exact RGB) |
 | `BEST_PRACTICES_CONFIDENCE_FIGURES.txt` | Guidelines for publication-quality statistical figures |
 | `BEST_PRACTICES_DEMO_WINDOW.md` | Demo window layout, font-state, viewport, and animation best practices |
+| `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` | Contact quotient from EGG: the three CQ methods and when each is valid, EGG signal-to-noise measurement, method selection by phonation task, and the mandatory segfault guard. Co-loads with `COMMANDS_Electroglottogram.txt` |
 | `BEST_PRACTICES_AUTO_TEXTGRID_ANNOTATION.md` | Automatic TextGrid annotation, VAD-based segmentation, speech-to-text pipelines |
 | `BEST_PRACTICES_PLUGIN_ARCHITECTURE.txt` | Plugin setup, menu/action registration, include-path resolution, conflict guards |
 | `EML_PROCEDURE_GUIDE.md` | Methodology rules, test-selection logic, graph-type routing, script-generation/flattening model |
@@ -237,7 +261,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 These are flattened `.txt` copies of the plugin tree's `.praat` sources; the
 `include ../graphs/….praat` lines and the registry's `**File:**` paths refer to
-the plugin layout, not to the flat PKB. For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md` (295 procedures across 16 files).
+the plugin layout, not to the flat PKB. For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md` (263 procedures across 15 files).
 
 Each PKB source carries the **plugin's** version number verbatim. If a PKB file's version differs from the plugin file it was copied from, the PKB has drifted and should be re-synced.
 
@@ -259,13 +283,13 @@ PraatGen tracks three version numbers:
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
 | **Release** | 1.0.0 | The combined package (prompt + PKB). This is the version that matters to users. Tracked separately from the Master Prompt version. |
-| **Master Prompt** | 14.6.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **Master Prompt** | 14.7.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
 | **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **x.y.z** — Major.Minor.Patch. Major = breaking workflow changes. Minor = new capabilities or reference files. Patch = corrections.
 - The **Release** number and the **Master Prompt** number are independent tracks. The release covers the whole package; the Master Prompt number covers the instruction set inside it. Both are stated on every release so a bug report is unambiguous.
-- **1.0.0 (29 July 2026)** is the first stable release, leaving the 0.9.x beta track. It ships Master Prompt 14.6.1. The PKB is reconciled against the EML plugin source, the procedure registry is generated from that source, and every library file is syntax-checked against Praat 6.6.30.
+- **1.0.0 (29 July 2026)** is the first stable release, leaving the 0.9.x beta track. It ships Master Prompt 14.7.1. The PKB is reconciled against the EML plugin source, the procedure registry is generated from that source, and every library file is syntax-checked against Praat 6.6.30.
 
 ---
 
