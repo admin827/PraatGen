@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 30 July 2026
-**Master Prompt:** 14.8.0 (was 13.9.4)
+**Master Prompt:** 14.8.1 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.8.0) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.8.1) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -61,7 +61,7 @@ effort models (4.8+) it is advisory and does not gate the turn.
 
 ---
 
-## Generated scripts vectorize by default (14.8.0)
+## Generated scripts vectorize by default (14.8.0–14.8.1)
 
 A per-element loop is now a last resort rather than a style preference, backed by
 sandbox measurements: scaling 88,200 Sound samples is **146x** faster with
@@ -420,7 +420,7 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.8.0** | 13.9.4 |
+| Master Prompt | **14.8.1** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
@@ -430,7 +430,7 @@ files.
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_8_0.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_8_1.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`

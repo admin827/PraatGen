@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.8.0
+**Version:** 14.8.1
 **Date:** 30 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,8 +25,9 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.8.0.** Vectorize by default — a per-element loop is a last resort,
-with measured speedups and the vectorized form for each task.
+**Current: 14.8.1.** Vectorize by default, with measured speedups; direct cell
+indexing (`object[id][row,col]`) documented as the right form when a loop is
+unavoidable.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -2999,7 +3000,8 @@ and a 100-file batch costs ~18 minutes for something `Formula:` finishes in
 | All Pitch frames as a vector | `List values in all frames: unit$` | `Get value in frame` loop |
 | Pitch at chosen times | `List values at times: times#, unit$, interpolation$` | `Get value at time` loop |
 | A whole Table column | `Get all numbers in column: col$` | `Get value: row, col$` loop |
-| Element access to any Matrix-shaped object | `Down to Matrix` / `To Matrix`, then `Formula:` | per-cell queries |
+| Element access inside a required loop | `object[id][row,col]` direct indexing | `Get value at …` per element |
+| Element access to a non-Matrix-shaped object | `Down to Matrix` / `To Matrix`, then `Formula:` | per-cell queries |
 | Arithmetic across arrays | vector `#` and matrix `##` variables, `mean()`, `sum()`, `mul##`, `solve#` | accumulator loop |
 
 **Loops that are correct, and stay:** iteration over FILES in a batch; over
@@ -3009,12 +3011,34 @@ per-item branching that `Formula:` cannot express; and bisection or other
 genuinely sequential algorithms. Object-level work per item is the signal
 that a loop belongs.
 
-**A trap when vectorizing.** `object[id].z[row,col]` does NOT work — object
-field access exposes only metadata (`xmin`, `xmax`, `nx`, `ny`, `dx`, `dy`,
-`nrow`, `ncol`). Verified 6.6.30: anything else raises *"After object
-[number]. there should be xmin, xmax …"*. To get sample data into a script
-variable, use the object's own listing command, or `Down to Matrix` and read
-from there.
+**Direct cell access exists — use it when you must loop.** Any Matrix-shaped
+object's cells can be read by index, with no selection and no command call.
+Three equivalent forms, all verified 6.6.30:
+
+    x = object[soundId][1, i]      # by ID — preferred, survives renaming
+    x = Sound_myname[1, i]         # by object name, underscore for the space
+    x = Sound_myname[i]            # single index: row 1 assumed
+
+This is a **read** path only; `object[id][1,5] = 0.9` is a parse error. Write
+with `Formula:` or `Set value at sample number:`.
+
+It is meaningfully faster than the equivalent command call, because it skips
+command dispatch and selection — measured on 88,200 samples:
+
+    loop, Get value at sample number   0.286 s
+    loop, object[s][1,i]               0.078 s     3.7x faster
+    Formula: (whole object)            0.0031 s    25x faster still
+
+So the ordering is: `Formula:` or a vector read first; **if a loop is genuinely
+required, index directly rather than calling a query command per element.** A
+per-element `Get`/`Set` loop is the worst of the three and has no remaining
+justification.
+
+Do not confuse this with `object[id].FIELD`, which is metadata only — `xmin`,
+`xmax`, `nx`, `ny`, `dx`, `dy`, `nrow`, `ncol`. There is no `.z`; using it
+raises *"After object [number]. there should be xmin, xmax …"*, which is easy
+to misread as "cell access is unavailable." It is available; drop the field
+name.
 
 **SELF-AUDIT.** When a script contains a loop whose body is arithmetic on
 samples, frames, or cells, state why a vectorized form was not used. "It was

@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.8.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.8.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.6.1**. These are two independent numbers and both are correct: the
@@ -20,6 +20,28 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.8.1 — 30 July 2026
+
+**Correction to 14.8.0: direct cell access does exist.** 14.8.0 claimed
+`object[id].z[row,col]` does not work and told the model to route through
+`Down to Matrix`. The claim came from testing the wrong syntax. The `.field` form is
+metadata only — hence the error listing `xmin`, `xmax`, `nx`, `ny` — but the cell
+form drops the field name entirely and works on any Matrix-shaped object. All three
+verified 6.6.30: `object[id][1,i]`, `Sound_name[1,i]`, `Sound_name[i]`.
+
+Read-only; `object[id][1,5] = 0.9` is a parse error.
+
+This changes the advice, because indexing is measurably faster than a query call
+(88,200 samples): `Get value at sample number` loop 0.286 s, `object[s][1,i]` loop
+0.078 s (3.7x), `Formula:` 0.0031 s (25x faster again). So the ordering is
+`Formula:`/vector read first, and **if a loop is genuinely required, index directly
+rather than calling a query command per element** — a per-element `Get`/`Set` loop
+is the worst of the three with no remaining justification. The prompt also warns
+that the `.z` error message is easy to misread as "cell access is unavailable",
+which is exactly the mistake 14.8.0 made.
+
+---
 
 ### 14.8.0 — 30 July 2026
 
