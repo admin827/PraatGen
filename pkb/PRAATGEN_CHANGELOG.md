@@ -7,19 +7,54 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.1)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
-Prompt 14.1.0**. These are two independent numbers and both are correct: the
+Prompt 14.6.1**. These are two independent numbers and both are correct: the
 release versions the whole package, the Master Prompt versions the instruction
 set inside it. Quote both in any bug report.
 
 What made it stable rather than beta: the PKB is reconciled against the EML
 plugin source instead of audited against itself; the procedure registry is
-generated from that source rather than maintained alongside it; every library
+updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.7.1 — 30 July 2026
+
+**Neither outcome of the recycle check is assumed.** 14.7.0 said what to do when
+`boot_id` changed and left the other branch implicit. A reload MAY coincide with a
+recycle; often it does not. Unchanged boot_id means the same container — it is NOT
+proof the processes survived, since they can die for other reasons — so confirm by
+execution (`pgrep Xvfb`, `pgrep praat`, `xdotool getdisplaygeometry`) before relying
+on anything started earlier. Both branches are now spelled out, with the note that
+the setup block is safe to re-run, so when in doubt, rebuild.
+
+---
+
+### 14.7.0 — 30 July 2026
+
+**`VERIFY YOUR STATE` is not only for compaction.** The trigger list now covers any
+event that may have cost context or continuity: the conversation was summarized; an
+error told the user to reload, retry or start again; a response failed partway and
+was regenerated; the user returns after a long gap unsure what landed. Compaction
+was only the most predictable of these — a reload loses just as much and announces
+itself even less.
+
+Section renamed `CONTEXT COMPACTION` -> `STATE PERSISTENCE AND RECOVERY`, since the
+title was narrower than the rule.
+
+**Recovery step 4 added, tying this to Rule 24C.** In SANDBOX mode a reload or retry
+can coincide with a container recycle: the filesystem survives, but Xvfb, the window
+manager, the compositor and any running Praat do not. `VERIFY YOUR STATE` now
+compares `/proc/sys/kernel/random/boot_id` against the stored value and rebuilds the
+display stack rather than reattaching. The two failure modes were documented
+separately and are in practice the same moment.
+
+Greeting and README updated to name reloads and errors alongside summaries.
+
+---
 
 ### 14.6.1 — 29 July 2026 (same day, post-release)
 
@@ -104,7 +139,7 @@ for whether something belongs in it.
 
 ### 14.5.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Rule 24C: container recycle and the display readiness
+**Rule 24C: container recycle and the display readiness
 probe.
 
 - **Container recycle (new 24C subsection).** Background processes usually survive
@@ -135,7 +170,7 @@ All claims re-verified in a live sandbox before adoption.
 
 ### 14.4.2 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Compaction survival and a way to skip the greeting.
+**Compaction survival and a way to skip the greeting.
 
 - **`CONTEXT COMPACTION` (new, hard).** Long sessions get summarized and a summary
   is lossy prose, not the work. The current script, test results and open items are
@@ -167,7 +202,7 @@ All claims re-verified in a live sandbox before adoption.
 
 ### 14.3.1 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** EGG method selection is a discussion, not a dialog
+**EGG method selection is a discussion, not a dialog
 field. `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` §5 previously read as a behaviour
 table, which invited two wrong implementations: a runtime branch on an SNR
 threshold, and a `form:` optionmenu offering dEGG / hybrid / threshold as three
@@ -189,7 +224,7 @@ the user has asked for the choice to be exposed in a reusable tool.
 
 ### 14.3.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Spectral thresholding parked. `@emlEggSpectralThreshold`
+**Spectral thresholding parked. `@emlEggSpectralThreshold`
 and the whole §4 de-noising section of `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md`
 are **withdrawn from distribution**. They were **never tested on real material** —
 every figure behind them (the 8× clean-signal penalty, the zero-to-297 GCI
@@ -215,7 +250,7 @@ validated and remains mandatory.
 
 ### 14.2.0 — 29 July 2026 (same day, post-release)
 
-29 July 2026.** Script delivery format made explicit. Phase 3C said
+**Script delivery format made explicit. Phase 3C said
 only "Output ONE COMPLETE SCRIPT" and specified no format, so on a chat surface
 it resolved to a code block by default. `present_files` had only ever appeared
 inside AUTO mode, and the standing rule "no partial code blocks" tacitly assumed
