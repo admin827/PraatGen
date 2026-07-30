@@ -6,7 +6,7 @@
 **Status:** Empirically validated against synthetic signals with analytically known crossings, graded-SNR variants, and a real stereo audio+EGG recording.
 **Revised:** 30 July 2026. Method selection (§5) is a PRE-FLIGHT discussion, not a dialog field, and the SNR figures are guidance to reason from rather than thresholds to branch on: dEGG is the default, and in the 10–20 dB band dEGG and hybrid-at-0.43 are taken together and compared. `Derivative` is the default differentiator (§3). Sub-10 dB signals are refused on signal quality. There is no de-noising path (§4).
 
-**Maintainers:** version history for this file, including what was removed and why, is in `PRAATGEN_CHANGELOG.md` and `PARITY_PASS_BACKLOG.md`. Nothing about the library's own development belongs in a reply to the user.
+**Maintainers:** version history for this file, including what was removed and why, is in `PRAATGEN_CHANGELOG.md`. Nothing about the library's own development belongs in a reply to the user.
 
 For command syntax, arity, return types, and failure modes: see `COMMANDS_Electroglottogram.txt`.
 
@@ -162,8 +162,10 @@ If the user asks directly for de-noising: say it is not available here and that
 pre-processing is theirs to do upstream, in one sentence.
 
 Do not reconstruct a spectral-threshold de-noiser from memory or from any other
-source. `@emlEggSpectralThreshold` is not shipped; rationale and the validation it
-would need are in `PARITY_PASS_BACKLOG.md` §8, which is a maintainer document.
+source. `@emlEggSpectralThreshold` is not shipped. It was never validated on real
+material — every supporting figure came from synthetic additive white Gaussian
+noise, which is not what EGG noise is like — so a plausible CQ from altered data is
+the expected failure. That is sufficient reason not to rebuild it here.
 
 **Two Praat traps, retained here because they apply to any spectral work on an EGG
 signal** and are authoritative in `COMMANDS_Spectrum.txt`:
@@ -231,7 +233,8 @@ having the discussion.
 | < 10 dB | **Refuse** on signal quality. Too noisy to measure reliably. |
 
 **These are numbers to reason from, not thresholds to branch on.** The 20 dB
-boundary is lab judgement (see `PARITY_PASS_BACKLOG.md` §3b); 10 dB is Herbst's
+boundary is lab judgement, not a published finding — it was set against synthetic
+material and has not been validated on real graded recordings. 10 dB is Herbst's
 and is the only published figure here.
 
 Detection yield overrides all of it in both directions. Count GCIs against the
