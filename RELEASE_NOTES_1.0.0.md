@@ -197,11 +197,14 @@ cannot reliably tell from the inside that a summary has happened. The file wins 
 it reconciles by reading, and never regenerates delivered work from a recollection
 of what it should contain.
 
-**A new hard `CONTEXT COMPACTION` section** requires the current script, test
-results and open items to be written to the output folder and kept current there,
-as you go. This is unconditional — chat, SANDBOX and Cowork all have an output
-folder and it survives compaction. Delivering the `.praat` file is still required,
-but delivery is for you; the folder is what PraatGen reads back.
+**A new hard `STATE PERSISTENCE AND RECOVERY` section** requires the current
+script, test results and open items to be written to the output folder and kept
+current there, as you go — not held in the conversation to be restated later. This
+is unconditional: chat, SANDBOX and Cowork all have an output folder, and it
+survives both a compaction and a reload. Delivering the `.praat` file is still
+required, but delivery is for you; the folder is what PraatGen reads back. (The
+section was introduced as `CONTEXT COMPACTION` and renamed at 14.7.0, when the
+recovery triggers broadened beyond compaction.)
 
 **`NOINTRO`.** Put it in your first message to skip the opening menu. Straight to
 PRE-FLIGHT if you supplied the four items, otherwise PraatGen asks only for what is

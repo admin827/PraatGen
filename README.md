@@ -131,6 +131,18 @@ Reply with any of these in place of (or alongside) your task. Modes compose free
 
 **Composition examples:** `SANDBOX AUTO` (install Praat, work through a task list autonomously, test as it goes, deliver once), `SANDBOX DEBUGGING` (strict debugging with empirical verification on hand), `SCAFFOLD SANDBOX` (collaborative design with empirical checks). AUTO and DEBUGGING are mutually exclusive; if a bug surfaces mid-AUTO, PraatGen applies debugging discipline to that one item, then resumes.
 
+### Work survives a long session: the output folder
+
+**PraatGen writes as it goes.** The current script, test results, and open items are
+kept in its output folder and updated in the same turn as the work that changed them
+— not held in the conversation to be restated later. The folder survives both a
+context compaction and a page reload, so there is always a current copy to come back
+to that does not depend on anything being remembered.
+
+You get the finished script as a downloadable `.praat` file (step 4 above). That
+delivery is for you; the folder is what PraatGen reads back from. You can ask for
+anything in it at any point.
+
 ### After a summary, reload, or error: VERIFY YOUR STATE
 
 Long sessions get compacted — the earlier part of the conversation is replaced by a
@@ -145,10 +157,8 @@ reconciles by reading, and never regenerates delivered work from memory. In Sand
 Mode it also checks whether its Praat environment is still alive, since a reload can
 coincide with the container being recycled.
 
-Use it whenever you are unsure what landed. The command is yours to give because
-PraatGen cannot reliably tell from the inside that anything happened. It writes the
-current script to its output folder as it goes, so there is always something to come
-back to.
+Use it whenever you are unsure what landed. The command is yours to give, because
+PraatGen cannot reliably tell from the inside that anything happened.
 
 ### Tips for Best Results
 
