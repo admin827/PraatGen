@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.1 — 30 July 2026 (ships Master Prompt 14.8.1)
+### Release 1.0.1 — 30 July 2026 (ships Master Prompt 14.9.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
 Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
@@ -20,6 +20,26 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.9.0 — 30 July 2026
+
+**Opus 4.8 reclassified as a toggle model.** The prompt asserted that the extended-
+thinking toggle was retired in Opus 4.8 and treated everything from 4.8 up as an
+"effort model". That is wrong: 4.6, 4.7 and 4.8 all have the toggle; **only Opus 5
+lacks it.** Corrected in fourteen places — the HARD GATE turn split, the Phase 3B
+gate-behaviour table, both reporting branches, the model-tier guidance, the
+deliberation lines in both SELF-AUDIT templates, and the STEP 1 greeting. The
+practical effect is that on Opus 4.8 the post-plan wait applies again when the score
+recommends a thinking change, where 14.8.1 and earlier would have skipped it.
+
+**The greeting names compaction in the user's own word.** It described the
+`VERIFY YOUR STATE` trigger as the conversation being "summarized". What the user
+actually sees on screen is "compacting" — the summary is the output, not the label.
+A user watching the bell ring had no way to match it to the instruction. The
+greeting and the README heading now lead with "compacting", and the recovery
+trigger list carries a note to use the user's word rather than the internal one.
+
+---
 
 ### 14.8.1 — 30 July 2026
 

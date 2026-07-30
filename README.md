@@ -79,7 +79,7 @@ In Claude (claude.ai or the Claude app):
 ### 2. Set the System Prompt
 
 1. In your new project, click **instructions**
-2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_8_1.md` into the instructions field
+2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_9_0.md` into the instructions field
 3. Scroll to the bottom and edit the "Canary" text if you wish. PraatGen reports this value back to you in pre-flight as a confidence measure that it read the entire Master Prompt.
 4. Save
 
@@ -143,12 +143,13 @@ You get the finished script as a downloadable `.praat` file (step 4 above). That
 delivery is for you; the folder is what PraatGen reads back from. You can ask for
 anything in it at any point.
 
-### After a summary, reload, or error: VERIFY YOUR STATE
+### When you see "compacting", or after a reload or error: VERIFY YOUR STATE
 
-Long sessions get compacted — the earlier part of the conversation is replaced by a
-summary. Sessions also get interrupted: an error telling you to reload the page, a
-response that fails partway and regenerates, a long gap before you come back. In any
-of these, work rebuilt from memory can quietly lose corrections you already made.
+Long conversations get **compacted** — Claude replaces the earlier part of the
+conversation with a summary, and you see the word "compacting" while it happens.
+Sessions also get interrupted: an error telling you to reload the page, a response
+that fails partway and regenerates, a long gap before you come back. In any of
+these, work rebuilt from memory can quietly lose corrections you already made.
 
 **Say `VERIFY YOUR STATE`.** PraatGen re-reads what is actually saved in its output
 folder — the current script, notes, open items — and reports where that disagrees
@@ -177,7 +178,7 @@ PraatGen cannot reliably tell from the inside that anything happened.
 
 | File | Purpose |
 |------|---------|
-| `MASTER_PROMPT_CORE_v14_8_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.8.1. |
+| `MASTER_PROMPT_CORE_v14_9_0.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.9.0. |
 | `README.md` | This file. |
 | `LICENSE` | GPL-3.0-or-later. |
 
@@ -291,13 +292,13 @@ PraatGen tracks three version numbers:
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
 | **Release** | 1.0.1 | The combined package (prompt + PKB). This is the version that matters to users. Tracked separately from the Master Prompt version. |
-| **Master Prompt** | 14.8.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **Master Prompt** | 14.9.0 | The system instructions. Bumped when rules, workflow, or protocols change. |
 | **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **x.y.z** — Major.Minor.Patch. Major = breaking workflow changes. Minor = new capabilities or reference files. Patch = corrections.
 - The **Release** number and the **Master Prompt** number are independent tracks. The release covers the whole package; the Master Prompt number covers the instruction set inside it. Both are stated on every release so a bug report is unambiguous.
-- **1.0.1 (30 July 2026)** is the current stable release, superseding 1.0.0 of 29 July. It ships Master Prompt 14.8.1. The PKB is reconciled against the EML plugin source, the procedure registry is updated from that source, and every library file is syntax-checked against Praat 6.6.30.
+- **1.0.1 (30 July 2026)** is the current stable release, superseding 1.0.0 of 29 July. It ships Master Prompt 14.9.0. The PKB is reconciled against the EML plugin source, the procedure registry is updated from that source, and every library file is syntax-checked against Praat 6.6.30.
 
 ---
 
