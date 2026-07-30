@@ -7,10 +7,10 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.1)
+### Release 1.0.1 — 30 July 2026 (ships Master Prompt 14.8.1)
 
-The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
-Prompt 14.6.1**. These are two independent numbers and both are correct: the
+The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
+Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
 release versions the whole package, the Master Prompt versions the instruction
 set inside it. Quote both in any bug report.
 
@@ -20,6 +20,92 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.8.1 — 30 July 2026
+
+**Correction to 14.8.0: direct cell access does exist.** 14.8.0 claimed
+`object[id].z[row,col]` does not work and told the model to route through
+`Down to Matrix`. The claim came from testing the wrong syntax. The `.field` form is
+metadata only — hence the error listing `xmin`, `xmax`, `nx`, `ny` — but the cell
+form drops the field name entirely and works on any Matrix-shaped object. All three
+verified 6.6.30: `object[id][1,i]`, `Sound_name[1,i]`, `Sound_name[i]`.
+
+Read-only; `object[id][1,5] = 0.9` is a parse error.
+
+This changes the advice, because indexing is measurably faster than a query call
+(88,200 samples): `Get value at sample number` loop 0.286 s, `object[s][1,i]` loop
+0.078 s (3.7x), `Formula:` 0.0031 s (25x faster again). So the ordering is
+`Formula:`/vector read first, and **if a loop is genuinely required, index directly
+rather than calling a query command per element** — a per-element `Get`/`Set` loop
+is the worst of the three with no remaining justification. The prompt also warns
+that the `.z` error message is easy to misread as "cell access is unavailable",
+which is exactly the mistake 14.8.0 made.
+
+---
+
+### 14.8.0 — 30 July 2026
+
+**Vectorize by default (hard).** The prompt previously carried one clause on this,
+inside the elegance/DRY section: "If a vector operation replaces an element-wise
+loop, use the vector operation." Filed under style, no magnitudes, no list of the
+vectorized forms — weak enough that a loop which occurs first survives to delivery.
+It is now its own hard subsection with measured numbers, on the grounds that a model
+changes behaviour for a benchmark and not for an adjective.
+
+Measured in the sandbox, Praat 6.6.30:
+
+| operation | loop | vectorized | speedup |
+|---|---|---|---|
+| scale 88,200 Sound samples | 0.368 s | 0.0025 s | 146x |
+| read 19,961 Pitch frames | 0.121 s | 0.0003 s | 415x |
+| read a 20,000-row Table column | 0.049 s | 0.0049 s | 10x |
+| scale a 20,000-row Table column | 0.099 s | 0.021 s | 5x |
+
+The spread matters and is stated: sample- and frame-level loops are catastrophic
+while Table row loops are merely wasteful. Scaled up, the first row is 2 seconds of
+audio — a 60 s recording costs ~11 s per pass and a 100-file batch ~18 minutes for
+work `Formula:` finishes in 0.15 s, which users misdiagnose as "Praat is slow".
+
+Adds a task-to-command table (`Formula:`, `List values in all frames`,
+`List values at times`, `Get all numbers in column`, `Down to Matrix`, vector and
+matrix variables), and names the loops that are correct and stay: iteration over
+files, over TextGrid intervals or PointProcess points where the per-item work is an
+object-level operation, anything with early exit or per-item branching, and
+genuinely sequential algorithms such as bisection.
+
+**Trap documented:** `object[id].z[row,col]` does not work. Object field access
+exposes only metadata (`xmin`, `xmax`, `nx`, `ny`, `dx`, `dy`, `nrow`, `ncol`) —
+verified 6.6.30. Use the object's listing command or `Down to Matrix`. SELF-AUDIT
+must justify any loop whose body is arithmetic on samples, frames or cells.
+
+---
+
+### 14.7.2 — 30 July 2026
+
+**No status reports, no unrequested measures.** Two house rules, both from observed
+behaviour in a live EGG task: the build announced to the user that it had no
+de-noising, and offered QDelta unprompted.
+
+*Do not narrate the library's own state (hard).* PKB files carry maintainer-facing
+material — corrections, rationale, notes on what is deliberately absent — so a model
+does not repeat a mistake. It is not reply content. §4 of the EGG best practices had
+been written as a prominent "PARKED, not distributed" essay with no instruction to
+keep it internal, so the model did the natural thing and reported it. §4 is now
+short and explicitly internal: a sub-10 dB signal is refused in the user's terms
+("too noisy to measure reliably"), with no mention of what was withdrawn or why. The
+T1 correction block in §5 is marked INTERNAL for the same reason — the reasoning
+must survive so it is not re-derived, but it is not something to tell anyone. The
+file header now points maintainers at the changelog and backlog for history.
+
+*Do not volunteer optional measures.* QDelta answers one question — are the folds
+contacting at all — and §7 said only "use it as a descriptor when the question is
+whether the folds are contacting", which was permissive enough to attach it to any
+CQ task. It now says explicitly not to offer it unprompted, and names the cases
+where it belongs (breathy onsets, voice mapping, whistle and falsetto edges,
+suspected non-contacting phonation). An unrequested noise-sensitive number invites
+the user to read it as a quality check, which it is not.
+
+---
 
 ### 14.7.1 — 30 July 2026
 
