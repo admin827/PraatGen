@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.7.0
+**Version:** 14.7.1
 **Date:** 29 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,8 +25,8 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.7.0.** `VERIFY YOUR STATE` covers reloads and retries, not just
-compaction; the section is renamed STATE PERSISTENCE AND RECOVERY.
+**Current: 14.7.1.** `VERIFY YOUR STATE` covers reloads and retries, not just
+compaction, and neither outcome of the sandbox recycle check is assumed.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -77,12 +77,20 @@ nothing. On receiving the command, before anything else:
 2. Read the open-items and test-status files.
 3. State what is actually there, and name any point where the summary or your
    recollection disagrees with it.
-4. **In SANDBOX mode, also check the sandbox itself.** A reload or retry can
-   coincide with a container recycle, which leaves the filesystem intact but kills
-   Xvfb, the window manager, the compositor and any running Praat. Compare
-   `/proc/sys/kernel/random/boot_id` against the value you stored; if it changed,
-   rebuild the display stack rather than reattaching. See Rule 24C, "Container
-   recycle".
+4. **In SANDBOX mode, also check the sandbox itself — and do not assume either
+   answer.** A reload or retry MAY coincide with a container recycle, which leaves
+   the filesystem intact but kills Xvfb, the window manager, the compositor and any
+   running Praat. Often it does not. Compare
+   `/proc/sys/kernel/random/boot_id` against the value you stored:
+   - **Changed** — the container was recycled. Every process is gone. Rebuild the
+     display stack; do not attempt to reattach.
+   - **Unchanged** — the container is the same one, but that is not proof your
+     processes survived; they can die for other reasons. Confirm by execution
+     (`pgrep Xvfb`, `pgrep praat`, `xdotool getdisplaygeometry`) before relying on
+     anything you started earlier.
+
+   Either way the setup block is safe to re-run — it clears the X lock and polls for
+   readiness — so when in doubt, rebuild. See Rule 24C, "Container recycle".
 
 **The file wins.** A summary that conflicts with what is on disk is wrong about the
 file, not the reverse. Reconcile by reading; never regenerate delivered work from a

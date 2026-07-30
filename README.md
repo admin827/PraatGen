@@ -79,7 +79,7 @@ In Claude (claude.ai or the Claude app):
 ### 2. Set the System Prompt
 
 1. In your new project, click **instructions**
-2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_7_0.md` into the instructions field
+2. Paste the entire contents of `MASTER_PROMPT_CORE_v14_7_1.md` into the instructions field
 3. Scroll to the bottom and edit the "Canary" text if you wish. PraatGen reports this value back to you in pre-flight as a confidence measure that it read the entire Master Prompt.
 4. Save
 
@@ -167,7 +167,7 @@ back to.
 
 | File | Purpose |
 |------|---------|
-| `MASTER_PROMPT_CORE_v14_7_0.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.7.0. |
+| `MASTER_PROMPT_CORE_v14_7_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.7.1. |
 | `README.md` | This file. |
 | `RELEASE_NOTES_1.0.0.md` | What changed in this release, and the upgrade notes. Read the upgrade notes before replacing an existing installation. |
 | `PARITY_PASS_BACKLOG.md` | Open items carried forward deliberately — known-unknowns, parameters awaiting validation, and structural work scoped but not done. Nothing in it is a defect in this release. |
@@ -282,13 +282,13 @@ PraatGen tracks three version numbers:
 | Component | Current | What it tracks |
 |-----------|---------|----------------|
 | **Release** | 1.0.0 | The combined package (prompt + PKB). This is the version that matters to users. Tracked separately from the Master Prompt version. |
-| **Master Prompt** | 14.7.0 | The system instructions. Bumped when rules, workflow, or protocols change. |
+| **Master Prompt** | 14.7.1 | The system instructions. Bumped when rules, workflow, or protocols change. |
 | **PKB Snapshot** | 2026-07-29 | The reference file set. Date-stamped when files are added or revised. |
 
 **Release versioning** follows semver conventions:
 - **x.y.z** — Major.Minor.Patch. Major = breaking workflow changes. Minor = new capabilities or reference files. Patch = corrections.
 - The **Release** number and the **Master Prompt** number are independent tracks. The release covers the whole package; the Master Prompt number covers the instruction set inside it. Both are stated on every release so a bug report is unambiguous.
-- **1.0.0 (29 July 2026)** is the first stable release, leaving the 0.9.x beta track. It ships Master Prompt 14.7.0. The PKB is reconciled against the EML plugin source, the procedure registry is generated from that source, and every library file is syntax-checked against Praat 6.6.30.
+- **1.0.0 (29 July 2026)** is the first stable release, leaving the 0.9.x beta track. It ships Master Prompt 14.7.1. The PKB is reconciled against the EML plugin source, the procedure registry is generated from that source, and every library file is syntax-checked against Praat 6.6.30.
 
 ---
 

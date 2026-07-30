@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.0)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.1)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.6.1**. These are two independent numbers and both are correct: the
@@ -20,6 +20,18 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.7.1 — 30 July 2026
+
+**Neither outcome of the recycle check is assumed.** 14.7.0 said what to do when
+`boot_id` changed and left the other branch implicit. A reload MAY coincide with a
+recycle; often it does not. Unchanged boot_id means the same container — it is NOT
+proof the processes survived, since they can die for other reasons — so confirm by
+execution (`pgrep Xvfb`, `pgrep praat`, `xdotool getdisplaygeometry`) before relying
+on anything started earlier. Both branches are now spelled out, with the note that
+the setup block is safe to re-run, so when in doubt, rebuild.
+
+---
 
 ### 14.7.0 — 30 July 2026
 
