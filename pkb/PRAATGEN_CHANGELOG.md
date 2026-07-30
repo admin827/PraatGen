@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.1)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.2)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.6.1**. These are two independent numbers and both are correct: the
@@ -20,6 +20,32 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.7.2 — 30 July 2026
+
+**Two house rules, both from observed behaviour in a live EGG task.** The build
+announced to the user that it had no de-noising, and offered QDelta unprompted.
+
+*Do not narrate the library's own state (hard).* PKB files carry maintainer-facing
+material — corrections, rationale, notes on what is deliberately absent — so a model
+does not repeat a mistake. It is not reply content. §4 of the EGG best practices had
+been written as a prominent "PARKED, not distributed" essay with no instruction to
+keep it internal, so the model did the natural thing and reported it. §4 is now
+short and explicitly internal: a sub-10 dB signal is refused in the user's terms
+("too noisy to measure reliably"), with no mention of what was withdrawn or why. The
+T1 correction block in §5 is marked INTERNAL for the same reason — the reasoning
+must survive so it is not re-derived, but it is not something to tell anyone. The
+file header now points maintainers at the changelog and backlog for history.
+
+*Do not volunteer optional measures.* QDelta answers one question — are the folds
+contacting at all — and §7 said only "use it as a descriptor when the question is
+whether the folds are contacting", which was permissive enough to attach it to any
+CQ task. It now says explicitly not to offer it unprompted, and names the cases
+where it belongs (breathy onsets, voice mapping, whistle and falsetto edges,
+suspected non-contacting phonation). An unrequested noise-sensitive number invites
+the user to read it as a quality check, which it is not.
+
+---
 
 ### 14.7.1 — 30 July 2026
 

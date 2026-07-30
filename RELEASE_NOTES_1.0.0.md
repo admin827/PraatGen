@@ -2,7 +2,7 @@
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
 **Release date:** 30 July 2026
-**Master Prompt:** 14.7.1 (was 13.9.4)
+**Master Prompt:** 14.7.2 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
@@ -11,7 +11,7 @@ The first stable release. The EML procedure library is updated and expanded to
 match the current plugin — the analysis orchestrators, regression, normality and
 the vibrato drawing family; the command reference is verified against Praat
 6.6.30; and Phase 3B adapts to the model in use. It folds in two Master Prompt
-increments (14.0.0 → 14.7.1) and supersedes 0.9.3-beta.02.1 (22 June 2026).
+increments (14.0.0 → 14.7.2) and supersedes 0.9.3-beta.02.1 (22 June 2026).
 
 ---
 
@@ -58,6 +58,22 @@ the plugin.
 retired in Opus 4.8. The complexity score is unchanged; on toggle models
 (4.6/4.7) it recommends thinking on/off and waits on a recommended change, and on
 effort models (4.8+) it is advisory and does not gate the turn.
+
+---
+
+## Quieter output (14.7.2)
+
+Two house rules. **PraatGen does not narrate its own state** — you should never be
+told that a capability is withdrawn, parked, untested or absent from this build.
+If something is unavailable the consequence is stated in your terms ("this
+recording is too noisy to measure reliably") and nothing else. Maintainer notes in
+the reference files exist so the tool does not repeat a mistake; they are not
+content for a reply.
+
+**PraatGen does not volunteer optional measures.** It computes what the task needs.
+An extra descriptor appears only if you asked for it or the task turns on the
+question it answers — QDelta on a routine contact-quotient job, for instance, is
+noise, and invites reading a noise-sensitive number as a quality check.
 
 ---
 
@@ -384,7 +400,7 @@ files.
 | Component | This release | Previous |
 |---|---|---|
 | Release | **1.0.0** | 0.9.3-beta.02.1 |
-| Master Prompt | **14.7.1** | 13.9.4 |
+| Master Prompt | **14.7.2** | 13.9.4 |
 | PKB snapshot | **2026-07-29** | 2026-06-22 |
 | Sandbox Praat | **6.6.30** | 6.4.67 |
 | Rules | 37 | 37 |
@@ -394,7 +410,7 @@ files.
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_7_1.md`. The
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_7_2.md`. The
 filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures`
