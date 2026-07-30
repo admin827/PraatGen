@@ -179,7 +179,6 @@ PraatGen cannot reliably tell from the inside that anything happened.
 |------|---------|
 | `MASTER_PROMPT_CORE_v14_8_1.md` | The system instructions that configure Claude as a Praat scripting specialist. Contains 37 rules governing syntax validation, command verification, clinical defaults, debugging protocol, sandbox/autonomous modes, and code-quality standards. Master Prompt content version: 14.8.1. |
 | `README.md` | This file. |
-| `RELEASE_NOTES_1.0.0.md` | What changed in this release, and the upgrade notes. Read the upgrade notes before replacing an existing installation. |
 | `LICENSE` | GPL-3.0-or-later. |
 
 ### Project Knowledge Base (PKB)
