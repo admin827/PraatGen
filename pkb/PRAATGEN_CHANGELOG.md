@@ -7,10 +7,10 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.8.1)
+### Release 1.0.1 — 30 July 2026 (ships Master Prompt 14.8.1)
 
-The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
-Prompt 14.6.1**. These are two independent numbers and both are correct: the
+The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
+Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
 release versions the whole package, the Master Prompt versions the instruction
 set inside it. Quote both in any bug report.
 
