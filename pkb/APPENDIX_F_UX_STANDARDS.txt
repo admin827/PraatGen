@@ -1252,3 +1252,38 @@
 
 *End of Appendix F. This appendix is authoritative for UX design
 standards (Rule 33).*
+
+# ============================================================================
+# BATCH COUNTERS: REMAINING WORK IS FILES WITHOUT OUTPUT (hard)
+# ============================================================================
+#
+# Do not increment one `nSkipped` at every skip site. Skips have unrelated
+# meanings and a single counter conflates them:
+#
+#   already annotated   - finished, nothing to do
+#   unreadable          - cannot be done
+#   wrong channel count - cannot be done as configured
+#   user chose Skip     - NOT finished; still outstanding
+#
+# A summary computing
+#
+#     nRemaining = nFiles - nSkipped - nSaved
+#
+# counts a file the user skipped without annotating as finished. Skip every
+# file in a folder and the report says nothing remains when everything does.
+# No work is lost — those files have no output and are re-offered next run —
+# but the report misleads at exactly the moment the user is deciding whether
+# they are done.
+#
+# Use one counter per reason, and define remaining work by the artifact:
+#
+#     nRemaining = nFiles - nAlreadyDone - nSaved
+#     # i.e. files with no output on disk, not files not touched this session
+#
+# Report the reasons separately:
+#
+#     appendInfoLine: "Saved this session: ", nSaved
+#     appendInfoLine: "Already annotated:  ", nAlreadyDone
+#     appendInfoLine: "Skipped by you:     ", nUserSkipped, " (still to do)"
+#     appendInfoLine: "Unreadable:         ", nUnreadable
+#     appendInfoLine: "Remaining:          ", nRemaining

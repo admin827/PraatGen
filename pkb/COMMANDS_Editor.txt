@@ -986,3 +986,34 @@
 ---
 
 *End of Editor Scripting commands.*
+
+# ============================================================================
+# ENTERING AN EDITOR BLOCK IS THE UNGUARDED STEP (hard)
+# ============================================================================
+#
+# `nocheck` suppresses the failure of the ONE command it prefixes. It cannot
+# protect the block opener above it. This is the common wrong shape:
+#
+#     editor: gridId          <- fails here if the user closed the window
+#         nocheck Close       <- never reached
+#     endeditor
+#
+# The user can close an editor window by hand at any time. When they have,
+# the opener fails with «Editor N does not exist» and the script aborts.
+#
+# Verified, Praat 6.6.30, 30 July 2026 — editor opened, closed, re-entered:
+#
+#     editor: tg              -> PRAAT ERROR: Editor 2 does not exist.
+#                                (script aborts; the following line never runs)
+#     nocheck editor: tg      -> block skipped cleanly, execution continues
+#
+# GUARD THE OPENER:
+#
+#     nocheck editor: gridId
+#         nocheck Close
+#     endeditor
+#
+# There is no query for "does this editor still exist", so the guard is the
+# only available protection. Any editor block that runs after a point where
+# the user could have closed the window needs it — which in an interactive
+# annotation loop is every block after the first pause.

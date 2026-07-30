@@ -809,6 +809,36 @@ To Intensity: 100, 0.0, "yes"
 # Formant F2 (Hz)       500 – 3500              "F2 outside typical range"
 # Formant F3 (Hz)       1500 – 4500             "F3 outside typical range"
 
+# GUARD BOTH ENDS OF EVERY BOUNDED RANGE (hard)
+#
+# A floor-only guard is half a guard. Warn when a measurement approaches
+# EITHER limit of any bounded analysis range — pitch floor and ceiling, the
+# cepstral peak search range, the derivative low-pass, formant ceiling.
+#
+# Observed failure: a script warned when minimum F0 came within 10% of the
+# pitch floor and had no equivalent at the top. On a real recording the
+# measured maximum F0 was 322.87 Hz against a cepstral search ceiling of
+# 330 Hz — 98% of the ceiling — and nothing said so. Slightly higher material
+# and the measurement degrades with no signal at all.
+#
+#   if maxF0 > 0.9 * ceiling
+#       appendInfoLine: "WARNING: max F0 ", fixed$(maxF0,2),
+#           ... " Hz is within 10% of the ", fixed$(ceiling,0),
+#           ... " Hz ceiling. Widen the range or treat the result as censored."
+#   endif
+#
+# CHECK THE USER'S STATED RANGE AGAINST THE MEASUREMENT (hard)
+#
+# When the user supplies an expected range, compare it to what was measured
+# and warn on disagreement. The stated value is an INPUT to parameter
+# derivation — ceilings are commonly derived as max(600, 1.2 * stated) or
+# similar — so a wrong statement propagates silently into every downstream
+# parameter.
+#
+# Observed: user stated F0 stayed below 300 Hz; measurement returned 322.87 Hz;
+# nothing flagged it. Report the discrepancy, state which parameters were
+# derived from the stated value, and let the user decide whether to re-run.
+#
 # Pattern for plausibility check:
 #
 #   if hnr <> undefined

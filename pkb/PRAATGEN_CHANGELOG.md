@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.1 — 30 July 2026 (ships Master Prompt 14.9.0)
+### Release 1.0.2 — 30 July 2026 (ships Master Prompt 14.10.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
 Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
@@ -20,6 +20,77 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.10.0 — 30 July 2026
+
+**Benchmark dry-run remediation.** Five tasks run against v1.0.1 and verified
+independently against Praat 6.6.30. Every claim below was re-verified here before
+being written.
+
+- **One file is the delivery default, always (protocol 12).** Shape was chosen by
+  library size; it is now not chosen at all. A multi-file delivery requires the
+  user's affirmative agreement in the conversation — no length threshold, no
+  complexity score, no "this would be cleaner". A relative `include` sent as loose
+  files cannot resolve, and this broke a deliverable in a user's hands. If the user
+  does agree, it ships as one archive with the layout stated before sending.
+- **Shape changes must prove inertness.** Re-render every figure and compare
+  checksums to the pre-merge build; state the hashes.
+- **Merging relocates module-level state.** Procedure definitions are
+  position-independent; top-level statements are not, so a library's bare
+  assignments run after the main body when pasted at the bottom. Verified both
+  directions. Relocate them into the host's constants block and say so.
+- **Counts are computed, not remembered.** A manifest claimed 504 lines for a
+  519-line file.
+- **Bundles are checksummed before the manifest is written.** Five byte-identical
+  PNGs were described as five distinct captures, one of them as evidence of a
+  corrected build it predated.
+- **The ASCII sweep covers copied library text.** The shipped `eml-*` sources hold
+  ~140 non-ASCII literals — harmless in Info output, not harmless once pasted into
+  a script that writes files. Verified with `--utf8` set: pure ASCII writes `ASCII
+  text`, the same line with one em-dash writes `UTF-16, big-endian`.
+- **Bounded ranges are guarded at both ends** (APPENDIX_D), and a user's stated
+  range is checked against the measurement, since the stated value feeds ceiling
+  derivation.
+- **Batch counters are per reason** (APPENDIX_F). Remaining work is files without
+  output, not files not touched this session.
+- **Editor blocks guard the opener** (COMMANDS_Editor). `nocheck` protects only the
+  command it prefixes, so `nocheck Close` inside the block is unreachable when the
+  user has closed the window by hand. Verified: `editor: tg` -> «Editor 2 does not
+  exist», script aborts; `nocheck editor: tg` -> block skipped, execution continues.
+- **Demo window layout** (BEST_PRACTICES_DEMO_WINDOW). `demoWindowWidth()` does not
+  exist — verified — so layout cannot query the window and does not need to: demo
+  coordinates are always 0-100. What varies is aspect ratio, and the documented
+  1.726:1 was measured on a 16:9 screen. Text pages take a maximum measure and
+  centre, so an unusual aspect gives symmetric margins rather than dead space.
+
+**PKB corrections.**
+
+- `Spectrogram: Paint` in the catalogue corrected 8 -> 10, restoring the dropped
+  leading time-range pair. First hand-correction in that file; corrected entries
+  are marked and the banner now carries a corrections log.
+- `To Sound (derivative)` in `COMMANDS_Sound.txt` **was wrong on all three
+  parameter names and their order** — it read "smoothing, low pass, high pass".
+  Praat's own field names, read back by type probe: `Low-pass frequency`,
+  `Smoothing`, `New absolute peak`. Found while implementing, not in the dry run.
+  Adds a domain note: canonical audio smoothing of 100 Hz is a 46% magnitude error
+  on respiratory-band signals, and a non-zero third argument destroys calibration.
+- `Get value at sample number` argument order documented as a silent-failure
+  hazard. An out-of-range channel does not error — Praat clamps to channel 1 and
+  returns the requested sample — so a swapped call returns sample 1 forever with
+  plausible magnitudes and no error. Demonstrated.
+
+**Catalogue de-escalated (step 10 and the retrieval row).** The dry run showed the
+model resolving `Spectrogram Paint` correctly from the curated COMMANDS file and
+then reporting the answer as a *correction of the catalogue* — it had cross-checked
+a fallback it had no reason to open. The arity warning had grown across three
+places and was pulling attention toward the file it warned about. Step 10 now opens
+with a stop condition: **if the command is in the object's COMMANDS file, you are
+done; do not cross-check the catalogue.** The defect detail moved into the
+catalogue's own banner, where it is read at the point of use, and the named phrase
+"documented range-pair arity defect" is gone — a named thing invites citation.
+Step 10 is 252 words, down from 372.
+
+---
 
 ### 14.9.0 — 30 July 2026
 

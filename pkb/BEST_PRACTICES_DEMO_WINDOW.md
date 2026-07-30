@@ -746,3 +746,38 @@ BEST_PRACTICES_DEMO_WINDOW.md
 # ============================================================================
 # END OF BEST_PRACTICES_DEMO_WINDOW.md
 # ============================================================================
+
+
+# ============================================================================
+# WINDOW SIZE, ASPECT RATIO, AND WHAT YOU CANNOT QUERY (hard)
+# ============================================================================
+#
+# THERE IS NO SIZE QUERY. `demoWindowWidth()` and `demoWindowHeight()` do not
+# exist — verified 6.6.30: «Unknown function». Never write layout code that
+# tries to read the window's dimensions; it cannot be done.
+#
+# You do not need to. Demo coordinates are ALWAYS 0-100 regardless of pixel
+# size, so any layout expressed in demo units is already resolution-
+# independent. A plot panel spanning x 10-90 fills its share of any window.
+#
+# WHAT ACTUALLY VARIES IS ASPECT RATIO. The window opens at ~70% of the
+# screen (COMMANDS_DemoWindow.txt §1), so its proportions follow the display.
+# The 1.726:1 ratio documented there was measured on a 16:9 screen and is NOT
+# universal — on a 16:10 or ultrawide monitor it is wrong, and any "multiply
+# vertical by 1.726 for a true square" arithmetic is off by that much.
+#
+# CONSEQUENCE FOR TEXT PAGES. Analysis pages survive a wide display because
+# the plot stretches. Text pages do not: text sits at a fixed point size, so
+# a page built on a fixed left column and fixed line spacing leaves a growing
+# empty region to the right and below as the window widens. Reported from a
+# real deck whose analysis pages were fine and whose title and end cards were
+# not.
+#
+# RULE. Lay text pages out with a MAXIMUM MEASURE and CENTRE them in demo
+# units — e.g. a text column of 60 units centred on x = 50, rather than text
+# starting at x = 8 and running to wherever it ends. An unusual aspect then
+# produces symmetric margins instead of dead space. Centre the block
+# vertically the same way rather than anchoring it to the top.
+#
+# Treat 1.726 as a measurement of one screen, not a constant. Where a true
+# square matters, say so on the page rather than relying on the ratio.

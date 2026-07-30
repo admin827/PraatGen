@@ -17,15 +17,27 @@
 #   Where they disagree, the object-specific COMMANDS_*.txt file governs —
 #   it carries the newer sandbox verification stamp.
 #
-#   ⚠️ SYSTEMATIC ARITY DEFECT — MEASURED 29 JULY 2026, PRAAT 6.6.30
+#   ⚠️ EXTRACTION GAPS — MEASURED, AND CORRECTED WHERE VERIFIED
 #
 #   The extractor DROPS paired range fields. Praat renders a range as two
 #   boxes on one row using the `left Xxx` / `right Xxx` label idiom (see
 #   APPENDIX_C_GUI.txt §C.1, "Side-by-side fields"). The extraction counted
-#   those as one field, or as none. Every affected command is therefore
-#   documented with 1, 2 or 4 FEWER parameters than it actually takes.
+#   those as one field, or as none. String-array fields (`...$#`) are dropped
+#   the same way. Affected commands are therefore documented with FEWER
+#   parameters than they take.
 #
-#   Confirmed examples (catalogue arity vs live Praat 6.6.30):
+#   Measured rate: 22 defects in 542 commands probed across 8 object types
+#   (4.1%). Projected ~100 more of the same class in the object types that
+#   have no COMMANDS_*.txt file.
+#
+#   CORRECTIONS APPLIED TO THIS FILE (verified by execution before editing):
+#     30 Jul 2026  Spectrogram: Paint  8 -> 10  (leading time-range pair)
+#
+#   Entries marked "# CORRECTED <date>" are hand-verified against a live
+#   Praat and are no longer extraction output. Everything else in this file
+#   is the 6.4.62 extraction as produced.
+#
+#   Confirmed examples still uncorrected (catalogue arity vs live 6.6.30):
 #     Harmonicity  Draw                 catalogue 0  actual 4  (from/to time, min, max)
 #     Harmonicity  Get mean             catalogue 0  actual 2  (from/to time)
 #     Harmonicity  Get standard deviation catalogue 0 actual 2
@@ -41,18 +53,14 @@
 #     Sound        To CrossCorrelationTable  catalogue 1  actual 3
 #     Sound        To Polygon                catalogue 4  actual 6
 #
-#   Measured rate: 22 defects in 542 commands probed across 8 object types
-#   (4.1%). Projected ~100 more of the same class in the object types that
-#   have no COMMANDS_*.txt file.
-#
-#   WHERE THIS BITES. 22 of the 136 object types have a curated
+#   WHERE THIS MATTERS. 22 of the 136 object types have a curated
 #   COMMANDS_*.txt, and those files carry the CORRECT arity — they were
-#   hand-verified and this sweep confirmed them. The remaining 114 types
-#   (2,464 commands: KlattGrid, Matrix, TableOfReal, DTW, Discriminant,
-#   FormantModeler, EEG, OTGrammar, …) have no curated file, so the
-#   catalogue is the sole authority — which is exactly the fallback case it
-#   exists to serve. Assume any range-taking command in those sections is
-#   under-specified.
+#   hand-verified and this sweep confirmed them. **If a command is in a
+#   curated COMMANDS file, use that file and do not consult this one.** The
+#   remaining 114 types (2,464 commands: KlattGrid, Matrix, TableOfReal, DTW,
+#   Discriminant, FormantModeler, EEG, OTGrammar, …) have no curated file, so
+#   this catalogue is the sole authority — which is exactly the fallback case
+#   it exists to serve, and the only place these gaps can bite.
 #
 #   HOW TO USE IT SAFELY. Before emitting a catalogue-sourced command that
 #   plausibly takes a time, frequency, quefrency or value RANGE, verify the
@@ -7873,6 +7881,8 @@ Total parameter fields: 5440
   Movie  [alias]
 
   Paint
+    REAL           left Time range (s) = "0.0"          # CORRECTED 30 Jul 2026
+    REAL           right Time range (s) = "0.0 (= all)" # CORRECTED 30 Jul 2026
     REAL           left Frequency range (Hz) = "0.0"
     REAL           right Frequency range (Hz) = "0.0 (= all)"
     REAL           Maximum (dB/Hz) = "100.0"

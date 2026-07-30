@@ -47,6 +47,24 @@
   Get value at time: channel, time, interpolation$
   # Verified: Get value at time: 0, 0.5, "sinc70"
   # Note: channel 0 = average across channels
+  # ⚠️ ARGUMENT ORDER IS (channel, sample) — SWAPPING IT FAILS SILENTLY (hard)
+  #   An out-of-range channel does NOT error. Praat clamps to channel 1 and
+  #   returns the requested sample, so a swapped call is syntactically fine
+  #   and numerically wrong. Verified 6.6.30 on a 1-channel Sound:
+  #
+  #     for i from 1 to 5
+  #         v = Get value at sample number: 1, i    # CORRECT
+  #     -> .0000125  .0000352  .0000578  .0000805  .0001032
+  #
+  #     for i from 1 to 5
+  #         v = Get value at sample number: i, 1    # SWAPPED
+  #     -> .0000125  .0000125  .0000125  .0000125  .0000125
+  #
+  #   The loop index lands in the channel slot, gets clamped, and every read
+  #   returns sample 1 forever — plausible magnitudes, constant value, no
+  #   error. Any per-sample loop should be checked for this before it is
+  #   trusted; and per the vectorization rule, prefer Formula: or a vector
+  #   read over the loop entirely.
   Get value at sample number: channel, sample number
   # Verified: Get value at sample number: 0, 100
   # Note: channel 0 = average across channels
@@ -72,7 +90,27 @@
 
   # Convert / Analyze
   To Sound: longest period
-  To Sound (derivative): smoothing, low pass, high pass
+  To Sound (derivative): low-pass frequency, smoothing, new absolute peak
+  # CORRECTED 30 Jul 2026 (sandbox, 6.6.30). The file previously read
+  #   "smoothing, low pass, high pass" — wrong on all three names and on the
+  #   order. Praat's own field names, read back by type probe:
+  #     arg 1 "Low-pass frequency"   arg 2 "Smoothing"   arg 3 "New absolute peak"
+  #   Arity is exactly 3. Anyone following the old names would have swapped
+  #   the low-pass and smoothing values.
+  # DOMAIN NOTE — the smoothing argument is a transition-band width, and the
+  #   canonical audio value of 100 Hz is badly wrong at respiratory rates.
+  #   Measured on a 0.25 Hz sine with an analytically known derivative peak:
+  #
+  #     low-pass  smoothing   measured / true
+  #        5 Hz      1 Hz        1.000
+  #        3 Hz    0.5 Hz        1.000
+  #        2 Hz    0.5 Hz        1.000
+  #        5 Hz    100 Hz        0.537   <- 46% magnitude error
+  #
+  #   Match the smoothing width to the signal's band, not to habit.
+  #   The THIRD argument rescales: any non-zero value destroys unit
+  #   calibration (verified: third arg 0.99 -> peak 0.990031). Pass 0 unless
+  #   you intend to normalise.
   # Verified: To Sound (derivative): 5000, 100, 0
   To PointProcess (cc)
   To PointProcess (peaks): include maxima?, include minima?
