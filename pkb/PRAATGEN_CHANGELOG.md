@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.6.1)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.6.1**. These are two independent numbers and both are correct: the
@@ -20,6 +20,29 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.7.0 — 30 July 2026
+
+**`VERIFY YOUR STATE` is not only for compaction.** The trigger list now covers any
+event that may have cost context or continuity: the conversation was summarized; an
+error told the user to reload, retry or start again; a response failed partway and
+was regenerated; the user returns after a long gap unsure what landed. Compaction
+was only the most predictable of these — a reload loses just as much and announces
+itself even less.
+
+Section renamed `CONTEXT COMPACTION` -> `STATE PERSISTENCE AND RECOVERY`, since the
+title was narrower than the rule.
+
+**Recovery step 4 added, tying this to Rule 24C.** In SANDBOX mode a reload or retry
+can coincide with a container recycle: the filesystem survives, but Xvfb, the window
+manager, the compositor and any running Praat do not. `VERIFY YOUR STATE` now
+compares `/proc/sys/kernel/random/boot_id` against the stored value and rebuilds the
+display stack rather than reattaching. The two failure modes were documented
+separately and are in practice the same moment.
+
+Greeting and README updated to name reloads and errors alongside summaries.
+
+---
 
 ### 14.6.1 — 29 July 2026 (same day, post-release)
 
