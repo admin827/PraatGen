@@ -1,7 +1,7 @@
 # EML PraatGen — Release Notes
 
 **1.0.0** (first stable release; leaves the 0.9.x beta line)
-**Release date:** 29 July 2026
+**Release date:** 30 July 2026
 **Master Prompt:** 14.7.1 (was 13.9.4)
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)
 **Sandbox Praat:** 6.6.30 (was 6.4.67)

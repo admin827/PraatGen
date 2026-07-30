@@ -86,7 +86,7 @@ In Claude (claude.ai or the Claude app):
 ### 3. Upload the Knowledge Base
 
 1. In your project, click **add files**
-2. Upload all files from the `pkb/` folder — these are the verified reference files PraatGen uses to validate commands and functions
+2. Upload all 61 files from the `pkb/` folder — these are the verified reference files PraatGen uses to validate commands and functions
 3. Do not rename the files; the Master Prompt references them by their exact filenames
 
 ### 4. Start a Conversation
@@ -233,6 +233,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 | `BEST_PRACTICES_DRAWING.txt` | Mandatory drawing patterns: Sound+TextGrid, viewport-before-save, stereo guard, text-label safety, spectrum/Ltas/PowerCepstrum axis alignment, accessible color palette (Okabe-Ito exact RGB) |
 | `BEST_PRACTICES_CONFIDENCE_FIGURES.txt` | Guidelines for publication-quality statistical figures |
 | `BEST_PRACTICES_DEMO_WINDOW.md` | Demo window layout, font-state, viewport, and animation best practices |
+| `BEST_PRACTICES_EGG_CONTACT_QUOTIENT.md` | Contact quotient from EGG: the three CQ methods and when each is valid, EGG signal-to-noise measurement, method selection by phonation task, and the mandatory segfault guard. Co-loads with `COMMANDS_Electroglottogram.txt` |
 | `BEST_PRACTICES_AUTO_TEXTGRID_ANNOTATION.md` | Automatic TextGrid annotation, VAD-based segmentation, speech-to-text pipelines |
 | `BEST_PRACTICES_PLUGIN_ARCHITECTURE.txt` | Plugin setup, menu/action registration, include-path resolution, conflict guards |
 | `EML_PROCEDURE_GUIDE.md` | Methodology rules, test-selection logic, graph-type routing, script-generation/flattening model |
@@ -260,7 +261,7 @@ The `pkb/` folder contains the verified reference files. These are PraatGen's so
 
 These are flattened `.txt` copies of the plugin tree's `.praat` sources; the
 `include ../graphs/….praat` lines and the registry's `**File:**` paths refer to
-the plugin layout, not to the flat PKB. For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md` (295 procedures across 16 files).
+the plugin layout, not to the flat PKB. For the full procedure catalogue and signatures, see `EML_PROCEDURE_REGISTRY.md` (263 procedures across 15 files).
 
 Each PKB source carries the **plugin's** version number verbatim. If a PKB file's version differs from the plugin file it was copied from, the PKB has drifted and should be re-synced.
 

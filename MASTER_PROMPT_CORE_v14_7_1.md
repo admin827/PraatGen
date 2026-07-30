@@ -3,7 +3,7 @@
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
 **Version:** 14.7.1
-**Date:** 29 July 2026
+**Date:** 30 July 2026
 **License:** GPL-v3 or later 
 
 
