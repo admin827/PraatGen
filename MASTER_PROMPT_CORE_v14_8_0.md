@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.7.2
+**Version:** 14.8.0
 **Date:** 30 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,8 +25,8 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.7.2.** Two house rules: do not narrate the library's own state to
-the user, and do not volunteer optional measures.
+**Current: 14.8.0.** Vectorize by default — a per-element loop is a last resort,
+with measured speedups and the vectorized form for each task.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -2963,9 +2963,62 @@ defect.
 
 **Highest abstraction:** Code should operate at the highest level of
 abstraction available. If a procedure exists that encapsulates a
-multi-step pattern, use the procedure. If a vector operation replaces
-an element-wise loop, use the vector operation. If a Praat built-in
-handles what a manual implementation would do, use the built-in.
+multi-step pattern, use the procedure. If a Praat built-in handles what a
+manual implementation would do, use the built-in. And see the vectorization
+rule below — it is a correctness-of-craft requirement, not a style
+preference.
+
+### Vectorize by default; a per-element loop is a last resort (hard)
+
+**The default is the whole-object operation.** Praat's interpreter is slow and
+its `Formula` engine, vector reads and matrix operations run compiled. Reach
+for the loop only after establishing that no vectorized form exists.
+
+This is not an aesthetic preference. Measured in the sandbox, Praat 6.6.30,
+29 July 2026:
+
+| operation | per-element loop | vectorized | speedup |
+|---|---|---|---|
+| Scale 88,200 Sound samples (`Get`/`Set value at sample number` vs `Formula: ~ self*0.5`) | 0.368 s | 0.0025 s | **146x** |
+| Read 19,961 Pitch frames (`Get value in frame` vs `List values in all frames`) | 0.121 s | 0.0003 s | **415x** |
+| Read a 20,000-row Table column (`Get value:` vs `Get all numbers in column`) | 0.049 s | 0.0049 s | **10x** |
+| Scale a 20,000-row Table column (`Get`+`Set numeric value` vs `Formula:`) | 0.099 s | 0.021 s | **5x** |
+
+Note the spread: sample- and frame-level loops are catastrophic, Table
+row loops merely wasteful. Scale the first row and the reason is obvious —
+that loop is 2 seconds of audio. A 60-second recording costs ~11 s per pass,
+and a 100-file batch costs ~18 minutes for something `Formula:` finishes in
+0.15 s. Users abandon scripts that behave like that, and the usual diagnosis
+("Praat is slow") is wrong.
+
+**The vectorized forms, by task:**
+
+| Need | Use | Not |
+|---|---|---|
+| Transform every sample / cell / frame in place | `Formula:` (`~ self …`) on the object | Get/Set loop |
+| All Pitch frames as a vector | `List values in all frames: unit$` | `Get value in frame` loop |
+| Pitch at chosen times | `List values at times: times#, unit$, interpolation$` | `Get value at time` loop |
+| A whole Table column | `Get all numbers in column: col$` | `Get value: row, col$` loop |
+| Element access to any Matrix-shaped object | `Down to Matrix` / `To Matrix`, then `Formula:` | per-cell queries |
+| Arithmetic across arrays | vector `#` and matrix `##` variables, `mean()`, `sum()`, `mul##`, `solve#` | accumulator loop |
+
+**Loops that are correct, and stay:** iteration over FILES in a batch; over
+TextGrid intervals or PointProcess points, where the work per item is an
+object-level operation rather than arithmetic; anything with early exit or
+per-item branching that `Formula:` cannot express; and bisection or other
+genuinely sequential algorithms. Object-level work per item is the signal
+that a loop belongs.
+
+**A trap when vectorizing.** `object[id].z[row,col]` does NOT work — object
+field access exposes only metadata (`xmin`, `xmax`, `nx`, `ny`, `dx`, `dy`,
+`nrow`, `ncol`). Verified 6.6.30: anything else raises *"After object
+[number]. there should be xmin, xmax …"*. To get sample data into a script
+variable, use the object's own listing command, or `Down to Matrix` and read
+from there.
+
+**SELF-AUDIT.** When a script contains a loop whose body is arithmetic on
+samples, frames, or cells, state why a vectorized form was not used. "It was
+simpler to write" is not a reason.
 
 **Proactive sweep obligation:** Claude is expected to surface elegance
 violations, dead code, and architectural issues during code review —

@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.7.2)
+### Release 1.0.0 — out of beta, 29 July 2026 (ships Master Prompt 14.8.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.0**, shipping **Master
 Prompt 14.6.1**. These are two independent numbers and both are correct: the
@@ -20,6 +20,43 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.8.0 — 30 July 2026
+
+**Vectorize by default (hard).** The prompt previously carried one clause on this,
+inside the elegance/DRY section: "If a vector operation replaces an element-wise
+loop, use the vector operation." Filed under style, no magnitudes, no list of the
+vectorized forms — weak enough that a loop which occurs first survives to delivery.
+It is now its own hard subsection with measured numbers, on the grounds that a model
+changes behaviour for a benchmark and not for an adjective.
+
+Measured in the sandbox, Praat 6.6.30:
+
+| operation | loop | vectorized | speedup |
+|---|---|---|---|
+| scale 88,200 Sound samples | 0.368 s | 0.0025 s | 146x |
+| read 19,961 Pitch frames | 0.121 s | 0.0003 s | 415x |
+| read a 20,000-row Table column | 0.049 s | 0.0049 s | 10x |
+| scale a 20,000-row Table column | 0.099 s | 0.021 s | 5x |
+
+The spread matters and is stated: sample- and frame-level loops are catastrophic
+while Table row loops are merely wasteful. Scaled up, the first row is 2 seconds of
+audio — a 60 s recording costs ~11 s per pass and a 100-file batch ~18 minutes for
+work `Formula:` finishes in 0.15 s, which users misdiagnose as "Praat is slow".
+
+Adds a task-to-command table (`Formula:`, `List values in all frames`,
+`List values at times`, `Get all numbers in column`, `Down to Matrix`, vector and
+matrix variables), and names the loops that are correct and stay: iteration over
+files, over TextGrid intervals or PointProcess points where the per-item work is an
+object-level operation, anything with early exit or per-item branching, and
+genuinely sequential algorithms such as bisection.
+
+**Trap documented:** `object[id].z[row,col]` does not work. Object field access
+exposes only metadata (`xmin`, `xmax`, `nx`, `ny`, `dx`, `dy`, `nrow`, `ncol`) —
+verified 6.6.30. Use the object's listing command or `Down to Matrix`. SELF-AUDIT
+must justify any loop whose body is arithmetic on samples, frames or cells.
+
+---
 
 ### 14.7.2 — 30 July 2026
 
