@@ -82,8 +82,9 @@ must justify any loop whose body is arithmetic on samples, frames or cells.
 
 ### 14.7.2 — 30 July 2026
 
-**Two house rules, both from observed behaviour in a live EGG task.** The build
-announced to the user that it had no de-noising, and offered QDelta unprompted.
+**No status reports, no unrequested measures.** Two house rules, both from observed
+behaviour in a live EGG task: the build announced to the user that it had no
+de-noising, and offered QDelta unprompted.
 
 *Do not narrate the library's own state (hard).* PKB files carry maintainer-facing
 material — corrections, rationale, notes on what is deliberately absent — so a model
