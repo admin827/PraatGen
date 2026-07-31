@@ -1289,10 +1289,10 @@ standards (Rule 33).*
 #     appendInfoLine: "Remaining:          ", nRemaining
 
 # ============================================================================
-# S11 PRAAT VERSION CHECK
+# S15 PRAAT VERSION CHECK
 # ============================================================================
 #
-# S11A: WHEN
+# S15A: WHEN
 #
 # Emit a version check whenever the script uses any feature listed as
 # post-floor in PRAAT_VERSION_FLOOR.txt. The floor is Praat 6.4.15. If
@@ -1302,12 +1302,12 @@ standards (Rule 33).*
 # their Praat may well be fine, and a script that will not start is worse
 # than one that might not finish.
 #
-# S11B: PLACEMENT
+# S15B: PLACEMENT
 #
 # Before the first object creation and before the first file write, so a
 # user who quits is left with exactly what they started with.
 #
-# S11C: THE MESSAGE
+# S15C: THE MESSAGE
 #
 # Goes to BOTH the pause dialog and the Info window. The dialog is what they
 # read; the Info window is where they can select and copy the URL, which a
@@ -1316,24 +1316,56 @@ standards (Rule 33).*
 # Say which version, which version they have, what it is for, where to get
 # it, and end on something warm. This is a nudge, not a scolding.
 #
-# S11D: PATTERN (verified, Praat 6.6.30, 31 July 2026)
+# S15D: THE SUPPRESSION IS VERSION-STAMPED, NOT PERMANENT (hard)
 #
-#   minVersion = 6418
-#   minVersion$ = "6.4.18"
-#   whyNeeded$ = "the padLeft$ family of text-formatting functions"
+# "Check again next time" must not silence the check forever. It records the
+# REQUIREMENT the user dismissed, and it only silences that requirement or a
+# lower one.
+#
+#   config key                 meaning
+#   -------------------------  ----------------------------------------------
+#   suppressed_for_min         the minVersion in force when they opted out
+#   suppressed_at_praat        the Praat they were running then (diagnostic)
+#
+#   Suppress only when   suppressed_for_min >= minVersion
+#
+# Worked example, which is the case this exists for:
+#
+#   They are on 6.3, a script needs 6.4.18. Check fires. They tick
+#   "don't check again" -> suppressed_for_min = 6418.
+#   They upgrade to 6.6.30. Nothing fires, because 6630 >= 6418; the check
+#   never even reaches the suppression test.
+#   A year later Praat 7.1 exists, PraatGen has learned a 7.1-only feature,
+#   and a script needs 7100. They are still on 6.6.30.
+#     praatVersion 6630 < minVersion 7100          -> check is relevant
+#     suppressed_for_min 6418 >= 7100 ?  NO        -> it FIRES
+#
+#   The old dismissal covered a 6.4.18 requirement. It does not cover a 7.1
+#   one, and must not.
+#
+# S15E: PATTERN (verified, Praat 6.6.30, 31 July 2026)
+#
+#   minVersion = 6439
+#   minVersion$ = "6.4.39"
+#   whyNeeded$ = "the calibrated CPPS measurement"
 #   praatURL$ = "https://www.fon.hum.uva.nl/praat/"
 #   prefPath$ = preferencesDirectory$ + "/eml_version_check.txt"
 #
-#   # --- has the user switched this off? ---
-#   checkVersion = 1
+#   # --- did the user dismiss THIS requirement, or a higher one? ---
+#   suppressedForMin = 0
 #   if fileReadable (prefPath$)
 #       prefTxt$ = readFile$ (prefPath$)
-#       if index (prefTxt$, "check_version" + tab$ + "0") > 0
-#           checkVersion = 0
+#       .k = index (prefTxt$, "suppressed_for_min" + tab$)
+#       if .k > 0
+#           .rest$ = mid$ (prefTxt$, .k + 19, 20)
+#           suppressedForMin = number (left$ (.rest$, index (.rest$, newline$) - 1))
+#           if suppressedForMin = undefined
+#               suppressedForMin = 0
+#           endif
 #       endif
 #   endif
 #
-#   if praatVersion < minVersion and checkVersion = 1
+#   if praatVersion < minVersion and suppressedForMin < minVersion
 #       writeInfoLine: "This script was written for Praat ", minVersion$,
 #           ... " or newer."
 #       appendInfoLine: "You are running ", praatVersion$, "."
@@ -1360,29 +1392,37 @@ standards (Rule 33).*
 #
 #       if check_again_next_time = 0
 #           writeFileLine: prefPath$, "# EML PraatGen version check"
-#           appendFileLine: prefPath$, "check_version", tab$, "0"
+#           appendFileLine: prefPath$, "suppressed_for_min", tab$,
+#               ... string$ (minVersion)
+#           appendFileLine: prefPath$, "suppressed_at_praat", tab$,
+#               ... string$ (praatVersion)
 #       endif
 #       if clicked = 1
 #           exitScript: "Stopped. Update at ", praatURL$
 #       endif
 #   endif
 #
-# S11E: NOTES
+# S15F: NOTES
 #
-#   - `praatVersion` is an integer: 6.4.18 is 6418, 6.6.30 is 6630. Compare
+#   - `praatVersion` is an integer: 6.4.39 is 6439, 6.6.30 is 6630. Compare
 #     numerically. `praatVersion$` is the display string. Both are documented
 #     in APPENDIX_B_FUNCTIONS.txt.
-#   - Default the boolean to ON (1). The user opts out; they are not opted
-#     out for them.
-#   - The preference file is shared across EML scripts by design — switching
-#     the check off once switches it off everywhere, which is what a person
-#     who has just updated Praat actually wants.
+#   - Never write a bare "check_version 0" flag. A permanent off switch is the
+#     bug this section exists to prevent.
+#   - Default the boolean to ON. The user opts out; they are not opted out
+#     for them.
+#   - The preference file is shared across EML scripts by design, and the
+#     version stamp is what makes sharing safe: one dismissal covers one
+#     requirement level everywhere, not all future ones.
 #   - Writing the preference is the ONE file write permitted before the
 #     version gate, and only when the user asked for it.
 #   - "Run anyway" is button 2 and the default, so Return proceeds.
 #   - `whyNeeded$` names the feature in the user's terms, not the command
-#     name. "the padLeft$ family of text-formatting functions", not
-#     "padLeft$()".
+#     name. "the calibrated CPPS measurement", not "Get CPPS...".
+#   - The most important trigger is not a missing command. It is
+#     `PowerCepstrogram: Get CPPS...`, recalibrated at 6.4.39, which returns
+#     DIFFERENT NUMBERS either side of that version with no error at all.
+#     See PRAAT_VERSION_FLOOR.txt §1.
 #
 # SELF-AUDIT must confirm: "Version check: [emitted for <feature>, minimum
 # <version> / not applicable — nothing above the 6.4.15 floor]".

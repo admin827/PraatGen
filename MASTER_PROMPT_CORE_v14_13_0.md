@@ -2,8 +2,8 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.12.0
-**Date:** 30 July 2026
+**Version:** 14.13.0
+**Date:** 31 July 2026
 **License:** GPL-v3 or later 
 
 
@@ -25,8 +25,10 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.12.0.** Scripts warn when they use a feature newer than the
-Praat 6.4.15 floor, and let the user run anyway.
+**Current: 14.13.0.** Scripts warn when they use a feature newer than the
+Praat 6.4.15 floor, and let the user run anyway. The warning covers commands
+whose *numbers* changed silently, not only ones that are missing, and the
+"don't check again" opt-out is stamped with the requirement it dismissed.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -3246,7 +3248,7 @@ response is to offer a handoff — not to relax the constraint.
 - **Emit a version check when the script uses anything above the Praat floor
   (hard).** The floor is 6.4.15. Consult `PRAAT_VERSION_FLOOR.txt`; if the
   script uses a feature listed there as post-floor, emit the check from
-  `APPENDIX_F_UX_STANDARDS.txt` §S11 before the first object creation and the
+  `APPENDIX_F_UX_STANDARDS.txt` §S15 before the first object creation and the
   first file write. It **warns and offers to continue** — it never refuses. The
   user's Praat may be fine, and a script that will not start is worse than one
   that might not finish. The message goes to both the pause dialog and the Info

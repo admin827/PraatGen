@@ -1,99 +1,126 @@
 # PRAAT VERSION FLOOR AND POST-FLOOR FEATURES
 # Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 #
-# Version: 1.0
+# Version: 1.1
 # Date: 31 July 2026
-# Method: executed against Praat 6.4.16 and 6.6.30, both linux-intel64/x64v3.
+# Sources: Praat release notes, github.com/praat/praat/releases, 6.4.15 through
+#          6.6.30, read 31 July 2026. Items marked [X] additionally executed
+#          against Praat 6.4.16 and 6.6.30 side by side.
 #
 # ============================================================================
 # THE FLOOR: PRAAT 6.4.15
 # ============================================================================
 #
 # Generated scripts target Praat 6.4.15 or newer. The floor is set by
-# `To Pitch (filtered autocorrelation)`, which PraatGen routes to for voice
-# work: 6.4.15 is the release that distinguished "pitch top" from "pitch
-# ceiling", which is the parameter set the command now takes.
+# `To Pitch (filtered autocorrelation)`: 6.4.15 is the release that
+# "distinguished between pitch ceiling (flat) and pitch top (curved ceiling)",
+# which is the parameter set that command now takes.
 #
-# 6.4.15 itself is not published for download, so the floor is verified at
-# 6.4.16, one patch above: the 11-argument FAC call executes there.
+# 6.4.15 is not published for download, so the floor is verified at 6.4.16:
+# the 11-argument FAC call executes there [X].
 #
-#   To Pitch (filtered autocorrelation): 0.0, 50, 800, 15, "no",
-#       ... 0.03, 0.09, 0.5, 0.055, 0.35, 0.14        -> OK at 6.4.16
-#
-# WHAT TO DO ABOUT IT: see APPENDIX_F_UX_STANDARDS.txt §S11. A script that
-# uses anything listed below emits a version check before it does any work.
-# The check WARNS and offers to continue; it does not refuse.
+# WHAT TO DO: see APPENDIX_F_UX_STANDARDS.txt §S15. A script using anything
+# below emits a version check before doing any work. It WARNS and offers to
+# continue. It never refuses.
 #
 # ============================================================================
-# CONFIRMED POST-FLOOR — absent at 6.4.16, present at 6.6.30
+# 1. SILENT NUMERICAL CHANGES — THE DANGEROUS CLASS
 # ============================================================================
 #
-# Each verified by execution in both builds.
+# These commands exist on both sides of the floor and RETURN DIFFERENT
+# NUMBERS. No error, no missing command. A version check is the only warning
+# the user will get.
 #
-#   Feature                    First version   Evidence at 6.4.16
-#   -------------------------  --------------  ---------------------------
-#   padLeft$() and the         6.4.18          «Unknown function padLeft$»
-#     padRight$/truncateLeft$/  (changelog)
-#     padOrTruncate family
-#   clock()                    6.4.35          «Unknown function clock»
-#                               (changelog)
-#   moveAndOrRenameFile()      6.4.36          «Unknown function
-#                               (changelog)     moveAndOrRenameFile»
+#   6.4.39   PowerCepstrogram: Get CPPS...
+#            "Calibrated cepstral peak prominence measurement."
+#            CPPS values from before 6.4.39 are NOT comparable with values
+#            from 6.4.39 onward. Any clinical or AVQI work reporting CPPS
+#            must gate on this. This is the single most consequential entry
+#            in this file.
 #
-# The "first version" column is the changelog's claim; only the absence at
-# 6.4.16 and presence at 6.6.30 are execution-verified here. Treat the exact
-# introduction patch as unconfirmed until the version sweep runs.
+#   6.4.47   Sound: To LPC
+#            "now defaults to channel averaging" — a multi-channel input
+#            yields a different LPC than it did before.
+#
+#   6.4.24   FormantPath sampling-frequency bug fix; Formant measurement bugs
+#            repaired in the autocorrelation and robust methods. Formant
+#            values before 6.4.24 may differ.
 #
 # ============================================================================
-# VERIFIED SAFE AT THE FLOOR — do not gate on these
+# 2. NEW SCRIPTING FUNCTIONS
 # ============================================================================
 #
-# All executed successfully at 6.4.16. Listed because each was suspected of
-# being post-floor and is not.
+#   6.4.18   padLeft$()  padRight$()  truncateLeft$()  truncateRight$()
+#            padOrTruncateLeft$()  padOrTruncateRight$()          [X]
+#   6.4.24   tensor subtraction and unary minus
+#   6.4.24   sendsocket REMOVED — do not emit it at any version
+#   6.4.34   clock()                                              [X]
+#   6.4.36   moveAndOrRenameFile()                                [X]
+#   6.4.58   runSubprocess/runSystem asynchronous support; randomImax
+#
+#   Also absent at 6.4.16, present at 6.6.30, exact version not established [X]:
+#     appDay  appMonth  appMonth$  appVersion  appVersion$  appYear
+#     lowerCase$  upperCase$  lowerCamelCase$  upperCamelCase$
+#     lowerSnakeCase$  upperSnakeCase$  lowerCaseAppName$  upperCaseAppName$
+#     runNotebook  runScriptWithForm  sort_removeUndefined#
+#
+# ============================================================================
+# 3. NEW COMMANDS
+# ============================================================================
+#
+#   6.4.26   Rectangle text (maximal fit)     — drawing / Demo window
+#   6.4.26   OTGrammar: Tabulate all correct rankings
+#            OTGrammar: Tabulate equivalent pairs
+#   6.4.28   Read TextGrid from ESPS label file
+#            Insert picture from file (now embeds, previously linked)
+#   6.4.29   Read Sound and adjacent annotation files (TIMIT)
+#            Read Sound and adjacent annotation files (Buckeye)
+#   6.4.38   PairDistribution: Set weight...
+#   6.4.50   Transcribe interval          — speech recognition, Whisper.cpp
+#   6.4.62   Sound: To TextGrid (speech activity, Silero)
+#   6.4.63   speaker diarization in Transcribe interval
+#   6.4.66   standalone diarization
+#
+# ============================================================================
+# 4. BEHAVIOURAL AND ENVIRONMENT CHANGES
+# ============================================================================
+#
+#   6.4.20   Pause forms accept "yes"/"off" as boolean defaults, not only 1/0.
+#            A script writing boolean: "Label", "yes" needs 6.4.20.
+#   6.4.28   demoKey$() recognises the Escape key
+#   6.4.34   demoShow() works again on GTK 3 (Linux)
+#   6.4.36   demoKey$ handles Command-key combinations
+#   6.4.43   --send-or-form command-line switch
+#   6.4.45   Picture window expanded from 12x12 to 60x60 inches.
+#            NOTE [X]: `Select outer viewport: 0, 40, 0, 40` is accepted
+#            without error at 6.4.16, so this is not a hard failure on the
+#            viewport command. Do not gate ordinary drawing on it.
+#   6.4.59   nested scripts with pause windows and/or the Demo window work again
+#   6.4.60   pause window / exitScript interaction fixed
+#
+# ============================================================================
+# 5. VERIFIED SAFE AT THE FLOOR — do not gate on these
+# ============================================================================
+#
+# All executed at 6.4.16 [X]. Listed because each was suspected and is not.
 #
 #   Sound: To PowerCepstrogram: 60, 0.002, 5000, 50
-#       The 6.4.58 changelog entry "New command: Sound: To PowerCepstrogram"
-#       does NOT mean the command is new — it works at 6.4.16. CPPS work is
-#       safe at the floor.
-#
-#   Picture window viewports beyond 12 inches
-#       6.4.45 expanded the Picture window from 12x12 to 60x60 inches, but
-#       `Select outer viewport: 0, 40, 0, 40` is accepted at 6.4.16 without
-#       error. Whatever changed at 6.4.45, it is not a hard failure on the
-#       viewport command. Do not gate drawing scripts on it.
-#
+#       The command itself is old. Only its CPPS *calibration* changed, at
+#       6.4.39 — see §1.
 #   To FormantPath (burg): 0.005, 5.0, 5500, 0.025, 50, 0.05, 4
 #   Pitch: List values in all frames: unit$
 #   To Pitch (filtered autocorrelation), 11 arguments
+#   Select outer viewport beyond 12 inches
 #
 # ============================================================================
-# UNRESOLVED — needs a fixture, not a version
+# COVERAGE
 # ============================================================================
 #
-# These failed at BOTH 6.4.16 and 6.6.30, which means the test call was wrong,
-# not that the feature is version-gated. Do not record them as post-floor.
+# Sections 1-4 are compiled from Praat's own release notes for every version
+# from 6.4.15 to 6.6.30, so the list of things Paul announced is complete.
+# What is NOT complete: unannounced changes, and the exact introduction patch
+# for the [X] functions in §2 that were found by execution rather than in a
+# release note.
 #
-#   Extract Electroglottogram         tested on a mono fixture; the verified
-#                                     example uses channel 2 and needs stereo
-#   Rectangle text (maximal fit)      call signature not established
-#
-# ============================================================================
-# COVERAGE — READ THIS BEFORE TRUSTING AN ABSENCE
-# ============================================================================
-#
-# This file is NOT a complete map of version requirements. It records what has
-# been executed against both builds, which is a small fraction of the command
-# set. A command absent from this file has an UNKNOWN minimum version — it has
-# not been shown safe at the floor, only untested.
-#
-# The full determination is a version sweep across the 42 downloadable 6.4.x
-# patch releases, probing every documented command by invoking it with excess
-# arguments and reading Praat's reply:
-#
-#   «Command "X" not available for current selection»  -> absent
-#   «Command requires only N arguments»                -> present, arity N
-#
-# That sweep shares its fixture table and harness with the catalogue parity
-# pass and should be run with it. Until then, this file grows one verified
-# entry at a time and states its own incompleteness rather than implying
-# coverage it does not have.
+# A command absent from this file has no announced version requirement. That
+# is good evidence, not proof.

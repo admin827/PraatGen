@@ -7,6 +7,58 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### Release 1.0.5 — 31 July 2026 (ships Master Prompt 14.13.0)
+
+A same-day follow-up to 1.0.4. The version floor is rebuilt from Praat's own
+release notes rather than from probing, which surfaces the class of change
+probing cannot see: commands that still run at the floor and return different
+numbers there. `PowerCepstrogram: Get CPPS...` is the case — recalibrated at
+6.4.39, no error, values not comparable across that boundary. The version-check
+opt-out is version-stamped so it cannot become a permanent off switch. Changed
+files: Master Prompt, `PRAAT_VERSION_FLOOR.txt`, `APPENDIX_F_UX_STANDARDS.txt`.
+
+### 14.13.0 — 31 July 2026
+
+**The floor list is compiled from release notes, not from execution.**
+`PRAAT_VERSION_FLOOR.txt` v1.1 reads every Praat release note from 6.4.15 to
+6.6.30. Probing establishes what you happened to test; the release notes are the
+complete set of announced changes. Reorganised by consequence: §1 silent
+numerical changes, §2 new scripting functions, §3 new commands, §4 behavioural
+and environment changes, §5 verified safe at the floor.
+
+**§1 is the section that matters.** These commands exist on both sides of the
+floor and return different numbers, with no error and nothing missing:
+
+- **6.4.39 `PowerCepstrogram: Get CPPS...` — calibrated CPPS.** 14.12.0 recorded
+  CPPS as safe at the floor because the command executes at 6.4.16. It does. That
+  established the command exists, not that it agrees. Values before and after
+  6.4.39 are not comparable; clinical, AVQI and longitudinal CPPS work must gate
+  on it. Single most consequential entry in the file.
+- **6.4.47 `Sound: To LPC` defaults to channel averaging.** Multi-channel input
+  yields a different LPC than before.
+- **6.4.24** FormantPath sampling-frequency fix plus autocorrelation and robust
+  formant measurement fixes.
+
+The lesson generalises: an execution probe answers "does this run", and the
+version question is "does this agree". Probing cannot detect recalibration.
+
+**`APPENDIX_F` §S15D — the opt-out is version-stamped (hard).** 14.12.0 wrote a
+permanent flag: one tick and the check never fired again, including for
+requirements that did not exist at tick time. The preference file now stores
+`suppressed_for_min` (the minVersion in force when the user opted out) and
+`suppressed_at_praat` (diagnostic), and the check is suppressed only when
+`suppressed_for_min >= minVersion`. A hard note forbids writing a bare
+`check_version 0`.
+
+Verified in 6.6.30 across six cases: no prefs file; same requirement dismissed
+again; a later higher requirement after an upgrade; a lower requirement than the
+one dismissed; Praat already past the minimum with a stale dismissal present; and
+a prefs file containing no suppression key. All six behave as specified.
+
+**Renumbered §S11 to §S15.** The version-check section landed on a number the
+file already used for INTEGRATION WITH MASTER PROMPT. Cross-references updated in
+the Master Prompt, this changelog and `PRAAT_VERSION_FLOOR.txt`.
+
 ### Release 1.0.4 — 31 July 2026 (ships Master Prompt 14.12.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
@@ -53,7 +105,7 @@ UNKNOWN minimum, not a safe one. Full coverage is a sweep across the 42
 downloadable 6.4.x patch releases, sharing its fixture table and probe harness
 with the catalogue parity pass.
 
-**`APPENDIX_F` §S11 — the check itself.** Emitted only when the script uses
+**`APPENDIX_F` §S15 — the check itself.** Emitted only when the script uses
 something post-floor, placed before the first object creation and the first file
 write. It **warns and offers to continue; it never refuses** — the user's Praat
 may be fine, and a script that will not start is worse than one that might not

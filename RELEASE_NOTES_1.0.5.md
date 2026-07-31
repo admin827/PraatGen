@@ -1,13 +1,73 @@
-# EML PraatGen v1.0.4 Release Notes
+# EML PraatGen v1.0.5 Release Notes
 
-**1.0.4** (stable release; leaves the 0.9.x beta line)  
+**1.0.5** (stable)  
 **Release date:** 31 July 2026  
-**Master Prompt:** 14.12.0 (was 13.9.4)  
+**Master Prompt:** 14.13.0 (was 13.9.4)  
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)  
 **Sandbox Praat:** 6.6.30 (was 6.4.67)  
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.12.0, supersedes 1.0.0 through 1.0.3, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
+A same-day follow-up to 1.0.4 that rebuilds the version floor from Praat's own release notes and, in doing so, finds the case the floor was built for: a command that still runs at the floor and returns different numbers there. Everything below 14.13.0 shipped in 1.0.4 and is unchanged; it stays here because these notes are cumulative.
+
+The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.13.0, supersedes 1.0.0 through 1.0.4, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
+
+---
+
+## The version floor, rebuilt from Praat's release notes (14.13.0)
+
+1.0.4 built the floor by probing: pick a candidate feature, run it against 6.4.16
+and against 6.6.30, see which one errors. That finds features that are *missing*.
+It cannot find the dangerous kind.
+
+`pkb/PRAAT_VERSION_FLOOR.txt` is now compiled from Praat's own release notes for
+every version from 6.4.15 to 6.6.30, read directly. Probing tells you what you
+happened to test; the release notes are the complete set of what Paul announced.
+The file is reorganised around consequence rather than around what was convenient
+to verify.
+
+**`PowerCepstrogram: Get CPPS...` was recalibrated at 6.4.39.** Same command, same
+arguments, no error, different numbers. 1.0.4's notes said CPPS work was safe at
+the floor, on the evidence that the command *runs* there. It does run there. It
+does not agree there. CPPS values from before 6.4.39 are not comparable with
+values from 6.4.39 onward, which matters for any clinical or AVQI reporting, for
+any longitudinal set that spans the boundary, and for any published threshold
+whose source version is unstated. This is now the single most consequential entry
+in the file, and the clearest case for why a version check exists at all: nothing
+else in the system would have told you.
+
+Two more in the same class. `Sound: To LPC` **defaults to channel averaging from
+6.4.47**, so a multi-channel input yields a different LPC than it used to.
+**6.4.24** fixed formant measurement bugs in the autocorrelation and robust
+methods and a FormantPath sampling-frequency bug, so formant values from before
+it may differ.
+
+The file now separates these outright: §1 is silent numerical changes, §2 new
+scripting functions, §3 new commands, §4 behavioural and environment changes, §5
+things that were suspected and are verified safe at the floor. §5 exists so a
+later pass does not re-litigate them.
+
+### "Don't check again" no longer means "never again"
+
+The opt-out was a permanent off switch. Tick it once and that script family stops
+warning you for good — including about requirements that did not exist when you
+ticked it.
+
+It is now stamped with the requirement it dismissed. The preference file records
+`suppressed_for_min` (the minimum version in force when you opted out) and
+`suppressed_at_praat` (what you were running, for diagnostics), and the check is
+suppressed only when `suppressed_for_min >= minVersion`.
+
+The case this exists for: you are on 6.3, a script needs 6.4.18, you tick the box.
+You upgrade to 6.6.30 — nothing fires, because you are past the requirement. A year
+later Praat 7.1 is out, PraatGen has learned a 7.1-only feature, and a script needs
+it. You are still on 6.6.30. The old dismissal covered a 6.4.18 requirement; it does
+not cover this one, and the check fires. Verified against six cases in 6.6.30,
+including a prefs file with no suppression key in it and a stale dismissal left in
+place after an upgrade.
+
+`APPENDIX_F` gains a hard rule against writing a bare permanent flag, since that is
+the bug this section exists to prevent. The section is renumbered §S15; it had
+collided with the existing §S11.
 
 ---
 
@@ -55,8 +115,10 @@ needing something newer: `padLeft$()` and its family, `clock()`,
 `moveAndOrRenameFile()`.
 
 Two features that looked like problems are not. `Sound: To PowerCepstrogram` runs
-at 6.4.16 despite a changelog entry calling it new in 6.4.58 — **CPPS work is safe
-at the floor**. And Picture window viewports beyond 12 inches are accepted at
+at 6.4.16 despite a changelog entry calling it new in 6.4.58 — the command is safe
+at the floor. (Its *calibration* is not: see 14.13.0 above, which supersedes this
+paragraph's original claim that CPPS work as a whole was safe there.) And Picture
+window viewports beyond 12 inches are accepted at
 6.4.16 despite the 6.4.45 expansion to 60×60, so drawing scripts aren't gated
 either. Both were a changelog read away from becoming rules that would have blocked
 users unnecessarily.
@@ -362,21 +424,25 @@ MDVP's pathology thresholds are listed with the manual's own caveat that they ca
 
 | Component      | This release            | Previous        |
 | -------------- | ----------------------- | --------------- |
-| Release        | **1.0.4**               | 0.9.3-beta.02.1 |
-| Master Prompt  | **14.12.0**             | 13.9.4          |
+| Release        | **1.0.5**               | 0.9.3-beta.02.1 |
+| Master Prompt  | **14.13.0**             | 13.9.4          |
 | PKB snapshot   | **2026-07-29**          | 2026-06-22      |
 | Sandbox Praat  | **6.6.30**              | 6.4.67          |
 | Rules          | 37                      | 37              |
 | EML procedures | **263** across 15 files | 251             |
 
 The `Previous` column compares against the last beta, 0.9.3-beta.02.1. Release
-1.0.0 through 1.0.3 shipped on 29-30 July and are superseded by this build.
+1.0.0 through 1.0.4 shipped on 29-31 July and are superseded by this build.
 
 ---
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_12_0.md`. The filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_13_0.md`. The filename changed; delete any earlier `MASTER_PROMPT_CORE_v*.md`.
+
+Coming from 1.0.4 specifically: the changed files are the Master Prompt, `pkb/PRAAT_VERSION_FLOOR.txt`, `pkb/APPENDIX_F_UX_STANDARDS.txt` and `pkb/PRAATGEN_CHANGELOG.md`. Replacing the whole `pkb/` folder is still the supported path.
+
+If you have run a script that reported CPPS and you do not know which Praat produced the number, it is worth checking whether that build predates 6.4.39.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures` is gone, and the `eml-annotation-procedures.praat` / `.praat.txt` pair is now a single `.txt`. Delete the old folder rather than overwriting into it.
 
