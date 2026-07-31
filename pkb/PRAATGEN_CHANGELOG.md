@@ -7,15 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.5 — 31 July 2026 (ships Master Prompt 14.13.0)
-
-A same-day follow-up to 1.0.4. The version floor is rebuilt from Praat's own
-release notes rather than from probing, which surfaces the class of change
-probing cannot see: commands that still run at the floor and return different
-numbers there. `PowerCepstrogram: Get CPPS...` is the case — recalibrated at
-6.4.39, no error, values not comparable across that boundary. The version-check
-opt-out is version-stamped so it cannot become a permanent off switch. Changed
-files: Master Prompt, `PRAAT_VERSION_FLOOR.txt`, `APPENDIX_F_UX_STANDARDS.txt`.
+### Unreleased — on `main`, not yet cut as a release
 
 ### 14.13.0 — 31 July 2026
 
