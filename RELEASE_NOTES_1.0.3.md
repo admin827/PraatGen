@@ -1,13 +1,13 @@
-# EML PraatGen v1.0.2 Release Notes
+# EML PraatGen v1.0.3 Release Notes
 
-**1.0.2** (stable release; leaves the 0.9.x beta line)  
+**1.0.3** (stable release; leaves the 0.9.x beta line)  
 **Release date:** 30 July 2026  
-**Master Prompt:** 14.10.0 (was 13.9.4)  
+**Master Prompt:** 14.11.0 (was 13.9.4)  
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)  
 **Sandbox Praat:** 6.6.30 (was 6.4.67)  
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.10.0, supersedes 1.0.0 and 1.0.1, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
+The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.11.0, supersedes 1.0.0, 1.0.1 and 1.0.2, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
 
 ---
 
@@ -26,6 +26,44 @@ The first stable release, focusing on updates, clarifications, and expansion of 
 **Self-containment is now an explicit rule.** Generated scripts have always been standalone; Step 12 states the requirement and both SELF-AUDIT templates check it. Library procedure bodies are copied into the delivered script, or into a folder shipped alongside it, transitively, and generated code never `include`s the plugin.
 
 **Phase 3B is model-conditional.** Extended thinking as a user-facing toggle was retired in Opus 5; 4.6, 4.7 and 4.8 all still have it. The complexity score is unchanged; on toggle models (4.6/4.7/4.8) it recommends thinking on/off and waits on a recommended change, and on Opus 5 it is advisory and does not gate the turn.
+
+---
+
+## Legends and greyscale (14.11.0)
+
+**A legend now has to encode everything that separates the series.** Rule 28D
+required a legend to exist and never said what it must contain, so a figure whose
+two lines differed by colour *and* by dash pattern could carry a key showing only
+the colour and still pass. That is what shipped in the dry run — the drawing was
+right, the colours were right, the solid/dashed distinction was right, and the key
+documented one of the two. Print that figure in black and white and the key labels
+two lines nobody can tell apart.
+
+Keys are now **drawn rather than described**: a short line segment rendered with the
+same `Colour:`, `Line style` and `Line width` as the series it labels, with the text
+beside it. No filled swatches, no coloured text, no prose describing the style. If a
+channel cannot appear in the key, it cannot be used to separate series.
+
+**Greyscale is reordered around line style.** The black-and-white palette's first
+two entries are 0.00 and 0.35 — two dark values, adjacent by construction — so a
+two-series plot taking them in index order lands on the worst available pair.
+
+Rendering lines at 300 dpi and sampling the pixels shows why it looked weak:
+
+| nominal grey | 1 pt | 3 pt |
+|---|---|---|
+| 0.00 | **42** | 0 |
+| 0.35 | **116** | 89 |
+| 0.70 | 192 | 179 |
+
+Antialiasing lightens thin strokes, and lightens black most — a 1 pt "black" line
+renders at 42, not 0, so the palette's 0.00 never anchors the range the number
+implies. The usable span at 1 pt is about 150 levels, and 0.00/0.35 spends only 74
+of it. Using entries 1 and 6 instead roughly doubles the separation at no cost, and
+raising line width restores contrast faster than darkening the value.
+
+So: line style first, width second, grey value third. Grey value stays reliable for
+filled areas, where stroke compression does not apply.
 
 ---
 
@@ -287,21 +325,21 @@ MDVP's pathology thresholds are listed with the manual's own caveat that they ca
 
 | Component      | This release            | Previous        |
 | -------------- | ----------------------- | --------------- |
-| Release        | **1.0.2**               | 0.9.3-beta.02.1 |
-| Master Prompt  | **14.10.0**             | 13.9.4          |
+| Release        | **1.0.3**               | 0.9.3-beta.02.1 |
+| Master Prompt  | **14.11.0**             | 13.9.4          |
 | PKB snapshot   | **2026-07-29**          | 2026-06-22      |
 | Sandbox Praat  | **6.6.30**              | 6.4.67          |
 | Rules          | 37                      | 37              |
 | EML procedures | **263** across 15 files | 251             |
 
 The `Previous` column compares against the last beta, 0.9.3-beta.02.1. Release
-1.0.0 and 1.0.1 shipped on 29-30 July and are superseded by this build.
+1.0.0, 1.0.1 and 1.0.2 shipped on 29-30 July and are superseded by this build.
 
 ---
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_10_0.md`. The filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_11_0.md`. The filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures` is gone, and the `eml-annotation-procedures.praat` / `.praat.txt` pair is now a single `.txt`. Delete the old folder rather than overwriting into it.
 

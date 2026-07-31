@@ -421,14 +421,64 @@
 #
 # B/W ALTERNATIVE:
 # If the user needs greyscale output, use the B/W palette from
-# @emlSetColorPalette: "bw". Combine with line-style redundancy
-# (Solid line / Dashed line / Dotted line) for accessibility.
+# @emlSetColorPalette: "bw" — but read the section below before
+# taking entries in index order.
 #
 # B/W line colors:
 #   1  "{0.00, 0.00, 0.00}"    5  "{0.25, 0.25, 0.25}"
 #   2  "{0.35, 0.35, 0.35}"    6  "{0.65, 0.65, 0.65}"
 #   3  "{0.55, 0.55, 0.55}"    7  "{0.15, 0.15, 0.15}"
 #   4  "{0.45, 0.45, 0.45}"    8  "{0.50, 0.50, 0.50}"
+#
+# ============================================================================
+# GREYSCALE: LINE STYLE IS THE PRIMARY CHANNEL, GREY VALUE IS SECONDARY (hard)
+# ============================================================================
+#
+# DO NOT TAKE B/W ENTRIES IN INDEX ORDER. Entries 1 and 2 are 0.00 and 0.35 —
+# two dark values, adjacent by construction. A two-series plot that takes the
+# first two entries gets the worst available pair. Observed in delivered work.
+#
+#   K = 2   use 1 and 6   (0.00, 0.65)
+#   K = 3   use 1, 3, 6   (0.00, 0.55, 0.65 is too tight — prefer 0.00, 0.45,
+#                          0.70 by writing the values directly)
+#   K >= 4  grey value alone cannot carry it. Style and width must separate
+#           the series; treat grey as decoration.
+#
+# WHY: THIN STROKES COMPRESS THE GREY RANGE. Antialiasing lightens a 1 pt line
+# substantially, and it lightens black most. Measured, Praat 6.6.30, lines
+# rendered at 300 dpi and sampled (0 = black, 255 = white page):
+#
+#     nominal grey     1 pt rendered     3 pt rendered
+#          0.00              42                0
+#          0.175             79               44
+#          0.35             116               89
+#          0.525            154              134
+#          0.70             192              179
+#
+# Two consequences, both counter-intuitive:
+#
+#   1. A 1 pt "black" line is not black. It renders at 42, so the palette's
+#      0.00 does not anchor the range the way the number implies.
+#   2. The whole usable span at 1 pt is 42-192, about 150 levels. The default
+#      pair 0.00/0.35 spends only 74 of that — under half. Entries 1 and 6
+#      roughly double the separation at no cost.
+#
+# Increasing LINE WIDTH restores contrast faster than darkening the value:
+# 0.35 at 3 pt (89) is darker than 0.175 at 1 pt (79).
+#
+# RULE. In greyscale, distinguish series by line style first (Solid /
+# Dashed / Dotted), width second, grey value third. Grey value is reliable
+# for filled areas, where the stroke-width compression does not apply; it is
+# not reliable for strokes.
+#
+# AND THE KEY MUST SHOW WHAT YOU USED. Whatever channels separate the series
+# — style, width, value — every one of them appears in the legend, drawn as a
+# line segment with the same Colour / Line style / Line width calls as the
+# series. See Master Prompt Rule 28D2. A colour-only key on a figure that also
+# uses dashes is the single commonest defect in an otherwise correct figure,
+# and it is fatal to the greyscale version.
+#
+# Provenance: rendered and pixel-sampled in the sandbox, 30 July 2026.
 #
 # SELF-AUDIT must confirm: palette source (PKB exact values vs.
 # hardcoded), whether user was asked about accessibility, and which

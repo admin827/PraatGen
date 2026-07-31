@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.10.0
+**Version:** 14.11.0
 **Date:** 30 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,11 +25,8 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.10.0.** Benchmark dry-run remediation: one file is the delivery
-default, merges relocate module state, counts and bundle hashes are computed,
-the ASCII sweep covers copied library text, ranges are guarded at both ends,
-editor blocks guard the opener, and the catalogue is a fallback you do not
-cross-check.
+**Current: 14.11.0.** Legends must encode every channel used to separate the
+series, and greyscale is reordered around line style rather than grey value.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -2688,6 +2685,24 @@ When generating Picture window output, apply the following standards:
 **C) Unit formatting:** Enclose units in parentheses: `Frequency (Hz)`, `Time (s)`, `Intensity (dB)`.
 
 **D) Legend requirement:** Include a legend whenever multiple data series, categories, or objects appear in the same figure, or when any ambiguity exists.
+
+**D2) The legend must encode EVERY channel used to separate the series (hard).** If two lines differ by colour *and* by line style, the legend shows both. A key that carries only the colour is a defect — it is the commonest failure in an otherwise correct figure, because the drawing code is right and only the key is short. It also destroys the greyscale version outright: print the colour figure in black and white and a colour-only key labels two lines the reader can no longer tell apart.
+
+**Draw the key, do not describe it.** A legend key is a short line segment rendered with the *same* `Colour:`, `Line style` and `Line width` calls as the series it labels, with the text beside it — never a filled swatch, never coloured text, never a text description of the style:
+
+    # for each series, in the same order the series were drawn
+    Colour: seriesColour$[i]
+    Line width: seriesWidth[i]
+    Dashed line                    ; or Solid line / Dotted line — as drawn
+    Draw line: keyX1, keyY[i], keyX2, keyY[i]
+    Colour: "Black"
+    Line width: 1
+    Solid line
+    Text special: keyX2 + gap, "left", keyY[i], "half", font$, size, "0", label$[i]
+
+If a channel cannot be shown in the key, it must not be used to separate series.
+
+**SELF-AUDIT (28D):** state which channels distinguish the series — colour, line style, line width, marker — and confirm each appears in the key.
 
 **E) Axis range — percentage scales:** 0 to 1 (proportion) or 0 to 100 (percentage).
 

@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.2 — 30 July 2026 (ships Master Prompt 14.10.0)
+### Release 1.0.3 — 30 July 2026 (ships Master Prompt 14.11.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
 Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
@@ -20,6 +20,50 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.11.0 — 30 July 2026
+
+**The legend must encode every channel used to separate the series (Rule 28D2).**
+28D required a legend to exist and never said what it must carry, so a key showing
+colour while the lines also differed by dash pattern was fully compliant. Observed
+in the dry run: correct drawing code, correct colours, correct solid/dashed
+distinction — and a legend that documented only the colour. The same key destroys
+the greyscale version, where colour is gone and the reader is left with two lines
+and no way to tell them apart.
+
+A key is now **drawn, not described**: a short line segment rendered with the same
+`Colour:`, `Line style` and `Line width` calls as the series it labels, text
+beside it. Never a filled swatch, never coloured text, never prose describing the
+style. If a channel cannot be shown in the key, it must not be used to separate
+series. SELF-AUDIT states which channels are in play and confirms each appears.
+
+**Greyscale reordered around line style (BEST_PRACTICES_DRAWING).** The B/W
+palette's first two entries are 0.00 and 0.35 — two dark values, adjacent by
+construction — so a two-series plot taking entries in index order gets the worst
+available pair. That is what shipped.
+
+Measured in the sandbox: lines rendered at 300 dpi and pixel-sampled.
+
+    nominal grey   1 pt   3 pt
+       0.00         42      0
+       0.175        79     44
+       0.35        116     89
+       0.525       154    134
+       0.70        192    179
+
+Antialiasing lightens thin strokes and lightens black most, so a 1 pt "black" line
+renders at 42, not 0 — the palette's 0.00 does not anchor the range the number
+implies. The usable span at 1 pt is 42-192, roughly 150 levels, and the default
+0.00/0.35 pair spends only 74 of it. Entries 1 and 6 (0.00/0.65) roughly double
+the separation for free. Raising line width also restores contrast faster than
+darkening the value: 0.35 at 3 pt is darker than 0.175 at 1 pt.
+
+Rule: in greyscale, separate series by line style first, width second, grey value
+third. Grey value remains reliable for filled areas, where stroke compression does
+not apply. Index-order palette selection is called out explicitly, with per-K
+guidance.
+
+---
 
 ### 14.10.0 — 30 July 2026
 
