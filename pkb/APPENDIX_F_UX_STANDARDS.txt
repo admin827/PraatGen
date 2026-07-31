@@ -1343,62 +1343,73 @@ standards (Rule 33).*
 #   The old dismissal covered a 6.4.18 requirement. It does not cover a 7.1
 #   one, and must not.
 #
-# S15E: PATTERN (verified, Praat 6.6.30, 31 July 2026)
+# S15E: PATTERN
 #
-#   minVersion = 6439
-#   minVersion$ = "6.4.39"
-#   whyNeeded$ = "the calibrated CPPS measurement"
-#   praatURL$ = "https://www.fon.hum.uva.nl/praat/"
-#   prefPath$ = preferencesDirectory$ + "/eml_version_check.txt"
+# This block sits at the TOP LEVEL of the generated script, not inside a
+# procedure. Two consequences, both of which the pattern already handles and
+# neither of which may be "tidied" away:
+#
+#   - No leading-dot names. `.k` is procedure-local syntax; at top level it is
+#     wrong. Every variable here is spelled out.
+#   - Every name is `vc_`-prefixed so the block cannot collide with a variable
+#     in the script it is guarding. Do not rename them to something shorter.
+#
+#   # --- version check: emitted only because this script uses <feature> ---
+#   vc_minVersion = 6439
+#   vc_minVersion$ = "6.4.39"
+#   vc_why$ = "the calibrated CPPS measurement"
+#   vc_url$ = "https://www.fon.hum.uva.nl/praat/"
+#   vc_prefPath$ = preferencesDirectory$ + "/eml_version_check.txt"
 #
 #   # --- did the user dismiss THIS requirement, or a higher one? ---
-#   suppressedForMin = 0
-#   if fileReadable (prefPath$)
-#       prefTxt$ = readFile$ (prefPath$)
-#       .k = index (prefTxt$, "suppressed_for_min" + tab$)
-#       if .k > 0
-#           .rest$ = mid$ (prefTxt$, .k + 19, 20)
-#           suppressedForMin = number (left$ (.rest$, index (.rest$, newline$) - 1))
-#           if suppressedForMin = undefined
-#               suppressedForMin = 0
+#   vc_suppressedForMin = 0
+#   if fileReadable (vc_prefPath$)
+#       vc_prefTxt$ = readFile$ (vc_prefPath$)
+#       vc_k = index (vc_prefTxt$, "suppressed_for_min" + tab$)
+#       if vc_k > 0
+#           vc_rest$ = mid$ (vc_prefTxt$, vc_k + 19, 20) + newline$
+#           vc_suppressedForMin = number (left$ (vc_rest$,
+#               ... index (vc_rest$, newline$) - 1))
+#           if vc_suppressedForMin = undefined
+#               vc_suppressedForMin = 0
 #           endif
 #       endif
 #   endif
 #
-#   if praatVersion < minVersion and suppressedForMin < minVersion
-#       writeInfoLine: "This script was written for Praat ", minVersion$,
+#   if praatVersion < vc_minVersion and vc_suppressedForMin < vc_minVersion
+#       writeInfoLine: "This script was written for Praat ", vc_minVersion$,
 #           ... " or newer."
 #       appendInfoLine: "You are running ", praatVersion$, "."
 #       appendInfoLine: ""
-#       appendInfoLine: "It uses ", whyNeeded$, ","
+#       appendInfoLine: "It uses ", vc_why$, ","
 #       appendInfoLine: "which your version may not have."
 #       appendInfoLine: ""
-#       appendInfoLine: "Update here:  ", praatURL$
+#       appendInfoLine: "Update here:  ", vc_url$
 #       appendInfoLine: ""
 #       appendInfoLine: "(The latest version is really great. You'll love it.)"
 #
 #       beginPause: "Praat version"
-#           comment: "This script was written for Praat " + minVersion$ +
+#           comment: "This script was written for Praat " + vc_minVersion$ +
 #               ... " or newer."
 #           comment: "You are running " + praatVersion$ +
 #               ... ". It may not run correctly."
 #           comment: ""
-#           comment: "Update at:  " + praatURL$
+#           comment: "Update at:  " + vc_url$
 #           comment: "(that link is in the Info window too, ready to copy)"
 #           comment: ""
 #           comment: "The latest version is really great. You'll love it."
 #           boolean: "Check again next time", 1
-#       clicked = endPause: "Quit", "Run anyway", 2, 0
+#       vc_clicked = endPause: "Quit", "Run anyway", 2, 0
 #
 #       if check_again_next_time = 0
-#           writeFileLine: prefPath$, "# EML PraatGen version check"
-#           appendFileLine: prefPath$, "suppressed_for_min", tab$,
-#               ... string$ (minVersion)
-#           appendFileLine: prefPath$, "suppressed_at_praat", tab$,
+#           writeFileLine: vc_prefPath$, "# EML PraatGen version check"
+#           appendFileLine: vc_prefPath$, "suppressed_for_min", tab$,
+#               ... string$ (vc_minVersion)
+#           appendFileLine: vc_prefPath$, "suppressed_at_praat", tab$,
 #               ... string$ (praatVersion)
 #       endif
-#       if clicked = 1
-#           exitScript: "Stopped. Update at ", praatURL$
+#       if vc_clicked = 1
+#           exitScript: "Stopped. Update at ", vc_url$
 #       endif
 #   endif
 #
