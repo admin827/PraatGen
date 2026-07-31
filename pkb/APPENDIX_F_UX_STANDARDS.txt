@@ -1287,3 +1287,102 @@ standards (Rule 33).*
 #     appendInfoLine: "Skipped by you:     ", nUserSkipped, " (still to do)"
 #     appendInfoLine: "Unreadable:         ", nUnreadable
 #     appendInfoLine: "Remaining:          ", nRemaining
+
+# ============================================================================
+# S11 PRAAT VERSION CHECK
+# ============================================================================
+#
+# S11A: WHEN
+#
+# Emit a version check whenever the script uses any feature listed as
+# post-floor in PRAAT_VERSION_FLOOR.txt. The floor is Praat 6.4.15. If
+# everything the script uses is at or below the floor, emit nothing.
+#
+# It WARNS. It does not refuse. The user can always choose to run anyway —
+# their Praat may well be fine, and a script that will not start is worse
+# than one that might not finish.
+#
+# S11B: PLACEMENT
+#
+# Before the first object creation and before the first file write, so a
+# user who quits is left with exactly what they started with.
+#
+# S11C: THE MESSAGE
+#
+# Goes to BOTH the pause dialog and the Info window. The dialog is what they
+# read; the Info window is where they can select and copy the URL, which a
+# `comment:` line does not allow.
+#
+# Say which version, which version they have, what it is for, where to get
+# it, and end on something warm. This is a nudge, not a scolding.
+#
+# S11D: PATTERN (verified, Praat 6.6.30, 31 July 2026)
+#
+#   minVersion = 6418
+#   minVersion$ = "6.4.18"
+#   whyNeeded$ = "the padLeft$ family of text-formatting functions"
+#   praatURL$ = "https://www.fon.hum.uva.nl/praat/"
+#   prefPath$ = preferencesDirectory$ + "/eml_version_check.txt"
+#
+#   # --- has the user switched this off? ---
+#   checkVersion = 1
+#   if fileReadable (prefPath$)
+#       prefTxt$ = readFile$ (prefPath$)
+#       if index (prefTxt$, "check_version" + tab$ + "0") > 0
+#           checkVersion = 0
+#       endif
+#   endif
+#
+#   if praatVersion < minVersion and checkVersion = 1
+#       writeInfoLine: "This script was written for Praat ", minVersion$,
+#           ... " or newer."
+#       appendInfoLine: "You are running ", praatVersion$, "."
+#       appendInfoLine: ""
+#       appendInfoLine: "It uses ", whyNeeded$, ","
+#       appendInfoLine: "which your version may not have."
+#       appendInfoLine: ""
+#       appendInfoLine: "Update here:  ", praatURL$
+#       appendInfoLine: ""
+#       appendInfoLine: "(The latest version is really great. You'll love it.)"
+#
+#       beginPause: "Praat version"
+#           comment: "This script was written for Praat " + minVersion$ +
+#               ... " or newer."
+#           comment: "You are running " + praatVersion$ +
+#               ... ". It may not run correctly."
+#           comment: ""
+#           comment: "Update at:  " + praatURL$
+#           comment: "(that link is in the Info window too, ready to copy)"
+#           comment: ""
+#           comment: "The latest version is really great. You'll love it."
+#           boolean: "Check again next time", 1
+#       clicked = endPause: "Quit", "Run anyway", 2, 0
+#
+#       if check_again_next_time = 0
+#           writeFileLine: prefPath$, "# EML PraatGen version check"
+#           appendFileLine: prefPath$, "check_version", tab$, "0"
+#       endif
+#       if clicked = 1
+#           exitScript: "Stopped. Update at ", praatURL$
+#       endif
+#   endif
+#
+# S11E: NOTES
+#
+#   - `praatVersion` is an integer: 6.4.18 is 6418, 6.6.30 is 6630. Compare
+#     numerically. `praatVersion$` is the display string. Both are documented
+#     in APPENDIX_B_FUNCTIONS.txt.
+#   - Default the boolean to ON (1). The user opts out; they are not opted
+#     out for them.
+#   - The preference file is shared across EML scripts by design — switching
+#     the check off once switches it off everywhere, which is what a person
+#     who has just updated Praat actually wants.
+#   - Writing the preference is the ONE file write permitted before the
+#     version gate, and only when the user asked for it.
+#   - "Run anyway" is button 2 and the default, so Return proceeds.
+#   - `whyNeeded$` names the feature in the user's terms, not the command
+#     name. "the padLeft$ family of text-formatting functions", not
+#     "padLeft$()".
+#
+# SELF-AUDIT must confirm: "Version check: [emitted for <feature>, minimum
+# <version> / not applicable — nothing above the 6.4.15 floor]".

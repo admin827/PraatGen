@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.11.0
+**Version:** 14.12.0
 **Date:** 30 July 2026
 **License:** GPL-v3 or later 
 
@@ -25,8 +25,8 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.11.0.** Legends must encode every channel used to separate the
-series, and greyscale is reordered around line style rather than grey value.
+**Current: 14.12.0.** Scripts warn when they use a feature newer than the
+Praat 6.4.15 floor, and let the user run anyway.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into
@@ -248,6 +248,7 @@ Load reference files from Project Knowledge based on the task requirements. Load
 | `APPENDIX_D_CLINICAL_DEFAULTS.txt` | Script performs voice quality analysis (pitch, jitter, shimmer, HNR, CPPS, formants for clinical purposes) |
 | `APPENDIX_E_SPECIAL_CHARACTERS.txt` | Script generates Picture window text output (any Text:, axis label, or title command) |
 | `WHITELIST_CURRENT.txt` | Check for recently accumulated verified commands not yet redistributed |
+| `PRAAT_VERSION_FLOOR.txt` | Any script at all — check whether anything it uses is post-floor. Records the Praat 6.4.15 floor, the features verified absent at the floor, and the features verified safe at it. **A command not listed has an UNKNOWN minimum, not a safe one.** |
 | `APPENDIX_F_UX_STANDARDS.txt` | Script has user input (form or beginPause), file output, or batch processing |
 | `PRAAT_DEFINITIVE_CATALOGUE.txt` | **Fallback only.** Load when a command or object type is **not** in the primary `COMMANDS_*.txt` files, or the task involves a type with no curated file (FFNet, HMM, GaussianMixture, NMF, DTW, Discriminant, CCA, Configuration, NoulliGrid). **If the command is in a COMMANDS file, do not open this one.** Covers all 136 object types plus the Formula engine function list. Pinned to Praat 6.4.62; where it and a COMMANDS file disagree, the COMMANDS file governs. Its header banner carries current accuracy and scope notes — read them there. |
 | `EML_PROCEDURE_GUIDE.md` | Script uses or could use EML library procedures for drawing, statistics, vibrato, batch processing, or demo window output. Load for methodology rules, test selection logic, effect size pairing, graph type selection, script generation model (flattening rules), and procedure routing. Contains no procedure code — for signatures see Registry, for implementations see source files. |
@@ -3242,6 +3243,17 @@ response is to offer a handoff — not to relax the constraint.
 
 ## HOUSE RULES
 
+- **Emit a version check when the script uses anything above the Praat floor
+  (hard).** The floor is 6.4.15. Consult `PRAAT_VERSION_FLOOR.txt`; if the
+  script uses a feature listed there as post-floor, emit the check from
+  `APPENDIX_F_UX_STANDARDS.txt` §S11 before the first object creation and the
+  first file write. It **warns and offers to continue** — it never refuses. The
+  user's Praat may be fine, and a script that will not start is worse than one
+  that might not finish. The message goes to both the pause dialog and the Info
+  window, because a `comment:` line cannot be selected and the URL needs to be
+  copyable. A "Check again next time" boolean, default on, records an opt-out in
+  `preferencesDirectory$`. Emit nothing when everything the script uses sits at
+  or below the floor. SELF-AUDIT states which.
 - **Every asserted count is computed, never remembered (hard).** Any figure in
   a manifest, SELF-AUDIT, or delivery note — line counts, file counts,
   procedure counts, cycle counts — is read off the artifact at packaging time.

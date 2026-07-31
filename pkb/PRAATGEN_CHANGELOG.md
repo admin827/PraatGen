@@ -7,7 +7,7 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Release 1.0.3 — 30 July 2026 (ships Master Prompt 14.11.0)
+### Release 1.0.4 — 31 July 2026 (ships Master Prompt 14.12.0)
 
 The package leaves the 0.9.x beta track at **release 1.0.1**, shipping **Master
 Prompt 14.8.1**. (1.0.0 shipped on 29 July and is superseded by this build.) These are two independent numbers and both are correct: the
@@ -20,6 +20,51 @@ updated from that source rather than maintained alongside it; every library
 file is syntax-checked against a real Praat 6.6.30 install; every PKB file
 carries the plugin's version verbatim so drift is detectable; and the clinical
 values a benchmark actually turns on were read off the live dialog.
+
+### 14.12.0 — 31 July 2026
+
+**Version floor, and a warning that lets you through.** Users on older Praat had
+no way to find out except by hitting a failure mid-run — after objects were
+created and files written.
+
+**Floor: Praat 6.4.15**, set by `To Pitch (filtered autocorrelation)`. 6.4.15 is
+the release that distinguished "pitch top" from "pitch ceiling", which is the
+parameter set that command now takes. 6.4.15 is not published for download, so it
+is verified at 6.4.16: the 11-argument FAC call executes there.
+
+New `pkb/PRAAT_VERSION_FLOOR.txt`, built by executing candidate features against
+6.4.16 and 6.6.30 side by side. Confirmed post-floor: `padLeft$()` and its family,
+`clock()`, `moveAndOrRenameFile()` — all «Unknown function» at 6.4.16.
+
+**Two suspicions raised from the changelog were wrong, and execution killed both.**
+`Sound: To PowerCepstrogram` works at 6.4.16 despite a 6.4.58 entry reading "New
+command" — CPPS work is safe at the floor. And `Select outer viewport: 0, 40, 0,
+40` is accepted at 6.4.16 despite the 6.4.45 expansion of the Picture window from
+12x12 to 60x60, so drawing scripts are not gated on it either. Both were about to
+become rules on the strength of a changelog read that had already contradicted
+itself once.
+
+Two further candidates failed on BOTH builds, which means the test call was wrong
+rather than the feature version-gated; they are recorded as unresolved rather than
+as findings.
+
+**The file states its own incompleteness.** A command absent from it has an
+UNKNOWN minimum, not a safe one. Full coverage is a sweep across the 42
+downloadable 6.4.x patch releases, sharing its fixture table and probe harness
+with the catalogue parity pass.
+
+**`APPENDIX_F` §S11 — the check itself.** Emitted only when the script uses
+something post-floor, placed before the first object creation and the first file
+write. It **warns and offers to continue; it never refuses** — the user's Praat
+may be fine, and a script that will not start is worse than one that might not
+finish. The message goes to the pause dialog *and* the Info window, because a
+`comment:` line cannot be selected and the update URL needs to be copyable. It
+ends warmly rather than sternly. A "Check again next time" boolean, default on,
+writes an opt-out to `preferencesDirectory$`, shared across EML scripts so
+switching it off once switches it off everywhere — which is what someone who has
+just updated actually wants. Pattern verified in 6.6.30.
+
+---
 
 ### 14.11.0 — 30 July 2026
 

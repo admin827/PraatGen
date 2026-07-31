@@ -1,13 +1,13 @@
-# EML PraatGen v1.0.3 Release Notes
+# EML PraatGen v1.0.4 Release Notes
 
-**1.0.3** (stable release; leaves the 0.9.x beta line)  
-**Release date:** 30 July 2026  
-**Master Prompt:** 14.11.0 (was 13.9.4)  
+**1.0.4** (stable release; leaves the 0.9.x beta line)  
+**Release date:** 31 July 2026  
+**Master Prompt:** 14.12.0 (was 13.9.4)  
 **PKB snapshot:** 2026-07-29 (was 2026-06-22)  
 **Sandbox Praat:** 6.6.30 (was 6.4.67)  
 **License:** GPL-3.0-or-later — Ian Howell, Embodied Music Lab
 
-The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.11.0, supersedes 1.0.0, 1.0.1 and 1.0.2, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
+The first stable release, focusing on updates, clarifications, and expansion of functionality. The EML procedure library is updated and expanded — the analysis orchestrators, regression, normality and the vibrato drawing family; the command reference is verified against Praat 6.6.30; and Phase 3B adapts to the model in use. It folds in the Master Prompt increments from 14.0.0 to 14.12.0, supersedes 1.0.0 through 1.0.3, and replaces 0.9.3-beta.02.1 (22 June 2026) as the current stable build.
 
 ---
 
@@ -26,6 +26,43 @@ The first stable release, focusing on updates, clarifications, and expansion of 
 **Self-containment is now an explicit rule.** Generated scripts have always been standalone; Step 12 states the requirement and both SELF-AUDIT templates check it. Library procedure bodies are copied into the delivered script, or into a folder shipped alongside it, transitively, and generated code never `include`s the plugin.
 
 **Phase 3B is model-conditional.** Extended thinking as a user-facing toggle was retired in Opus 5; 4.6, 4.7 and 4.8 all still have it. The complexity score is unchanged; on toggle models (4.6/4.7/4.8) it recommends thinking on/off and waits on a recommended change, and on Opus 5 it is advisory and does not gate the turn.
+
+---
+
+## Scripts tell you if your Praat is too old (14.12.0)
+
+Until now, a user on an older Praat found out by hitting a failure partway through
+a run — after objects had been created and files written.
+
+**The floor is Praat 6.4.15**, set by `To Pitch (filtered autocorrelation)`: 6.4.15
+is the release that separated "pitch top" from "pitch ceiling", which is the
+parameter set that command takes. Verified at 6.4.16, since 6.4.15 itself is not
+published for download.
+
+Scripts that use anything newer than the floor now open with a check, **before
+creating a single object or writing a single file**. It tells you which version the
+script wants, which one you have, what the newer feature is for, and where to get
+the update — in the dialog *and* in the Info window, since a dialog comment can't be
+selected and you need to copy the URL. Then it offers **Run anyway**, which is the
+default button. It never refuses: your Praat may well be fine, and a script that
+won't start is worse than one that might not finish. A "Check again next time"
+tickbox remembers an opt-out across all EML scripts, so once you've updated you stop
+hearing about it.
+
+New reference file `PRAAT_VERSION_FLOOR.txt` records what's actually been tested,
+by running candidate features against 6.4.16 and 6.6.30 side by side. Confirmed as
+needing something newer: `padLeft$()` and its family, `clock()`,
+`moveAndOrRenameFile()`.
+
+Two features that looked like problems are not. `Sound: To PowerCepstrogram` runs
+at 6.4.16 despite a changelog entry calling it new in 6.4.58 — **CPPS work is safe
+at the floor**. And Picture window viewports beyond 12 inches are accepted at
+6.4.16 despite the 6.4.45 expansion to 60×60, so drawing scripts aren't gated
+either. Both were a changelog read away from becoming rules that would have blocked
+users unnecessarily.
+
+The file says plainly what it doesn't cover: a command absent from it has an
+*unknown* minimum, not a safe one.
 
 ---
 
@@ -325,21 +362,21 @@ MDVP's pathology thresholds are listed with the manual's own caveat that they ca
 
 | Component      | This release            | Previous        |
 | -------------- | ----------------------- | --------------- |
-| Release        | **1.0.3**               | 0.9.3-beta.02.1 |
-| Master Prompt  | **14.11.0**             | 13.9.4          |
+| Release        | **1.0.4**               | 0.9.3-beta.02.1 |
+| Master Prompt  | **14.12.0**             | 13.9.4          |
 | PKB snapshot   | **2026-07-29**          | 2026-06-22      |
 | Sandbox Praat  | **6.6.30**              | 6.4.67          |
 | Rules          | 37                      | 37              |
 | EML procedures | **263** across 15 files | 251             |
 
 The `Previous` column compares against the last beta, 0.9.3-beta.02.1. Release
-1.0.0, 1.0.1 and 1.0.2 shipped on 29-30 July and are superseded by this build.
+1.0.0 through 1.0.3 shipped on 29-30 July and are superseded by this build.
 
 ---
 
 ## Upgrade notes
 
-Replace your project's instructions with `MASTER_PROMPT_CORE_v14_11_0.md`. The filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
+Replace your project's instructions with `MASTER_PROMPT_CORE_v14_12_0.md`. The filename changed; delete `MASTER_PROMPT_CORE_v13_9_4.md`.
 
 Replace the entire `pkb/` folder. 57 of 61 files changed, `eml-demo-procedures` is gone, and the `eml-annotation-procedures.praat` / `.praat.txt` pair is now a single `.txt`. Delete the old folder rather than overwriting into it.
 

@@ -1,0 +1,99 @@
+# PRAAT VERSION FLOOR AND POST-FLOOR FEATURES
+# Part of EML PraatGen GPL-3.0-or-later — Ian Howell, Embodied Music Lab
+#
+# Version: 1.0
+# Date: 31 July 2026
+# Method: executed against Praat 6.4.16 and 6.6.30, both linux-intel64/x64v3.
+#
+# ============================================================================
+# THE FLOOR: PRAAT 6.4.15
+# ============================================================================
+#
+# Generated scripts target Praat 6.4.15 or newer. The floor is set by
+# `To Pitch (filtered autocorrelation)`, which PraatGen routes to for voice
+# work: 6.4.15 is the release that distinguished "pitch top" from "pitch
+# ceiling", which is the parameter set the command now takes.
+#
+# 6.4.15 itself is not published for download, so the floor is verified at
+# 6.4.16, one patch above: the 11-argument FAC call executes there.
+#
+#   To Pitch (filtered autocorrelation): 0.0, 50, 800, 15, "no",
+#       ... 0.03, 0.09, 0.5, 0.055, 0.35, 0.14        -> OK at 6.4.16
+#
+# WHAT TO DO ABOUT IT: see APPENDIX_F_UX_STANDARDS.txt §S11. A script that
+# uses anything listed below emits a version check before it does any work.
+# The check WARNS and offers to continue; it does not refuse.
+#
+# ============================================================================
+# CONFIRMED POST-FLOOR — absent at 6.4.16, present at 6.6.30
+# ============================================================================
+#
+# Each verified by execution in both builds.
+#
+#   Feature                    First version   Evidence at 6.4.16
+#   -------------------------  --------------  ---------------------------
+#   padLeft$() and the         6.4.18          «Unknown function padLeft$»
+#     padRight$/truncateLeft$/  (changelog)
+#     padOrTruncate family
+#   clock()                    6.4.35          «Unknown function clock»
+#                               (changelog)
+#   moveAndOrRenameFile()      6.4.36          «Unknown function
+#                               (changelog)     moveAndOrRenameFile»
+#
+# The "first version" column is the changelog's claim; only the absence at
+# 6.4.16 and presence at 6.6.30 are execution-verified here. Treat the exact
+# introduction patch as unconfirmed until the version sweep runs.
+#
+# ============================================================================
+# VERIFIED SAFE AT THE FLOOR — do not gate on these
+# ============================================================================
+#
+# All executed successfully at 6.4.16. Listed because each was suspected of
+# being post-floor and is not.
+#
+#   Sound: To PowerCepstrogram: 60, 0.002, 5000, 50
+#       The 6.4.58 changelog entry "New command: Sound: To PowerCepstrogram"
+#       does NOT mean the command is new — it works at 6.4.16. CPPS work is
+#       safe at the floor.
+#
+#   Picture window viewports beyond 12 inches
+#       6.4.45 expanded the Picture window from 12x12 to 60x60 inches, but
+#       `Select outer viewport: 0, 40, 0, 40` is accepted at 6.4.16 without
+#       error. Whatever changed at 6.4.45, it is not a hard failure on the
+#       viewport command. Do not gate drawing scripts on it.
+#
+#   To FormantPath (burg): 0.005, 5.0, 5500, 0.025, 50, 0.05, 4
+#   Pitch: List values in all frames: unit$
+#   To Pitch (filtered autocorrelation), 11 arguments
+#
+# ============================================================================
+# UNRESOLVED — needs a fixture, not a version
+# ============================================================================
+#
+# These failed at BOTH 6.4.16 and 6.6.30, which means the test call was wrong,
+# not that the feature is version-gated. Do not record them as post-floor.
+#
+#   Extract Electroglottogram         tested on a mono fixture; the verified
+#                                     example uses channel 2 and needs stereo
+#   Rectangle text (maximal fit)      call signature not established
+#
+# ============================================================================
+# COVERAGE — READ THIS BEFORE TRUSTING AN ABSENCE
+# ============================================================================
+#
+# This file is NOT a complete map of version requirements. It records what has
+# been executed against both builds, which is a small fraction of the command
+# set. A command absent from this file has an UNKNOWN minimum version — it has
+# not been shown safe at the floor, only untested.
+#
+# The full determination is a version sweep across the 42 downloadable 6.4.x
+# patch releases, probing every documented command by invoking it with excess
+# arguments and reading Praat's reply:
+#
+#   «Command "X" not available for current selection»  -> absent
+#   «Command requires only N arguments»                -> present, arity N
+#
+# That sweep shares its fixture table and harness with the catalogue parity
+# pass and should be run with it. Until then, this file grows one verified
+# entry at a time and states its own incompleteness rather than implying
+# coverage it does not have.
