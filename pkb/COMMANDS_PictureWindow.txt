@@ -89,6 +89,14 @@
   # Verified: Marks left: 5, "yes", "yes", "no"
   Marks bottom: number of marks, draw numbers?, draw ticks?, draw dotted lines?
   # Verified: Marks bottom: 5, "yes", "yes", "no"
+  #   DO NOT EMIT THESE in generated scripts. The "# Verified:" lines above are
+  #   arity-regression fixtures, not usage examples — leave them in place.
+  #   EML house style prohibits these commands for tick placement: they divide
+  #   the data range into N-1 equal intervals, so the labels are whatever the
+  #   range divides into. Use the nice-number procedures instead —
+  #   @emlDrawAlignedMarksLeft / @emlDrawAlignedMarksBottom, or
+  #   One mark left: / One mark bottom: driven by @emlComputeNiceStep.
+  #   See BEST_PRACTICES_DRAWING.txt.
   One mark left: position, draw number?, draw tick?, draw dotted line?, text$
   # Verified: One mark left: 0, "yes", "yes", "no", ""
   #   NOTE: the position must lie inside the current Axes range — this example

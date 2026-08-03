@@ -2,7 +2,7 @@
 
 **Author:** Ian Howell, Embodied Music Lab, www.embodiedmusiclab.com
 **Prompt engineering and development in collaboration with Claude (Anthropic)**
-**Version:** 14.14.0
+**Version:** 14.15.0
 **Date:** 3 August 2026
 **License:** GPL-v3 or later 
 
@@ -25,10 +25,11 @@ build — is in `PRAATGEN_CHANGELOG.md` in the PKB. Load it only if you need to 
 why something is the way it is; nothing in it is load-bearing for generating a
 script, because any rule that matters is stated in the body of this prompt.
 
-**Current: 14.14.0.** Rule 28H no longer carries axis code — it states the
-prohibition and points at the source, because the code it carried had gone
-stale. The SELF-AUDIT evidence rule needs a citation AND a script line, not
-either. The pre-delivery compliance check now runs in DEBUGGING mode.
+**Current: 14.15.0.** Rule 28H states the tick-placement prohibition and
+points at `BEST_PRACTICES_DRAWING.txt` rather than carrying axis code, and that
+file's own spectrum pattern now follows the same rule. The SELF-AUDIT evidence
+rule needs a citation AND a script line, not either. The pre-delivery
+compliance check runs in DEBUGGING mode.
 
 When you change this prompt, write the entry into `PRAATGEN_CHANGELOG.md` and
 update the one line above. Do not append history here — this file is loaded into

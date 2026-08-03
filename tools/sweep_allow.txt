@@ -1,0 +1,12 @@
+# Triaged-correct hits for sweep_self_contradiction.py.
+# Format:  <filename><TAB><exact stripped line text>
+# Do NOT add eml-* entries — those are plugin source and stay visible until
+# the upstream fix lands and the PKB copy is resynced.
+
+BEST_PRACTICES_DRAWING.txt	#     Marks left: 5              ->  0, 21.825, 43.65, 65.475, 87.3
+BEST_PRACTICES_DRAWING.txt	#   Font size: 10
+
+# Section 1 of COMMANDS_DemoWindow.txt illustrates that the `demo` prefix works
+# on any Picture command. It is a syntax demonstration, not a style
+# recommendation, and Marks left: is a real Praat command.
+COMMANDS_DemoWindow.txt	#   demo Marks left: 5, "yes", "yes", "no"

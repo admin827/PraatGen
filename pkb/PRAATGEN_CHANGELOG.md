@@ -9,6 +9,53 @@
 
 ### Unreleased — on `main`, not yet cut as a release
 
+### 14.15.0 — 3 August 2026
+
+**`BEST_PRACTICES_DRAWING.txt` prohibited `Marks left:` / `Marks bottom:` and
+then used them.** Its "Pattern for Spectrum" block, given as the pattern to
+follow, ended with `Draw inner box` / `Marks bottom: 5` / `Marks left: 5` —
+roughly 250 lines below its own NEVER. The "Pattern for Ltas" said "same
+structure" and inherited it by reference.
+
+This reframes 14.14.0. That release fixed Rule 28H on the reasoning that the
+Master Prompt contradicted the PKB and the remedy was to make the model load
+the PKB. But the PKB contradicted itself, in the spectrum pattern, and the
+3 August incident task was a spectrum figure. A model that loaded the file,
+found the pattern matching its task and followed it would have emitted
+`Marks bottom:` from the authoritative source. Loading was never sufficient;
+14.14.0's fix was necessary and not sufficient.
+
+The spectrum pattern now uses `@emlDrawAlignedMarksBottom` / `Left`, and gains
+the `Axes:` re-assertion after `Draw:` that it was missing. Ltas states that it
+inherits both rather than implying it. The prohibition itself now says it
+governs every pattern in the file, which is what would have caught this when
+the pattern was written.
+
+**`COMMANDS_PictureWindow.txt` marks the two commands DO NOT EMIT.** The
+entries stay — a command reference must list the commands Praat has — but a
+model reading only that file previously saw them documented with no indication
+they are prohibited, and with a verified example to copy.
+
+**Found by the eval, not by inspection.** Two independent agents in a
+retrieval eval reported the contradiction unprompted. Neither the 3 August
+incident report nor the Master-Prompt-versus-PKB sweep that preceded it caught
+it, because both compared *across* files and this defect class lives *within*
+one.
+
+**`MAINTENANCE.md` and `tools/` are new.** Maintainer-only, deliberately
+outside `pkb/` so nothing here is ever retrieved into a script-writing
+conversation. `tools/sweep_self_contradiction.py` finds a prohibited construct
+used outside a block labelled WRONG; `tools/list_mp_code_blocks.py` lists the
+Master Prompt's Praat snippets for diffing against their sources. Triaged-clean
+hits live in `tools/sweep_allow.txt` rather than as markers in the PKB.
+
+The sweep currently reports 20 hits, all in `eml-*` library source carried
+verbatim from the plugin: `@emlDrawLMMForest` uses bare `Marks bottom:`, and
+the vibrato drawing family changes the ambient font size mid-panel to place
+axis names and captions. Those are not editable here without desyncing the PKB
+from the plugin; they are reported upstream and stay visible in the sweep until
+the fix lands and the copies are resynced.
+
 ### 14.14.0 — 3 August 2026
 
 **Rule 28H shipped axis code that violated a MANDATORY pattern in the file it
