@@ -92,6 +92,23 @@
 # NEVER use `Marks left:` or `Marks bottom:` for tick placement.
 # Always use EML procedure-based nice-number tick logic with `One mark left:` / `One mark bottom:`.
 #
+# WHY (this is a SEPARATE rule from the font-state invariant above — do not
+# conflate them). `Marks left: N` divides the DATA RANGE into N-1 equal
+# intervals, so the tick labels inherit whatever the range happens to divide
+# into. Nice-number logic instead picks a readable step and lets the ticks
+# fall where they may inside the range:
+#
+#   axis 0 to 87.3 dB, five ticks requested
+#     Marks left: 5              ->  0, 21.825, 43.65, 65.475, 87.3
+#     @emlComputeNiceStep        ->  step = 20
+#     @emlDrawAlignedMarksLeft   ->  0, 20, 40, 60, 80
+#
+# It is about tick VALUES, not about font. `Marks` and `One mark` are equally
+# margin-dependent and both respect the ambient font size; moving to the
+# procedures does not exempt the drawing sequence from the font-state
+# invariant. Verified 3 August 2026 (Praat 6.6.30, @emlComputeNiceStep run
+# against the same range).
+#
 # CORRECT:
 #   Font size: 10
 #   Select inner viewport: ...

@@ -9,6 +9,89 @@
 
 ### Unreleased — on `main`, not yet cut as a release
 
+### 14.14.0 — 3 August 2026
+
+**Rule 28H shipped axis code that violated a MANDATORY pattern in the file it
+points at.** Its canonical garnish-suppression snippet emitted
+`Marks left:` / `Marks bottom:`, which `BEST_PRACTICES_DRAWING.txt` prohibits
+outright and Rule 34 lists as an anti-pattern. A model following 28H faithfully
+violated both. Reported from a 3 August debugging session that shipped exactly
+that; confirmed by reading the two texts against the emitted script.
+
+The snippet is gone rather than corrected. Replacing it with a
+`@emlDrawAlignedMarksLeft` snippet would swap one copyable answer for another
+and drift the same way. 28H now states the prohibition, gives the reason, and
+points at the source — a pointer cannot go stale, and it forces the load.
+
+**The reason was not what the file implied, and this is worth recording.** The
+prohibition sits three lines below the font-state invariant, so the nearest
+available explanation is the wrong one, and the first draft of this fix
+asserted that `Marks` "does not respect the ambient font size." It does —
+sub-rule L already says so correctly, listing `Marks`/`One mark` together as
+both laid out at "whatever font size is active when *that* command runs."
+
+The actual reason is tick values. `Marks left: N` divides the data range into
+N-1 equal intervals, so labels inherit whatever the range divides into.
+Verified on a 0-87.3 dB axis, Praat 6.6.30:
+
+    Marks left: 5             ->  0, 21.825, 43.65, 65.475, 87.3
+    @emlComputeNiceStep       ->  step 20
+    @emlDrawAlignedMarksLeft  ->  0, 20, 40, 60, 80
+
+`BEST_PRACTICES_DRAWING.txt` now carries that reason and the worked example
+next to the prohibition, marked as a separate rule from the font-state
+invariant, so the conflation is not available to the next reader.
+
+**SELF-AUDIT evidence rule: `AND/OR` becomes `AND`.** The rule's own rationale
+says "producing the citation is the check" — and `AND/OR` made the citation
+optional. Every Picture-window item in the 3 August session was satisfied with
+script lines alone; the audit passed and the governing file was never opened. A
+script line proves what the output IS; only a citation proves it was checked
+against a source. For silent-failure items they are not interchangeable.
+
+**The pre-delivery compliance check runs in DEBUGGING mode (STEP 2C, STEP 2D
+item 6, House Rule 17).** It was AUTO-only, on the reasoning that standard
+mode's PRE-FLIGHT -> COMMAND PLAN -> gate -> SELF-AUDIT pipeline covers the
+same surface. That does not extend to DEBUGGING, where PRE-FLIGHT and COMMAND
+PLAN do not run at all — so the mode with the thinnest gates was excluded from
+the strongest check. Both recorded instances of this failure class (4 June, 3
+August 2026) occurred in DEBUGGING. Gated on trigger-domain presence, and the
+in-turn re-load is stated as the point of it: inherited code guarantees command
+novelty is zero, so the Step 4 mini-preflight structurally cannot fire on it.
+
+**Rule 24C: never `pkill -f` (hard).** `-f` matches full command lines, and the
+pattern is in the argv of the shell running the `pkill`. Sandbox-verified 3
+August: a pattern matching NO process anywhere still killed the issuing shell
+with signal 9. Not a Praat quirk and not an Xvfb quirk. `-x` matches the
+process name and survives; so does `-f '[p]raat'`. Corrected in item 5, the
+recycle snippet and the complete test template.
+
+**Rule 24C item 6B: pick the installation before writing the test.** `--run` is
+batch and has no GUI; `--new-send` under Xvfb is the full thing. A wall reached
+because the wrong one was chosen is a setup decision, not a finding, and must
+not be reported as "could not be verified in the sandbox."
+
+Driving the GUI, verified 3 August: use XTEST. `xdotool key --window` and
+`xdotool click --window` are BOTH silently discarded by GTK, which ignores
+`send_event` input — the split is transport, not keyboard-versus-mouse. Bare
+`xdotool key` and `xdotool mousemove ... click` both work. Take coordinates
+from a root capture; OCR of a window capture plus the window origin
+double-counts the decoration.
+
+**`APPENDIX_F` §S15E is now verified end to end** with the dialog actually
+driven: both buttons, the boolean at both settings, the preferences write, and
+a silent second run. Previously only its parse block was tested.
+
+**Two sweep findings.** All five Praat code blocks in the Master Prompt were
+diffed against their PKB sources after 28H, since nothing cross-checks them.
+The `@emlGenerateUniquePath` and stereo-guard blocks are correct. The 28D2
+legend key restored `Colour: "Black"` where the theme supplies
+`emlSetAdaptiveTheme.axisColor$`; corrected. (`Line width: 1` stays — the theme
+has no line-width field, so the Praat default is the right restore, and the
+comment now says so.) Going the other way, `APPENDIX_F` §S14B hand-rolled the
+entire stereo dialog that `@emlHandleStereo` implements; the expansion is kept
+as documentation and explicitly marked as not the thing to paste.
+
 ### 14.13.0 — 31 July 2026
 
 **The floor list is compiled from release notes, not from execution.**

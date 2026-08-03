@@ -1162,6 +1162,14 @@
 #
 # S14B: SINGLE-FILE PATTERN
 #
+# USE THE PROCEDURE. `@emlHandleStereo: soundId, fileName$` implements
+# everything below and returns `emlHandleStereo.resultId`. Emit that, not a
+# hand-rolled copy — a copy is a second implementation to keep in sync, and
+# Rule 34 names re-implementing an existing procedure as an anti-pattern.
+#
+# The expansion below is here so you can see what the procedure does and
+# recognise a correct one in inherited code. It is NOT the thing to paste.
+#
 # Present a dialog only when a stereo file is actually detected.
 # The dialog does not appear for mono files.
 #
@@ -1343,7 +1351,13 @@ standards (Rule 33).*
 #   The old dismissal covered a 6.4.18 requirement. It does not cover a 7.1
 #   one, and must not.
 #
-# S15E: PATTERN
+# S15E: PATTERN (sandbox-verified end to end, Praat 6.6.30, 3 August 2026)
+#
+# Verified under Xvfb with the dialog actually driven, not simulated: both
+# buttons clicked, the boolean read back at both settings, the preferences
+# file written and its contents checked, and a second run with those
+# preferences in place confirmed silent. The parse block was additionally
+# run at top level across six suppression cases.
 #
 # This block sits at the TOP LEVEL of the generated script, not inside a
 # procedure. Two consequences, both of which the pattern already handles and
