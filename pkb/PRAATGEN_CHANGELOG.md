@@ -7,13 +7,16 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
-### Unreleased — on `main`, not yet cut as a release
+### Release 1.0.5 — 5 August 2026 (ships Master Prompt 14.17.0)
+
+Cuts the 14.13.0 through 14.17.0 entries below into a release. Upgrade notes are
+in `RELEASE_NOTES_1.0.5.md`.
 
 ### 14.17.0 — 3 August 2026
 
 **Seven Praat builds were downloaded and run.** 6.4.14, 6.4.20, 6.4.24,
 6.4.30, 6.4.39, 6.4.46, 6.6.30, identical fixtures, every argument explicit.
-Two things we had written down turned out to be wrong.
+Two entries in this file were contradicted by the results.
 
 **The floor moves from 6.4.15 to 6.4.39.** The old floor was set on the belief
 that `To Pitch (filtered autocorrelation)` took a different parameter set below
@@ -868,7 +871,7 @@ correctly while the PKB shipped incomplete files. Measured, per file:
 - **M10 was wrong.** `@emlVibratoDrawFigure` was removed from the Guide as a
   dead reference. It is real — it and four companion panel procedures were
   simply absent from the truncated PKB vibrato copy. Restored.
-- **My own version bumps were wrong.** The v14.0.0 pass bumped five PKB files
+- **The v14.0.0 version bumps were wrong.** That pass bumped five PKB files
   past the plugin's real versions (PKB `eml-graphs` 3.1 vs plugin 3.0, etc.),
   destroying the only signal that catches this drift. **New policy: the PKB
   file carries the PLUGIN's version verbatim. PKB version == plugin version,
