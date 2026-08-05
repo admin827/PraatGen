@@ -4,3 +4,10 @@ MAINTENANCE.md      export-ignore
 tools/              export-ignore
 tools/**            export-ignore
 .gitattributes      export-ignore
+
+# Language statistics. The maintainer tools are not part of the distribution
+# and must not be counted. The EML library files are Praat source carrying a
+# .txt extension so that they upload to a Claude Project.
+tools/**            linguist-vendored
+MAINTENANCE.md      linguist-vendored
+pkb/eml-*.txt       linguist-language=Praat linguist-detectable=true
