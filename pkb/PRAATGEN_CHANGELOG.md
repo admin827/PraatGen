@@ -9,6 +9,139 @@
 
 ### Unreleased — on `main`, not yet cut as a release
 
+### 14.17.0 — 3 August 2026
+
+**Seven Praat builds were downloaded and run.** 6.4.14, 6.4.20, 6.4.24,
+6.4.30, 6.4.39, 6.4.46, 6.6.30, identical fixtures, every argument explicit.
+Two things we had written down turned out to be wrong.
+
+**The floor moves from 6.4.15 to 6.4.39.** The old floor was set on the belief
+that `To Pitch (filtered autocorrelation)` took a different parameter set below
+it. It does not: 6.4.14 and 6.6.30 both answer "Command requires only 11
+arguments", and the canonical call returns 149.999960 Hz against 150.000009 Hz.
+The eighth significant figure, on a fixture chosen to be hostile.
+
+The floor now sits where numbers actually converge. Maryn/AVQI CPPS, measured:
+
+    6.4.14  18.615235
+    6.4.24  17.244598      first revision of the cepstral tilt fit
+    6.4.39  18.994932      second revision — from here, current
+    6.6.30  19.037906      +0.043 dB from the floor
+
+Below 6.4.39 a user is 1.75 dB from current. At or above it, within 0.05 dB.
+Not 6.4.24, which is only the first of the two revisions — a floor there would
+declare "supported" a build whose numbers do not compare.
+
+**The effect depends on the tilt-line settings, not on the command.** At the
+6.4.24 boundary, straight tilt lines move -0.01 to +0.41 dB while both
+exponential-decay fits move more than 3 dB. The raw cepstrum peak moves 0.04
+dB; peak prominence moves 3.91 dB. So version entries are now keyed to the call
+the script emits: `Get CPPS` with a straight line and `Get CPPS` with
+exponential decay do not get the same warning.
+
+**Praat's release notes name only 6.4.39.** The 6.4.24 revision was announced
+as formant fixes, with no mention of cepstral measures, and it is the larger
+change for anyone on Praat's own dialog defaults (-3.25 dB). Found by running
+builds, not by reading. The floor file's coverage note is now a worked example
+rather than a disclaimer.
+
+**New hard-failure entry: `Get CPPS` fit method "Robust slow".** Accepted on
+6.4.14, 6.4.24 and 6.6.30; REJECTED on 6.4.39 and 6.4.46. The option vocabulary
+is not monotonic — a value can be valid, then invalid, then valid again — and
+this one breaks inside the supported range with no release note. Prefer
+"Robust", accepted on every build tested.
+
+**Function availability, measured rather than assumed.** `padLeft$` absent at
+6.4.14 and present at 6.4.20; `clock()` absent through 6.4.30, present at
+6.4.39; the case-conversion family absent through 6.4.39 and present at 6.4.46
+— previously recorded as "exact version not established"; `randomImax` absent
+through 6.4.46. With the floor at 6.4.39, the first two are no longer triggers
+and are kept only for inherited scripts.
+
+**§S15 rewritten: the check reports a list, not a number.** Each entry names
+one thing the script uses, its minimum, and which of two consequences applies —
+**STOPS** (does not exist; the script halts at that line) or **DIFFERS** (runs,
+returns a different number). Only entries the running Praat is actually below
+are reported. A user past every entry sees nothing.
+
+**The generic advisory added in 14.16.0 is removed.** "Your Praat is several
+versions old" is a nanny message: it fires on people whose script is fine, and
+a user who dismisses it reflexively will dismiss a real warning the same way.
+Every line must name something in the script in front of them. `vc_builtAgainst`
+and the second suppression key go with it; one notice needs one key.
+
+**`APPENDIX_F` §S0-WRAP — break your own lines (hard).** Found by rendering
+the dialog rather than reading it. An over-long `comment:` wraps, but the
+dialog reserves only ONE line of height for it, so the remainder is drawn on
+top of whatever comes next. Nothing errors and nothing is clipped — the layout
+just does not know the wrap happened, and every line below is corrupted.
+Measured under GTK: one long comment between two short ones wrapped to three
+lines and obliterated the comment after it.
+
+The rule is one idea per `comment:`, under roughly 60 characters, and never
+concatenate a variable of unknown length onto a label. Wrap width is
+platform-dependent, so short enough to fit everywhere is the only safe target.
+This applies to every pause form PraatGen emits, not only the version check.
+
+**Verified.** Decision logic across 15 cases — nine builds against a
+two-entry list, six suppression combinations — confirming that a dismissal
+below the list maximum does not silence the check and that a user past every
+entry is silent whether or not a dismissal exists.
+
+### 14.16.0 — 3 August 2026
+
+**The floor was an assumption, never a check.** §S15A said to emit the version
+check only when the script used a post-floor feature — so a script whose most
+demanding call was a floor-level one emitted nothing at all. A user below 6.4.15
+running such a script got no warning and failed partway through, which is
+exactly what the feature exists to prevent. Whether they were warned depended on
+whether the script happened to reach above the floor for some unrelated reason.
+
+**Every script now emits the check.** `vc_minVersion` is the highest post-floor
+requirement the script uses, or **6415** when it uses nothing above it. Never
+unset.
+
+**Second trigger: an advisory for users who are current enough to run, but well
+behind.** Someone sitting at 6.4.15 with a floor-only script passes cleanly and
+is also pre-6.4.39, so the next CPPS script they receive returns numbers that do
+not compare to anyone else's. The advisory tells them before that happens:
+
+    HARD      praatVersion < vc_minVersion
+    ADVISORY  not HARD, and floor(praatVersion/100) < floor(vc_builtAgainst/100)
+
+HARD supersedes ADVISORY — one dialog, and the hard message already says update.
+The advisory threshold is a MINOR version, not a patch: firing on every patch
+release makes it noise, and a user who dismisses reflexively will dismiss the
+hard warning too.
+
+**`vc_builtAgainst` is known offline and must never be polled.** PraatGen cannot
+emit a command newer than the build its references were verified against, so the
+number is already in hand. The message therefore says "this script was generated
+against Praat 6.6.30" rather than "the current version is" — true when written,
+true forever, and it understates the gap as time passes rather than overstating
+it. Making it a network lookup would mean no network, no script, or a silently
+wrong stamp when the fetch fails.
+
+**Two suppression keys, independent.** `suppressed_for_min` silences HARD while
+it is >= `vc_minVersion`; `suppressed_advisory_at` silences ADVISORY while it is
+>= `vc_builtAgainst`. One key would let "your Praat is old, stop telling me"
+silence a genuine feature warning, or the reverse. Both expire the same way, and
+`@vcSavePrefs` writes both stamps on every save so dismissing one never erases
+the other.
+
+**Verified, Praat 6.6.30.** The decision logic across 11 builds (6.3.0, 6.4.14,
+6.4.15, 6.4.16, 6.4.38, 6.4.39, 6.4.67, 6.5.0, 6.6.29, 6.6.30, 6.7.0) x 4
+requirement levels (floor-only, 6418, 6439, 6462) = 44 cells, every one matching
+the specified verdict. Plus 17 suppression cases: each key alone, both together,
+each failing to silence the other, stale dismissals surviving an upgrade, a
+preference file with no keys, and no file at all. A user ahead of
+`vc_builtAgainst` is silent, not warned.
+
+**Known limit, stated in §S15F rather than glossed.** `vc_minVersion` is fixed
+at generation, so a script carries the view of the world PraatGen had that day.
+A Praat change announced later will not be caught by a script written earlier.
+The route to currency is regeneration.
+
 ### 14.15.0 — 3 August 2026
 
 **`BEST_PRACTICES_DRAWING.txt` prohibited `Marks left:` / `Marks bottom:` and

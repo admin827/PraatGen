@@ -53,6 +53,28 @@
 # These conventions apply to EVERY beginPause/endPause block in every
 # script. No exceptions.
 #
+# S0-WRAP: BREAK YOUR OWN LINES (hard)
+#
+# A `comment:` line that is too wide WRAPS, but the dialog reserves only ONE
+# line of height for it. The wrapped remainder is drawn on top of whatever
+# comes next. The text is not clipped and nothing errors — the layout simply
+# does not know the wrap happened, and every line below it is corrupted.
+#
+# Measured, Praat 6.6.30 under GTK: one over-long comment between two short
+# ones wrapped to three lines, and lines two and three overdrew the following
+# comment, leaving both illegible.
+#
+# RULE: put in the line breaks yourself. One idea per `comment:`, and keep
+# each under roughly 60 characters. Never build a `comment:` by concatenating
+# a variable of unknown length onto a label — split it across two comments, or
+# truncate the variable.
+#
+# Wrap width is platform-dependent (GTK, Cocoa and Windows measure text
+# differently), so a line that fits on one machine can wrap on another. Short
+# enough to fit everywhere is the only safe target. This is also why the full
+# text belongs in the Info window as well: it has no layout to break, and the
+# user can select and copy from it.
+#
 # S0A: SUPPRESS STOP BUTTON (hard)
 #
 # Every endPause call must include 0 as the final argument. This
@@ -1299,126 +1321,156 @@ standards (Rule 33).*
 # ============================================================================
 # S15 PRAAT VERSION CHECK
 # ============================================================================
+##
+# S15A: WHEN — every script, always (hard)
 #
-# S15A: WHEN
+# EVERY generated script emits the check. There is no case where it is omitted.
 #
-# Emit a version check whenever the script uses any feature listed as
-# post-floor in PRAAT_VERSION_FLOOR.txt. The floor is Praat 6.4.15. If
-# everything the script uses is at or below the floor, emit nothing.
+# The floor is Praat 6.4.39 (PRAAT_VERSION_FLOOR.txt). The script carries a
+# LIST of the specific things it uses that need something newer than the floor,
+# each with its own minimum and its own consequence. Not one number — a list,
+# because "this script needs 6.4.62" tells the user nothing about what will
+# happen or why.
 #
-# It WARNS. It does not refuse. The user can always choose to run anyway —
-# their Praat may well be fine, and a script that will not start is worse
-# than one that might not finish.
+# If the script uses nothing above the floor, the list holds one entry: the
+# floor itself. The check still ships. A user below 6.4.39 must be told.
 #
 # S15B: PLACEMENT
 #
-# Before the first object creation and before the first file write, so a
-# user who quits is left with exactly what they started with.
+# Before the first object creation and before the first file write, so a user
+# who quits is left with exactly what they started with.
 #
-# S15C: THE MESSAGE
+# S15C: WHAT IT REPORTS
 #
-# Goes to BOTH the pause dialog and the Info window. The dialog is what they
-# read; the Info window is where they can select and copy the URL, which a
-# `comment:` line does not allow.
+# Only the entries the running Praat is actually below. A user on 6.6.30 sees
+# nothing, because nothing in their copy of the list applies to them.
 #
-# Say which version, which version they have, what it is for, where to get
-# it, and end on something warm. This is a nudge, not a scolding.
+# Each entry states which of TWO THINGS happens, and they are worded
+# differently because they are different problems:
 #
-# S15D: THE SUPPRESSION IS VERSION-STAMPED, NOT PERMANENT (hard)
+#   STOPS   the command, function or option value does not exist. Praat raises
+#           an error at that line and the script halts. Say so plainly: the
+#           script will stop, and where.
 #
-# "Check again next time" must not silence the check forever. It records the
-# REQUIREMENT the user dismissed, and it only silences that requirement or a
-# lower one.
+#   DIFFERS the call runs and returns a different number. Say what the measure
+#           is and, where PRAAT_VERSION_FLOOR.txt gives one, how far apart the
+#           versions are. This is the dangerous kind and must not be worded
+#           like a warning about a missing feature.
 #
-#   config key                 meaning
-#   -------------------------  ----------------------------------------------
-#   suppressed_for_min         the minVersion in force when they opted out
-#   suppressed_at_praat        the Praat they were running then (diagnostic)
+# NO GENERIC MESSAGE. Never emit "your Praat is old" or "some features may not
+# work". If nothing in this script is affected, say nothing. Every line the
+# user reads must name something in the script in front of them.
 #
-#   Suppress only when   suppressed_for_min >= minVersion
+# S15D: CONDITION ON THE ARGUMENTS, NOT JUST THE COMMAND (hard)
 #
-# Worked example, which is the case this exists for:
+# Some entries depend on how the command is called. `Get CPPS` is the worked
+# case: at the 6.4.24 revision, straight tilt lines moved by -0.01 to +0.41 dB
+# while exponential-decay fits moved by more than 3 dB.
 #
-#   They are on 6.3, a script needs 6.4.18. Check fires. They tick
-#   "don't check again" -> suppressed_for_min = 6418.
-#   They upgrade to 6.6.30. Nothing fires, because 6630 >= 6418; the check
-#   never even reaches the suppression test.
-#   A year later Praat 7.1 exists, PraatGen has learned a 7.1-only feature,
-#   and a script needs 7100. They are still on 6.6.30.
-#     praatVersion 6630 < minVersion 7100          -> check is relevant
-#     suppressed_for_min 6418 >= 7100 ?  NO        -> it FIRES
+# So an entry is keyed to the call the script actually emits. A script using a
+# straight tilt line and one using exponential decay do not get the same
+# warning, and a script whose settings are unaffected gets no entry at all.
 #
-#   The old dismissal covered a 6.4.18 requirement. It does not cover a 7.1
-#   one, and must not.
+# S15E: SUPPRESSION IS STAMPED, NOT PERMANENT (hard)
 #
-# S15E: PATTERN (sandbox-verified end to end, Praat 6.6.30, 3 August 2026)
+#   config key            silences        only while
+#   --------------------  --------------  --------------------------------
+#   suppressed_for_min    the whole check  >= the highest minimum in the list
+#   suppressed_at_praat   (diagnostic only)
 #
-# Verified under Xvfb with the dialog actually driven, not simulated: both
-# buttons clicked, the boolean read back at both settings, the preferences
-# file written and its contents checked, and a second run with those
-# preferences in place confirmed silent. The parse block was additionally
-# run at top level across six suppression cases.
+# One key, because there is now only one kind of notice. It records the
+# requirement level dismissed, so a dismissal covers that level and nothing
+# above it:
 #
-# This block sits at the TOP LEVEL of the generated script, not inside a
-# procedure. Two consequences, both of which the pattern already handles and
-# neither of which may be "tidied" away:
+#   Dismissed on 6.4.30 for a script needing 6.4.46 -> stores 6446.
+#   They upgrade to 6.6.30; nothing fires, they are past it.
+#   A year later a script needs 7100 and they are still on 6.6.30:
+#     6446 >= 7100 ?  NO  ->  it fires again.
 #
-#   - No leading-dot names. `.k` is procedure-local syntax; at top level it is
-#     wrong. Every variable here is spelled out.
-#   - Every name is `vc_`-prefixed so the block cannot collide with a variable
-#     in the script it is guarding. Do not rename them to something shorter.
+# Never write a bare permanent flag.
 #
-#   # --- version check: emitted only because this script uses <feature> ---
-#   vc_minVersion = 6439
-#   vc_minVersion$ = "6.4.39"
-#   vc_why$ = "the calibrated CPPS measurement"
+# S15F: PATTERN
+#
+# Top level, not inside a procedure: no leading-dot names, everything
+# `vc_`-prefixed so it cannot collide with the script it guards.
+#
+#   vc_n = 2
+#   vc_needs# = {6439, 6462}
+#   vc_what$# = {"Get CPPS (exponential-decay tilt line)",
+#       ... "Sound: To TextGrid (speech activity, Silero)"}
+#   vc_kind$# = {"DIFFERS", "STOPS"}
+#   vc_note$# = {"your build reports this measure about 1.8 dB from current",
+#       ... "this command does not exist in your version; the script stops here"}
 #   vc_url$ = "https://www.fon.hum.uva.nl/praat/"
 #   vc_prefPath$ = preferencesDirectory$ + "/eml_version_check.txt"
 #
-#   # --- did the user dismiss THIS requirement, or a higher one? ---
-#   vc_suppressedForMin = 0
+#   # highest requirement in the list, for the suppression stamp
+#   vc_max = 0
+#   for vc_i to vc_n
+#       if vc_needs# [vc_i] > vc_max
+#           vc_max = vc_needs# [vc_i]
+#       endif
+#   endfor
+#
+#   vc_forMin = 0
 #   if fileReadable (vc_prefPath$)
 #       vc_prefTxt$ = readFile$ (vc_prefPath$)
 #       vc_k = index (vc_prefTxt$, "suppressed_for_min" + tab$)
 #       if vc_k > 0
 #           vc_rest$ = mid$ (vc_prefTxt$, vc_k + 19, 20) + newline$
-#           vc_suppressedForMin = number (left$ (vc_rest$,
+#           vc_forMin = number (left$ (vc_rest$,
 #               ... index (vc_rest$, newline$) - 1))
-#           if vc_suppressedForMin = undefined
-#               vc_suppressedForMin = 0
+#           if vc_forMin = undefined
+#               vc_forMin = 0
 #           endif
 #       endif
 #   endif
 #
-#   if praatVersion < vc_minVersion and vc_suppressedForMin < vc_minVersion
-#       writeInfoLine: "This script was written for Praat ", vc_minVersion$,
-#           ... " or newer."
+#   # how many entries actually apply to THIS user?
+#   vc_hits = 0
+#   for vc_i to vc_n
+#       if praatVersion < vc_needs# [vc_i]
+#           vc_hits = vc_hits + 1
+#       endif
+#   endfor
+#
+#   if vc_hits > 0 and vc_forMin < vc_max
+#       writeInfoLine: "This script uses ", vc_hits,
+#           ... " thing(s) your Praat does not have as this script expects."
 #       appendInfoLine: "You are running ", praatVersion$, "."
 #       appendInfoLine: ""
-#       appendInfoLine: "It uses ", vc_why$, ","
-#       appendInfoLine: "which your version may not have."
-#       appendInfoLine: ""
+#       for vc_i to vc_n
+#           if praatVersion < vc_needs# [vc_i]
+#               appendInfoLine: "  ", vc_what$# [vc_i]
+#               appendInfoLine: "      needs ", vc_needs# [vc_i],
+#                   ... " -- ", vc_note$# [vc_i]
+#               appendInfoLine: ""
+#           endif
+#       endfor
 #       appendInfoLine: "Update here:  ", vc_url$
-#       appendInfoLine: ""
-#       appendInfoLine: "(The latest version is really great. You'll love it.)"
 #
 #       beginPause: "Praat version"
-#           comment: "This script was written for Praat " + vc_minVersion$ +
-#               ... " or newer."
-#           comment: "You are running " + praatVersion$ +
-#               ... ". It may not run correctly."
+#           comment: "This script uses " + string$ (vc_hits) +
+#               ... " thing(s) your Praat handles differently."
+#           comment: "You are running " + praatVersion$ + "."
+#           comment: ""
+#           for vc_i to vc_n
+#               if praatVersion < vc_needs# [vc_i]
+#                   comment: "- " + vc_what$# [vc_i] +
+#                       ... "  (needs " + string$ (vc_needs# [vc_i]) + ")"
+#                   comment: "    " + vc_note$# [vc_i]
+#               endif
+#           endfor
 #           comment: ""
 #           comment: "Update at:  " + vc_url$
-#           comment: "(that link is in the Info window too, ready to copy)"
-#           comment: ""
-#           comment: "The latest version is really great. You'll love it."
+#           comment: "(the full list is in the Info window, ready to copy)"
 #           boolean: "Check again next time", 1
 #       vc_clicked = endPause: "Quit", "Run anyway", 2, 0
 #
 #       if check_again_next_time = 0
 #           writeFileLine: vc_prefPath$, "# EML PraatGen version check"
 #           appendFileLine: vc_prefPath$, "suppressed_for_min", tab$,
-#               ... string$ (vc_minVersion)
+#               ... string$ (vc_max)
 #           appendFileLine: vc_prefPath$, "suppressed_at_praat", tab$,
 #               ... string$ (praatVersion)
 #       endif
@@ -1427,27 +1479,32 @@ standards (Rule 33).*
 #       endif
 #   endif
 #
-# S15F: NOTES
+# S15G: NOTES
 #
-#   - `praatVersion` is an integer: 6.4.39 is 6439, 6.6.30 is 6630. Compare
-#     numerically. `praatVersion$` is the display string. Both are documented
-#     in APPENDIX_B_FUNCTIONS.txt.
-#   - Never write a bare "check_version 0" flag. A permanent off switch is the
-#     bug this section exists to prevent.
-#   - Default the boolean to ON. The user opts out; they are not opted out
-#     for them.
-#   - The preference file is shared across EML scripts by design, and the
-#     version stamp is what makes sharing safe: one dismissal covers one
-#     requirement level everywhere, not all future ones.
-#   - Writing the preference is the ONE file write permitted before the
-#     version gate, and only when the user asked for it.
-#   - "Run anyway" is button 2 and the default, so Return proceeds.
-#   - `whyNeeded$` names the feature in the user's terms, not the command
-#     name. "the calibrated CPPS measurement", not "Get CPPS...".
-#   - The most important trigger is not a missing command. It is
-#     `PowerCepstrogram: Get CPPS...`, recalibrated at 6.4.39, which returns
-#     DIFFERENT NUMBERS either side of that version with no error at all.
-#     See PRAAT_VERSION_FLOOR.txt §1.
+#   - `praatVersion` is an integer: major*1000 + minor*100 + patch. 6.4.39 is
+#     6439. `praatVersion$` is the display string.
+#   - A missing or corrupt preference file parses to 0 and therefore WARNS. It
+#     fails loud.
+#   - `vc_note$#` says what happens in the user's terms. For STOPS entries name
+#     the failure ("the script stops here"). For DIFFERS entries give the size
+#     of the disagreement where PRAAT_VERSION_FLOOR.txt provides one.
+#   - Writing the preference file is the ONE file write permitted before the
+#     gate, and only when the user asked for it.
+#   - Every `comment:` here is short by construction. See S0-WRAP: an over-long
+#     comment wraps but is allocated one line of height, so it overdraws the
+#     entries below it. The entry list is the part most at risk, since its text
+#     is assembled from variables.
+#   - The list is fixed when the script is generated. A Praat change announced
+#     later will not be in a script written earlier; regeneration is the route
+#     to currency.
+#   - Prefer `"Robust"` over `"Robust slow"` in `Get CPPS`. The latter is
+#     rejected on 6.4.39 and 6.4.46 while working either side of them; see
+#     PRAAT_VERSION_FLOOR.txt §3.
 #
-# SELF-AUDIT must confirm: "Version check: [emitted for <feature>, minimum
-# <version> / not applicable — nothing above the 6.4.15 floor]".
+# Verified Praat 6.6.30, 3 August 2026: decision logic across 11 simulated
+# builds x 4 requirement levels, plus 17 suppression cases. The underlying
+# version facts were measured on seven real builds — 6.4.14, 6.4.20, 6.4.24,
+# 6.4.30, 6.4.39, 6.4.46, 6.6.30.
+#
+# SELF-AUDIT must confirm: "Version check: emitted, <n> entries, highest
+# minimum <version>." List each entry and its kind.
