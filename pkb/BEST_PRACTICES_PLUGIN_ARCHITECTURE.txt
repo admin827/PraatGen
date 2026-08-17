@@ -22,12 +22,31 @@
 #   ├── procedures/           # Shared procedure files (included)
 #   └── scripts/              # Scripts registered via setup.praat
 #
-# The preferences directory path varies by OS:
-#   macOS:   /Users/[name]/Library/Preferences/Praat Prefs/
-#   Windows: C:\Users\[name]\Praat\
-#   Linux:   /home/[name]/.praat-dir/
+# The preferences directory path varies by OS AND by Praat major version.
+# All three locations moved in Praat 7.0:
 #
-# In scripts: preferencesDirectory$
+#   OS       Praat 6.x                              Praat 7.x
+#   -------  -------------------------------------  ----------------------------
+#   macOS    ~/Library/Preferences/Praat Prefs/      ~/Library/Application Support/Praat/
+#   Windows  C:\Users\[name]\Praat\                  C:\Users\[name]\AppData\Roaming\Praat\
+#   Linux    /home/[name]/.praat-dir/                /home/[name]/.config/praat/
+#
+# On Linux, Praat 7 honours XDG_CONFIG_HOME: if it is set, the praat
+# folder is created there instead of under ~/.config.
+#
+# Praat 7 still READS plugins from the 6.x location, so an existing
+# install keeps working after an upgrade. If the same plugin name exists
+# in both, Praat installs the 7.x one and prints:
+#   Plugin "plugin_X" occurs both in "..." and in "..."; only the former
+#   is installed.
+# Verified in sandbox, 17 August 2026, Praat 6.6.30 and 7.0.
+#
+# --pref-dir does NOT redirect plugin discovery on Praat 7, only settings.
+# On 6.x it redirects both. A test harness that isolates a plugin by
+# --pref-dir alone loads no plugin at all under 7.x, with no error — set
+# HOME instead.
+#
+# In scripts: preferencesDirectory$ — correct on both major versions.
 # NOTE: preferencesDirectory$ cannot be used inside include directives.
 # include is a preprocessor directive — it resolves at parse time,
 # before any variables exist. Include paths are always relative to the

@@ -7,6 +7,35 @@
 # Referenced from the Master Prompt Core via the CHANGELOG section.
 # ============================================================================
 
+### 14.18.0 — 17 August 2026
+
+**The sandbox Praat version is pinned to 6.6.30.** Praat 7.0 requires the
+user's permission before a script may write a file or run a system command, so
+a `--run` verification that writes anything fails without `--FULL-TRUST`, and
+that flag is rejected by 6.4.62 and earlier — where it prints usage, runs
+nothing, and exits 0. The pin is stated once, under Rule 24C's Version
+management block, with its reason, its evidence and a review trigger; STEP 2B
+points at it rather than restating it. Nothing else about version resolution
+changes, including the architecture token.
+
+**The pin costs no measurement fidelity.** The floor probe returns identical
+values on 6.6.30 and 7.0: CPPS 12.114037 dB, Formant F1 161.676520 /
+F2 456.216348, LPC 191 frames. Matrix operators, elementwise idioms and
+form-widget marshalling are identical as well.
+
+**`PRAAT_VERSION_FLOOR.txt` §4B — new.** What changes above the floor at
+Praat 7.0: which write and system calls are gated, which are not, that the
+permission dialog is deliberately absent from the §S15 check because it
+neither halts a script nor changes a number, and that `--FULL-TRUST` must
+never be added to a harness unconditionally. The floor stays at 6.4.39.
+
+**`BEST_PRACTICES_PLUGIN_ARCHITECTURE.txt` §1 — corrected.** All three OS
+preference paths moved in Praat 7.0 and the file documented only the 6.x ones.
+Adds the 7.x paths, `XDG_CONFIG_HOME` on Linux, the fact that Praat 7 still
+reads plugins from the 6.x folder, the message printed when a plugin occurs in
+both, and that `--pref-dir` no longer redirects plugin discovery on 7.x — a
+harness that isolates by `--pref-dir` alone loads no plugin and says nothing.
+
 ### Release 1.0.5 — 5 August 2026 (ships Master Prompt 14.17.0)
 
 Cuts the 14.13.0 through 14.17.0 entries below into a release. Upgrade notes are

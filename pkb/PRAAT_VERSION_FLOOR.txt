@@ -183,6 +183,46 @@
 #     6.4.43  --send-or-form command-line switch
 #
 # ============================================================================
+# 4B. PRAAT 7.0 — WHAT CHANGES ABOVE THE FLOOR
+# ============================================================================
+#
+# Measured 17 August 2026, Praat 7.0 (4 August 2026) against 6.6.30.
+# The floor does NOT move. Nothing here stops a script or changes a number;
+# these are environment facts, recorded so they are not rediscovered.
+#
+# NO NUMERICAL CHANGE. The floor probe returns identical values on both:
+#   CPPS 12.114037 dB, Formant F1 161.676520 / F2 456.216348, LPC 191 frames.
+#   Matrix operators, elementwise idioms and form-widget marshalling likewise
+#   identical. Only praatVersion differs (6630 -> 7000).
+#
+# WRITING A FILE NOW REQUIRES THE USER'S PERMISSION. From 7.0, a script that
+# writes a file or runs a system command raises a modal dialog in the GUI, or
+# fails outright under --run unless Praat was started with --FULL-TRUST.
+# This is a prompt, not a defect: the user answers it and the script proceeds.
+# It is deliberately NOT in the §S15 version check, which reports only things
+# that halt a script or change a number.
+#   Gated:     writeFile, writeFileLine, appendFile, appendFileLine,
+#              deleteFile, createFolder, Save as WAV file:,
+#              Save as comma-separated file:, Save as tab-separated file:,
+#              Save as chronological text file:, runSystem:
+#   Not gated: picture saves (PNG/PDF/EPS), Save as text file: on an object,
+#              the bare `system` statement, and all reading.
+#              Treat the ungated set as an oversight, not a guarantee.
+#   In the script editor, Run > "Run with FULL TRUST" runs once without the
+#   dialog. The grant is per run: it does not persist across a restart, and a
+#   second script in the same session is asked again.
+#
+# --FULL-TRUST IS NOT BACKWARD COMPATIBLE. 6.4.62 and earlier reject it,
+#   print usage, run nothing, and exit 0 — a rejected flag reads as a clean
+#   pass. Never add it unconditionally to a harness.
+#
+# THE SETTINGS FOLDER MOVED on all three platforms; see
+#   BEST_PRACTICES_PLUGIN_ARCHITECTURE.txt §1 for the paths, the plugin
+#   fallback, and the --pref-dir caveat. preferencesDirectory$ resolves
+#   correctly on both major versions, so scripts need no change. A user's
+#   stored script preferences do not carry across the upgrade.
+#
+# ============================================================================
 # 5. SUSPECTED AND CLEARED — do not gate on these
 # ============================================================================
 #
